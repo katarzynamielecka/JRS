@@ -1,2 +1,26 @@
-<h1>Hello world</h1>
-<h3>System zapisów na języki</h3>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Hello World</title>
+</head>
+<body>
+    <h1>Hello world</h1>
+    <h3>System zapisów na języki</h3>
+    <form method="post">
+        {% csrf_token %}
+        <label for="inputField">Wpisz coś:</label>
+        <input type="text" id="inputField" name="inputField">
+        <button type="submit">Wyślij</button>
+    </form>
+    <br>
+    <button>Przycisk</button>
+
+    <!-- Display the data -->
+    <h2>Dane:</h2>
+    <ul>
+        {% for data in all_data %}
+            <li>{{ data.text }}</li>
+        {% endfor %}
+    </ul>
+</body>
+</html>
