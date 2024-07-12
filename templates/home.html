@@ -1,26 +1,25 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Hello World</title>
+    <title>JRS zapisy na jezyki</title>
 </head>
 <body>
-    <h1>Hello world</h1>
     <h3>System zapisów na języki</h3>
-    <form method="post">
-        {% csrf_token %}
-        <label for="inputField">Wpisz coś:</label>
-        <input type="text" id="inputField" name="inputField">
-        <button type="submit">Wyślij</button>
-    </form>
-    <br>
-    <button>Przycisk</button>
-
-    <!-- Display the data -->
-    <h2>Dane:</h2>
-    <ul>
-        {% for data in all_data %}
-            <li>{{ data.text }}</li>
-        {% endfor %}
-    </ul>
+    <a href="/login" style="text-decoration: none;">
+        <button type="button">Pracownik JRS</button>
+    </a>
+    <h1>Formularz</h1>
+    {% for question in questions %}
+        <div>
+            <h2>{{ question.text }}</h2>
+            {% if question.question_type == 'multiple_choice' %}
+                <ul>
+                    {% for choice in question.choices.all %}
+                        <li>{{ choice.text }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </div>
+    {% endfor %}
 </body>
 </html>
