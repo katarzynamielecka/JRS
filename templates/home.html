@@ -1,13 +1,14 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>JRS zapisy na jezyki</title>
-</head>
-<body>
-    <h3>System zapisów na języki</h3>
-    <a href="/login" style="text-decoration: none;">
-        <button type="button">Pracownik JRS</button>
-    </a>
+{% extends "base.html" %}
+
+{% block title %}
+JRS zapisy na jezyki
+{% endblock %}
+
+{% block extra_head %}
+
+{% endblock %}
+
+{% block content %}
     <h1>Formularz</h1>
     {% for question in questions %}
         <div>
@@ -21,5 +22,4 @@
             {% endif %}
         </div>
     {% endfor %}
-</body>
-</html>
+{% endblock %}

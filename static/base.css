@@ -1,0 +1,24 @@
+:root{
+    --jrs-blue: rgb(38, 82, 140);
+}
+
+.navbar{
+    background-color: var(--jrs-blue);
+}
+
+nav img{
+    display: flex;
+    justify-content: space-between;
+}
+
+nav h2{
+    color:whitesmoke;
+}
+
+.nav-menu{
+    color: orange;
+}
+.menu-button{
+    border-style: solid;
+    border-color: orange;
+}
