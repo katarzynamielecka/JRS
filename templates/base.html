@@ -7,13 +7,11 @@
     <title>{% block title %}Base{% endblock %}</title>
     <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="{% static 'base.css' %}" />
-    <link rel="stylesheet" href="{% static 'home.css' %}" />
-    {% block extra_head %}{% endblock %}
+    {% block head %}{% endblock %}
   </head>
-  <body>
     <nav class="navbar">
       <img src="https://via.placeholder.com/100x50?text=Logo" width="100" height="50" class="d-inline-block align-top" alt="LOGO" />
-      <h2>Registration for language courses</h2>
+      <h3>Registration for language courses</h3>
       <div>
         <a><img src="{% static 'ukraine-flag.png' %}" width="40" height="30" class="d-inline-block align-top flag-nav" alt="Ukrainian" /></a>
         <a><img src="{% static 'england-flag.png' %}" width="40" height="30" class="d-inline-block align-top" alt="English" /></a>
@@ -28,5 +26,4 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-  </body>
 </html>

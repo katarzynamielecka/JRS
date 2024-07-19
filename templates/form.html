@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}
+JRS zapisy na jezyki
+{% endblock %}
+
+{% block extra_head %}
+
+{% endblock %}
+
+{% block content %}
+    <h1>Formularz</h1>
+    {% for question in questions %}
+        <div>
+            <h2>{{ question.text }}</h2>
+            {% if question.question_type == 'multiple_choice' %}
+                <ul>
+                    {% for choice in question.choices.all %}
+                        <li>{{ choice.text }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </div>
+    {% endfor %}
+{% endblock %}

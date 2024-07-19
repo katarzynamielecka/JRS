@@ -8,11 +8,13 @@ from .models import Profile
 import pandas as pd
 
 
-
-
 def home(request):
+    context = {}
+    return render(request, 'home.html', context)    
+
+def form(request):
     questions = Question.objects.all()
-    return render(request, 'home.html', {'questions': questions})    
+    return render(request, 'form.html', {'questions': questions})    
 
 
 def employee(request):

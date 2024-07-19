@@ -1,0 +1,19 @@
+.form-home {
+    display: block;
+    text-align: center;
+    margin-top: 7%;
+}
+
+.form-group {
+    text-align: left;
+    display: inline-block;
+}
+
+.radio-group {
+    margin-top: 0.5em;
+    margin-right: 8em;
+}
+
+.radio-group label {
+    margin-left: 0.5em;
+}

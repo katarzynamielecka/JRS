@@ -1,25 +1,27 @@
 {% extends "base.html" %}
+{% load static %}
 
-{% block title %}
-JRS zapisy na jezyki
-{% endblock %}
+{% block title %} JRS zapisy na języki {% endblock %}
 
-{% block extra_head %}
-
+{% block head %}
+<link rel="stylesheet" href="{% static 'home.css' %}">
 {% endblock %}
 
 {% block content %}
-    <h1>Formularz</h1>
-    {% for question in questions %}
-        <div>
-            <h2>{{ question.text }}</h2>
-            {% if question.question_type == 'multiple_choice' %}
-                <ul>
-                    {% for choice in question.choices.all %}
-                        <li>{{ choice.text }}</li>
-                    {% endfor %}
-                </ul>
-            {% endif %}
-        </div>
-    {% endfor %}
+  <div class="form-home">
+    <h1 class="form-title">Formularz</h1>
+    <br>
+    <p class="description">Proszę odpowiedzieć na poniższe pytania, aby kontynuować rejestrację.</p>
+    <br>
+    <form>
+      <label for="slavic-lang-country">Czy jesteś z kraju słowiańskojęzycznego?</label>
+      <div class="radio-group">
+        <input type="radio" id="yes" name="slavic-lang-country" value="yes" />
+        <label for="yes">Tak</label>
+        <br>
+        <input type="radio" id="no" name="slavic-lang-country" value="no" />
+        <label for="no">Nie</label>
+      </div>
+    </form>
+  </div>
 {% endblock %}
