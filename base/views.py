@@ -3,6 +3,7 @@ from django.contrib.auth import authenticate, login
 from django.contrib import messages
 from .models import Test, Question, Choice
 from django.http import HttpResponseRedirect
+from django.views.decorators.csrf import csrf_protect
 from .forms import UserRegisterForm, UploadFileForm
 from .models import Profile
 import pandas as pd
@@ -28,20 +29,25 @@ def systemadmin(request):
 
 # login admin: kmielecka h: testowanie
 # login employee: kasiamielecka h: testowanie
+@csrf_protect
 def login_view(request):
     if request.method == "POST":
-        username = request.POST['username']
+        email = request.POST['email']
         password = request.POST['password']
-        user = authenticate(request, username=username, password=password)
+        try:
+            profile = Profile.objects.get(user__email=email)
+            user = profile.user
+            user = authenticate(request, username=user.username, password=password)
+        except Profile.DoesNotExist:
+            user = None
         if user is not None:
             login(request, user)
-            profile = Profile.objects.get(user=user)
             if profile.function == 'admin':
                 return redirect('/systemadmin')
             else:
                 return redirect('/employee')
         else:
-            messages.error(request, 'Invalid username or password.')
+            messages.error(request, 'Invalid email or password.')
     return render(request, 'login.html')
 
 def register(request):
