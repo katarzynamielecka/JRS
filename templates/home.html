@@ -13,14 +13,17 @@
     <br>
     <p class="description">Proszę odpowiedzieć na poniższe pytania, aby kontynuować rejestrację.</p>
     <br>
-    <form>
-      <label for="slavic-lang-country">Czy jesteś z kraju słowiańskojęzycznego?</label>
+    <form> 
+      <label for="slavic-lang-country">Na jaki kurs językowy planujesz się zarejestrować?</label>
       <div class="radio-group">
-        <input type="radio" id="yes" name="slavic-lang-country" value="yes" />
-        <label for="yes">Tak</label>
-        <br>
-        <input type="radio" id="no" name="slavic-lang-country" value="no" />
-        <label for="no">Nie</label>
+        <div class="choice">
+        <input type="radio" id="english" name="language-course" value="Angielski" />
+        <label for="english">Język Angielski</label>
+      </div>
+        <div class="choice">
+        <input type="radio" id="polish" name="language-course" value="Polski" />
+        <label for="polish">Język Polski</label>
+      </div>
       </div>
     </form>
   </div>

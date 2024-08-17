@@ -1,0 +1,37 @@
+body {
+    margin-top: auto;
+    margin-left: 0%;
+    margin-right: 0%;
+    font-family: Arial, sans-serif;
+}
+
+.second-navbar {
+    display: flex;
+    background-color: lightgray; 
+    height: 35px; 
+    width: 100%; 
+    padding: 0;
+    margin: 0;
+}
+
+.second-nav-item {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-grow: 1;
+    text-align: center;
+    text-decoration: none;
+    border-width: 1px;
+    border-style: solid;
+    border-color: transparent gray gray gray;
+    color: rgb(101, 100, 100);
+    padding: 0;
+    margin: 0;
+    transition: background-color 0.3s ease;
+}
+
+.second-nav-item:hover {
+    background-color: lightgray;
+    color: darkgrey;
+    text-decoration: none;
+}

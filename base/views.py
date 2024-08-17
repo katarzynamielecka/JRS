@@ -9,6 +9,8 @@ from .models import Profile
 import pandas as pd
 
 
+# REFUGEES
+
 def home(request):
     context = {}
     return render(request, 'home.html', context)    
@@ -18,17 +20,12 @@ def form(request):
     return render(request, 'form.html', {'questions': questions})    
 
 
+# EMPLOYEE
+
 def employee(request):
     context = {}
     return render(request, 'employee.html', context)
 
-def systemadmin(request):
-    context = {}
-    return render(request, 'systemadmin.html', context)
-
-
-# login admin: kmielecka h: testowanie
-# login employee: kasiamielecka h: testowanie
 @csrf_protect
 def login_view(request):
     if request.method == "POST":
@@ -49,23 +46,6 @@ def login_view(request):
         else:
             messages.error(request, 'Invalid email or password.')
     return render(request, 'login.html')
-
-def register(request):
-    if request.method == 'POST':
-        form = UserRegisterForm(request.POST)
-        if form.is_valid():
-            user = form.save()
-            function = form.cleaned_data.get('function')
-            Profile.objects.create(user=user, function=function)
-            login(request, user)
-            messages.success(request, f'Account created for {user.username}!')
-            if function == 'admin':
-                return redirect('/systemadmin')
-            else:
-                return redirect('/employee')
-    else:
-        form = UserRegisterForm()
-    return render(request, 'register.html', {'form': form})
 
 def handle_uploaded_form(f):
     Question.objects.all().delete()
@@ -101,3 +81,33 @@ def upload_form(request):
     else:
         form = UploadFileForm()
     return render(request, 'upload_form.html', {'form': form})
+
+
+
+
+# ADMIN
+
+def systemadmin(request):
+    context = {}
+    return render(request, 'systemadmin.html', context)
+
+def register(request):
+    if request.method == 'POST':
+        form = UserRegisterForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            function = form.cleaned_data.get('function')
+            Profile.objects.create(user=user, function=function)
+            login(request, user)
+            messages.success(request, f'Account created for {user.username}!')
+            if function == 'admin':
+                return redirect('/systemadmin')
+            else:
+                return redirect('/employee')
+    else:
+        form = UserRegisterForm()
+    return render(request, 'register.html', {'form': form})
+
+def employee_managment_section(request):
+    context = {}
+    return render(request, 'admin_emp_man_sec.html', context)

@@ -1,13 +1,6 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Admin JRS</title>
-</head>
-<body>
-    <h1>Admin JRS</h1>
-    <p>Welcome to the Admin page!</p>
-    <a href="{% url 'register' %}" style="text-decoration: none;">
-        <button type="button">Register</button>
-    </a>  
-</body>
-</html>
+{% extends "baseadmin.html" %}
+{% load static %}
+
+{% block content %}
+<h2>HOME ADMIN</h2>
+{% endblock %}
