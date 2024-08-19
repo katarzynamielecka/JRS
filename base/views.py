@@ -13,18 +13,18 @@ import pandas as pd
 
 def home(request):
     context = {}
-    return render(request, 'home.html', context)    
+    return render(request, 'refugees/home.html', context)    
 
 def form(request):
     questions = Question.objects.all()
-    return render(request, 'form.html', {'questions': questions})    
+    return render(request, 'refugees/form.html', {'questions': questions})    
 
 
 # EMPLOYEE
 
 def employee(request):
     context = {}
-    return render(request, 'employee.html', context)
+    return render(request, 'admin_and_employee/e.html', context)
 
 @csrf_protect
 def login_view(request):
@@ -45,7 +45,7 @@ def login_view(request):
                 return redirect('/employee')
         else:
             messages.error(request, 'Invalid email or password.')
-    return render(request, 'login.html')
+    return render(request, 'refugees/login.html')
 
 def handle_uploaded_form(f):
     Question.objects.all().delete()
@@ -80,7 +80,7 @@ def upload_form(request):
                 form.add_error('file', str(e))
     else:
         form = UploadFileForm()
-    return render(request, 'upload_form.html', {'form': form})
+    return render(request, 'admin_and_employee/ae_upload_form.html', {'form': form})
 
 
 
@@ -89,7 +89,7 @@ def upload_form(request):
 
 def systemadmin(request):
     context = {}
-    return render(request, 'systemadmin.html', context)
+    return render(request, 'admin_and_employee/a.html', context)
 
 def register(request):
     if request.method == 'POST':
@@ -106,8 +106,8 @@ def register(request):
                 return redirect('/employee')
     else:
         form = UserRegisterForm()
-    return render(request, 'register.html', {'form': form})
+    return render(request, 'admin_and_employee/a_register.html', {'form': form})
 
 def employee_managment_section(request):
     context = {}
-    return render(request, 'admin_emp_man_sec.html', context)
+    return render(request, 'admin_and_employee/a_emp_man_sec.html', context)
