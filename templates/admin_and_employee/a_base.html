@@ -8,6 +8,7 @@
     <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="{% static 'base.css' %}" />
     <link rel="stylesheet" href="{% static 'baseadmin.css' %}">
+    <link rel="stylesheet" href="{% static 'admin.css' %}">
     {% block head %}{% endblock %}
   </head>
     <nav class="navbar">
@@ -18,11 +19,6 @@
           <a class="dropdown-item" href="/">Wyloguj się</a>
         </div>
       </a>
-    </nav>
-    <nav class="second-navbar">
-        <a href="#" class="second-nav-item">Formularz zapisu</a>
-        <a href="#" class="second-nav-item">Kursy</a>
-        <a href="employee-managment" class="second-nav-item">Pracownicy</a>
     </nav>
     <div class="container">{% block content %}{% endblock %}</div>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>

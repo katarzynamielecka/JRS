@@ -1,11 +1,12 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login
 from django.contrib import messages
 from .models import Test, Question, Choice
+from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseRedirect
 from django.views.decorators.csrf import csrf_protect
-from .forms import UserRegisterForm, UploadFileForm
-from .models import Profile
+from .forms import EmployeeRegisterForm, UploadFileForm
+from .models import Employee, User
 import pandas as pd
 
 
@@ -28,21 +29,21 @@ def employee(request):
 
 @csrf_protect
 def login_view(request):
-    if request.method == "POST":
-        email = request.POST['email']
-        password = request.POST['password']
-        try:
-            profile = Profile.objects.get(user__email=email)
-            user = profile.user
-            user = authenticate(request, username=user.username, password=password)
-        except Profile.DoesNotExist:
-            user = None
+    if request.method == 'POST':
+        email = request.POST.get('email')
+        password = request.POST.get('password')
+        user = authenticate(request, username=email, password=password)
         if user is not None:
             login(request, user)
-            if profile.function == 'admin':
-                return redirect('/systemadmin')
-            else:
-                return redirect('/employee')
+            try:
+                employee = Employee.objects.get(user=user)
+                if employee.is_admin:
+                    return redirect('/systemadmin')
+                else:
+                    return redirect('/employee')
+            except Employee.DoesNotExist:
+                messages.error(request, 'User does not have an associated profile.')
+                return redirect('/login')
         else:
             messages.error(request, 'Invalid email or password.')
     return render(request, 'refugees/login.html')
@@ -75,7 +76,7 @@ def upload_form(request):
         if form.is_valid():
             try:
                 handle_uploaded_form(request.FILES['file'])
-                return HttpResponseRedirect('/success/')  # Przekierowanie po sukcesie
+                return HttpResponseRedirect('/success/')
             except ValueError as e:
                 form.add_error('file', str(e))
     else:
@@ -93,21 +94,32 @@ def systemadmin(request):
 
 def register(request):
     if request.method == 'POST':
-        form = UserRegisterForm(request.POST)
+        form = EmployeeRegisterForm(request.POST)
         if form.is_valid():
-            user = form.save()
-            function = form.cleaned_data.get('function')
-            Profile.objects.create(user=user, function=function)
-            login(request, user)
-            messages.success(request, f'Account created for {user.username}!')
-            if function == 'admin':
-                return redirect('/systemadmin')
-            else:
-                return redirect('/employee')
+            form.save()
+            messages.success(request, 'Konto zostało utworzone')
+            return redirect('/systemadmin/employee-management')
     else:
-        form = UserRegisterForm()
+        form = EmployeeRegisterForm()
     return render(request, 'admin_and_employee/a_register.html', {'form': form})
 
-def employee_managment_section(request):
+
+def employee_management_section(request):
+    employees = Employee.objects.all()
+    return render(request, 'admin_and_employee/a_emp_man_sec.html', {'employees': employees})
+
+def form_management_section(request):
     context = {}
-    return render(request, 'admin_and_employee/a_emp_man_sec.html', context)
+    return render(request, 'admin_and_employee/a_frm_man_sec.html', context)
+
+def courses_management_section(request):
+    context = {}
+    return render(request, 'admin_and_employee/a_crs_man_sec.html', context)
+
+@login_required
+def delete_employee(request, email):
+    user = get_object_or_404(User, email=email)
+    employee = get_object_or_404(Employee, user=user)
+    employee.delete()
+    user.delete()
+    return redirect('/systemadmin/employee-management')

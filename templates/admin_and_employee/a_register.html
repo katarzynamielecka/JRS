@@ -1,14 +1,13 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>JRS zapisy na języki</title>
-</head>
-<body>
-    <h1>Register</h1>
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Register</button>
-    </form>
-</body>
-</html>
+{% extends "admin_and_employee/a_base.html" %}
+{% load static %}
+
+
+
+{% block content %}
+<h2>Zarejestruj pracownika</h2>
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button class=" btn button-submit" type="submit">Zarejestruj</button>
+</form>
+{% endblock %}

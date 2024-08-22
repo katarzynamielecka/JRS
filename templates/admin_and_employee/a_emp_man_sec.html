@@ -1,9 +1,42 @@
-{% extends "admin_and_employee/a_base.html" %}
+{% extends "admin_and_employee/a_base2.html" %}
 {% load static %}
 
 {% block content %}
-<h2>Pracownicy</h2>
+<h2>Zarządzanie pracownikami</h2>
 <a href="{% url 'register' %}" style="text-decoration: none;">
-    <button type="button">Register</button>
+    <button class="btn button-func">Zarejestruj pracownika</button>
 </a> 
+<br>
+<br>
+<h5>Zarejestrowani pracownicy:</h5>
+<table class="table">
+    <thead>
+        <tr>
+            <th scope="col">Imię</th>
+            <th scope="col">Nazwisko</th>
+            <th scope="col">Email</th>
+            <th scope="col">Uprawnienia Administratora</th>
+            <th scope="col">Data dodania</th>
+            <th scope="col">Akcje</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for employee in employees %}
+            <tr>
+                <td>{{ employee.user.first_name }}</td>
+                <td>{{ employee.user.last_name }}</td>
+                <td>{{ employee.user.email }}</td>
+                <td>{{ employee.is_admin|yesno:"Tak,Nie" }}</td>
+                <td>{{ employee.date_joined }}</td>
+                <td>
+                    <a href="{% url 'delete_employee' employee.user.email %}" style="color: red; text-decoration: none;"
+                        onclick="return confirm('Czy na pewno chcesz usunąć tego pracownika?');">
+                        Usuń
+                    </a>
+                </td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
 {% endblock %}

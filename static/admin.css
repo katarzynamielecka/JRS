@@ -1,0 +1,24 @@
+form {
+    margin-top: 2%;
+    
+}
+
+.button-func{
+    background-color: grey;
+    color: white;
+    margin-top: 1%;
+    
+}
+
+
+.button-submit{
+    background-color: var(--jrs-orange);
+    color: white;
+    margin-top: 1%;
+}
+
+h2{
+    margin: 3%;
+    color: rgb(39, 38, 38);
+}
+
