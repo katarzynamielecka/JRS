@@ -17,4 +17,5 @@ urlpatterns = [
     path('systemadmin/courses-management', views.courses_management_section, name='crs_man_sec'),
     path('systemadmin/form-management', views.form_management_section, name='frm_man_sec'),
     path('delete_employee/<str:email>/', views.delete_employee, name='delete_employee'),
+    path('logout/', views.logout_view, name='logout')
 ]
