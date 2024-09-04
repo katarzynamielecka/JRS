@@ -23,3 +23,15 @@ h3{
     border-style: solid;
     border-color: orange;
 }
+
+@media (max-width: 768px) {
+    .navbar-title {
+      font-size: 1rem;
+    }
+  }
+
+@media (max-width: 576px) {
+    .navbar-title {
+      display: none;
+    }
+  }

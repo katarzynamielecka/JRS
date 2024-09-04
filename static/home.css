@@ -1,8 +1,30 @@
-.form-home {
+.home {
     display: block;
     text-align: center;
-    margin-top: 7%;
+    margin-top: 6%;
 }
+
+.button-orange{
+    background-color: var(--jrs-orange);
+    color: white;
+    margin-top: 1%;
+}
+
+form{
+    margin: 1%;
+}
+.two-column-list {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1px;
+    padding: 0;
+    margin-left: 20%;
+    margin-right: 20%;
+    max-width: 600px;
+    list-style-position: inside;
+}
+
+
 
 .radio-group {
     display: flex;

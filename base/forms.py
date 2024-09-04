@@ -4,6 +4,7 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from .models import Employee
 from django.contrib.auth.password_validation import validate_password
+from .models import Refugee
 
 class EmployeeRegisterForm(UserCreationForm):
     email = forms.EmailField(
@@ -121,3 +122,9 @@ class UploadFileForm(forms.Form):
         if not file.name.endswith('.xlsx') and not file.name.endswith('.xls'):
             raise forms.ValidationError('Plik musi być w formacie Excel (.xlsx lub .xls)')
         return file
+    
+
+class RefugeeRegistrationForm(forms.ModelForm):
+    class Meta:
+        model = Refugee
+        fields = ['first_name', 'last_name', 'gender', 'dob', 'phone_number', 'nationality', 'residency', 'comments']

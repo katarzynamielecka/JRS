@@ -8,23 +8,35 @@
 {% endblock %}
 
 {% block content %}
-  <div class="form-home">
-    <h1 class="form-title">Formularz</h1>
+  <div class="home">
+    <h2>Welcome to Our Language Register Platform</h2>
+    <p>
+      Our goal is to provide language courses for refugees to help them integrate, 
+      communicate and build a better future. Our courses are designed to suit a variety of skill levels, 
+      from beginner to advanced, and are tailored to the unique needs of our students.
+    </p>
     <br>
-    <p class="description">Proszę odpowiedzieć na poniższe pytania, aby kontynuować rejestrację.</p>
+    <h2>Available Courses</h2>
+    <ul class="two-column-list">
+      <!-- TODO - Kursy wylistować z bazy -->
+      <li>Basic English Course</li>
+      <li>Conversational English</li>
+      <li>Advanced English</li>
+      <li>Cultural Orientation</li>
+      <li>Business English</li>
+      <li>Grammar Intensive Course</li>
+      <li>Writing Skills Workshop</li>
+      <li>Pronunciation Practice</li>
+  </ul>
     <br>
-    <form> 
-      <label for="slavic-lang-country">Na jaki kurs językowy planujesz się zarejestrować?</label>
-      <div class="radio-group">
-        <div class="choice">
-        <input type="radio" id="english" name="language-course" value="Angielski" />
-        <label for="english">Język Angielski</label>
-      </div>
-        <div class="choice">
-        <input type="radio" id="polish" name="language-course" value="Polski" />
-        <label for="polish">Język Polski</label>
-      </div>
-      </div>
-    </form>
+    <h2>Important information</h2>
+    <p>Please note that registration for any of our courses requires the purchase of specific textbooks and materials, 
+      which are necessary to fully participate and succeed in the program. By enrolling, you commit to attending all classes 
+      and completing assignments. We strive to make these resources as affordable as possible and are here to support you every step of the way.
+    </p>
+    <br>
+    <h2>How to Register?</h2>
+    <p>Click on the "Register Now" button to start your journey with us.</p>
+    <a href="/form" class="btn button-orange">Register Now</a>
   </div>
 {% endblock %}

@@ -35,6 +35,7 @@ LOGIN_URL = '/login/'
 
 INSTALLED_APPS = [
     'django.contrib.admin',
+    'django_countries',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
