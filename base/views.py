@@ -15,7 +15,10 @@ import pandas as pd
 # REFUGEES
 
 def home(request):
-    context = {}
+    context = {
+        'navbar_title': 'JRS Registration for Language Courses',
+        'logged': False
+    }
     return render(request, 'refugees/home.html', context)    
 
 def form(request):
@@ -27,11 +30,18 @@ def form(request):
 @login_required
 @employee_required
 def employee(request):
-    context = {}
+    context = {
+        'navbar_title': 'JRS Employee',
+        'logged': True
+        }
     return render(request, 'admin_and_employee/e.html', context)
 
 @csrf_protect
 def login_view(request):
+    context = {
+        'navbar_title': 'JRS Registration for Language Courses',
+        'logged': True
+        }
     if request.method == 'POST':
         email = request.POST.get('email')
         password = request.POST.get('password')
@@ -49,7 +59,7 @@ def login_view(request):
                 return redirect('/login')
         else:
             messages.error(request, 'Invalid email or password.')
-    return render(request, 'refugees/login.html')
+    return render(request, 'refugees/login.html', context)
 
 def logout_view(request):
     logout(request)
@@ -97,12 +107,20 @@ def upload_form(request):
 @login_required
 @admin_required
 def systemadmin(request):
-    context = {}
+    context = {
+        'navbar_title': 'JRS Admin',
+        'logged': True
+        }
     return render(request, 'admin_and_employee/a.html', context)
 
 @login_required
 @admin_required
 def register(request):
+    context = {
+        'navbar_title': 'JRS Admin',
+        'form': form,
+        'logged': True
+        }
     if request.method == 'POST':
         form = EmployeeRegisterForm(request.POST)
         if form.is_valid():
@@ -111,24 +129,35 @@ def register(request):
             return redirect('/systemadmin/employee-management')
     else:
         form = EmployeeRegisterForm()
-    return render(request, 'admin_and_employee/a_register.html', {'form': form})
+    return render(request, 'admin_and_employee/a_register.html', context)
 
 @login_required
 @admin_required
 def employee_management_section(request):
+    context = {
+        'navbar_title': 'JRS Admin',
+        'employees': employees,
+        'logged': True
+    }
     employees = Employee.objects.all()
-    return render(request, 'admin_and_employee/a_emp_man_sec.html', {'employees': employees})
+    return render(request, 'admin_and_employee/a_emp_man_sec.html', context)
 
 @login_required
 @admin_required
 def form_management_section(request):
-    context = {}
+    context = {
+        'navbar_title': 'JRS Admin',
+        'logged': True
+        }
     return render(request, 'admin_and_employee/a_frm_man_sec.html', context)
 
 @login_required
 @admin_required
 def courses_management_section(request):
-    context = {}
+    context = {
+        'navbar_title': 'JRS Admin',
+        'logged': True
+        }
     return render(request, 'admin_and_employee/a_crs_man_sec.html', context)
 
 @login_required
