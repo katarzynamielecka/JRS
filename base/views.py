@@ -17,7 +17,7 @@ import pandas as pd
 def home(request):
     context = {
         'navbar_title': 'JRS Registration for Language Courses',
-        'logged': False
+        'role':'r'
     }
     return render(request, 'refugees/home.html', context)    
 
@@ -32,7 +32,7 @@ def form(request):
 def employee(request):
     context = {
         'navbar_title': 'JRS Employee',
-        'logged': True
+        'role': 'e'
         }
     return render(request, 'admin_and_employee/e.html', context)
 
@@ -40,7 +40,7 @@ def employee(request):
 def login_view(request):
     context = {
         'navbar_title': 'JRS Registration for Language Courses',
-        'logged': True
+        'role': 'e'
         }
     if request.method == 'POST':
         email = request.POST.get('email')
@@ -109,18 +109,13 @@ def upload_form(request):
 def systemadmin(request):
     context = {
         'navbar_title': 'JRS Admin',
-        'logged': True
+        'role': 'a'
         }
     return render(request, 'admin_and_employee/a.html', context)
 
 @login_required
 @admin_required
 def register(request):
-    context = {
-        'navbar_title': 'JRS Admin',
-        'form': form,
-        'logged': True
-        }
     if request.method == 'POST':
         form = EmployeeRegisterForm(request.POST)
         if form.is_valid():
@@ -129,17 +124,22 @@ def register(request):
             return redirect('/systemadmin/employee-management')
     else:
         form = EmployeeRegisterForm()
+    context = {
+    'navbar_title': 'JRS Admin',
+    'form': form,
+    'role': 'a'
+    }
     return render(request, 'admin_and_employee/a_register.html', context)
 
 @login_required
 @admin_required
 def employee_management_section(request):
+    employees = Employee.objects.all()
     context = {
         'navbar_title': 'JRS Admin',
         'employees': employees,
-        'logged': True
+        'role': 'a'
     }
-    employees = Employee.objects.all()
     return render(request, 'admin_and_employee/a_emp_man_sec.html', context)
 
 @login_required
@@ -147,7 +147,7 @@ def employee_management_section(request):
 def form_management_section(request):
     context = {
         'navbar_title': 'JRS Admin',
-        'logged': True
+        'role': 'a'
         }
     return render(request, 'admin_and_employee/a_frm_man_sec.html', context)
 
@@ -156,7 +156,7 @@ def form_management_section(request):
 def courses_management_section(request):
     context = {
         'navbar_title': 'JRS Admin',
-        'logged': True
+        'role': 'a'
         }
     return render(request, 'admin_and_employee/a_crs_man_sec.html', context)
 
