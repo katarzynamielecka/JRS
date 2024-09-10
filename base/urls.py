@@ -16,6 +16,7 @@ urlpatterns = [
     path('systemadmin/employee-management', views.employee_management_section, name='emp_man_sec'),
     path('systemadmin/courses-management', views.courses_management_section, name='crs_man_sec'),
     path('systemadmin/form-management', views.form_management_section, name='frm_man_sec'),
+    path('systemadmin/refugees', views.refugees_list_view, name='refugee_list'),
     path('delete_employee/<str:email>/', views.delete_employee, name='delete_employee'),
     path('logout/', views.logout_view, name='logout')
 ]

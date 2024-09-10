@@ -1,13 +1,14 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login
+from django.utils import formats
 from django.contrib import messages
 from django.contrib.auth import logout
-from .models import Test, Question, Choice
+from .models import Question, Choice
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseRedirect
 from django.views.decorators.csrf import csrf_protect
-from .forms import EmployeeRegisterForm, UploadFileForm
-from .models import Employee, User
+from .forms import EmployeeRegisterForm, UploadFileForm, RefugeeRegistrationForm
+from .models import Employee, User, Refugee
 from .decorators import admin_required, employee_required
 import pandas as pd
 
@@ -22,9 +23,14 @@ def home(request):
     return render(request, 'refugees/home.html', context)    
 
 def form(request):
-    questions = Question.objects.all()
-    return render(request, 'refugees/form.html', {'questions': questions})    
-
+    if request.method == 'POST':
+        form = RefugeeRegistrationForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('home')
+    else:
+        form = RefugeeRegistrationForm()
+    return render(request, 'refugees/form.html', {'form': form})
 
 # EMPLOYEE
 @login_required
@@ -168,3 +174,14 @@ def delete_employee(request, email):
     employee.delete()
     user.delete()
     return redirect('/systemadmin/employee-management')
+
+@login_required
+@admin_required
+def refugees_list_view(request):
+    refugees = Refugee.objects.all() 
+    context = {
+        'navbar_title': 'JRS Admin',
+        'role': 'a',
+        'refugees': refugees
+        }
+    return render(request, 'admin_and_employee/a_refugees_list.html', context)

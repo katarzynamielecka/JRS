@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% load static %}
+{% block head %}
+<link rel="stylesheet" href="{% static 'admin.css' %}">
+{% endblock %}
+{% block content %}
+<h2>Lista uchodźców</h2>
+<div class="table-responsive">
+<table class="table table-bordered table-hover">
+    <thead>
+        <tr>
+            <th>Imię</th>
+            <th>Nazwisko</th>
+            <th>Płeć</th>
+            <th>Data urodzenia</th>
+            <th>Numer telefonu</th>
+            <th>Narodowość</th>
+            <th>Typ pobytu</th>
+            <th>Komentarze</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for refugee in refugees %}
+            <tr>
+                <td>{{ refugee.first_name }}</td>
+                <td>{{ refugee.last_name }}</td>
+                <td>
+                    {% if refugee.gender == "female" %}
+                        Kobieta
+                    {% elif refugee.gender == "male" %}
+                        Mężczyzna
+                    {% else %}
+                        Inna
+                    {% endif %}
+                </td>
+                <td>{{ refugee.dob|date:"d-m-Y" }}</td>
+                <td>{{ refugee.phone_number }}</td>
+                <td>{{ refugee.get_nationality_name }}</td>
+                <td>{{ refugee.residency }}</td>
+                <td>{{ refugee.comments }}</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+</div>
+{% endblock %}

@@ -16,9 +16,12 @@ class Refugee(models.Model):
     gender = models.CharField(max_length=10, choices=[('female', 'Female'), ('male', 'Male'), ('other', 'Other')])
     dob = models.DateField()
     phone_number = models.CharField(max_length=15)
-    nationality = CountryField(blank_label='Select country')  # Użycie pola CountryField
+    nationality = CountryField(blank_label='Select country')
     residency = models.CharField(max_length=20, choices=[('permanent', 'Permanent'), ('temporary', 'Temporary'), ('refugee', 'Refugee'), ('other', 'Other')])
     comments = models.TextField(blank=True)
+
+    def get_nationality_name(self):
+        return self.nationality.name
 
 class Question(models.Model):
     QUESTION_TYPES = (
@@ -32,10 +35,3 @@ class Question(models.Model):
 class Choice(models.Model):
     question = models.ForeignKey(Question, related_name='choices', on_delete=models.CASCADE)
     text = models.CharField(max_length=255)
-
-# Create your models here.
-class Test(models.Model):
-    text = models.CharField(max_length=200)
-
-    def __str__(self):
-        return self.text

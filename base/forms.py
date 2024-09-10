@@ -6,6 +6,7 @@ from .models import Employee
 from django.contrib.auth.password_validation import validate_password
 from .models import Refugee
 
+
 class EmployeeRegisterForm(UserCreationForm):
     email = forms.EmailField(
         label="Adres e-mail",
@@ -125,6 +126,27 @@ class UploadFileForm(forms.Form):
     
 
 class RefugeeRegistrationForm(forms.ModelForm):
+    rodo_consent = forms.BooleanField(
+    required=True,
+    label="I consent to the processing of my personal data in accordance with GDPR."
+    )
+    truth_confirmation = forms.BooleanField(
+        required=True,
+        label="I confirm that the information provided is true and accurate."
+    )
     class Meta:
         model = Refugee
         fields = ['first_name', 'last_name', 'gender', 'dob', 'phone_number', 'nationality', 'residency', 'comments']
+        labels = {
+            'dob': 'Date of Birth',
+        }
+        widgets = {
+            'first_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'last_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'gender': forms.Select(attrs={'class': 'form-control'}),
+            'dob': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'phone_number': forms.TextInput(attrs={'class': 'form-control'}),
+            'nationality': forms.Select(attrs={'class': 'form-control'}),
+            'residency': forms.Select(attrs={'class': 'form-control'}),
+            'comments': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+        }
