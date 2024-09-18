@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<h2>Edycja testu</h2>
+<h2>Create a New Test</h2>
+<form method="post">
+    {% csrf_token %}
+    <label for="title">Test Title</label>
+    <input type="text" name="title" required>
+    <br>
+    <label for="description">Test Description</label>
+    <textarea name="description" required></textarea>
+    <br>
+    <button type="submit">Create Test</button>
+</form>
+{% endblock %}

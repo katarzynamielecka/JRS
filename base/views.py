@@ -3,7 +3,7 @@ from django.contrib.auth import authenticate, login
 from django.utils import formats
 from django.contrib import messages
 from django.contrib.auth import logout
-from .models import Question, Choice
+
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseRedirect
 from django.views.decorators.csrf import csrf_protect
@@ -71,45 +71,18 @@ def logout_view(request):
     logout(request)
     return redirect('/')
 
-def handle_uploaded_form(f):
-    Question.objects.all().delete()
-    try:
-        df = pd.read_excel(f)
-    except Exception as e:
-        raise ValueError("Nie można odczytać pliku Excel. Upewnij się, że plik jest poprawnie sformatowany.")
-    if df.shape[1] < 1:
-        raise ValueError("Plik Excel musi zawierać co najmniej jedną kolumnę.")
-    for index, row in df.iterrows():
-        if row.isnull().all():
-            continue
-        question_text = row[0]
-        if pd.isnull(question_text) or question_text == "":
-            continue
-        answer_texts = row[1:].dropna().tolist()
-        if answer_texts:
-            question = Question.objects.create(text=question_text, question_type='multiple_choice')
-            for answer_text in answer_texts:
-                Choice.objects.create(question=question, text=answer_text)
-        else:
-            question = Question.objects.create(text=question_text, question_type='open')
-
-def upload_form(request):
-    if request.method == 'POST':
-        form = UploadFileForm(request.POST, request.FILES)
-        if form.is_valid():
-            try:
-                handle_uploaded_form(request.FILES['file'])
-                return HttpResponseRedirect('/success/')
-            except ValueError as e:
-                form.add_error('file', str(e))
-    else:
-        form = UploadFileForm()
-    return render(request, 'admin_and_employee/ae_upload_form.html', {'form': form})
-
-
 
 
 # ADMIN
+@admin_required
+@login_required
+def create_test_view(request):
+    context = {
+        'navbar_title': 'JRS Admin',
+        'role': 'a'
+        }
+    return render(request, 'admin_and_employee/a.html', context)
+
 @login_required
 @admin_required
 def systemadmin(request):

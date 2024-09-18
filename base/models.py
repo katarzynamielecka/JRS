@@ -23,15 +23,3 @@ class Refugee(models.Model):
     def get_nationality_name(self):
         return self.nationality.name
 
-class Question(models.Model):
-    QUESTION_TYPES = (
-        ('open', 'Open-Ended'),
-        ('multiple_choice', 'Multiple Choice'),
-    )
-    text = models.TextField()
-    question_type = models.CharField(max_length=15, choices=QUESTION_TYPES)
-
-    
-class Choice(models.Model):
-    question = models.ForeignKey(Question, related_name='choices', on_delete=models.CASCADE)
-    text = models.CharField(max_length=255)
