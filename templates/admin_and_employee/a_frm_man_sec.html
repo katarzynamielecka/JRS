@@ -1,6 +1,38 @@
 {% extends "base.html" %}
 {% load static %}
-
+{% block head %}
+<link rel="stylesheet" href="{% static 'admin.css' %}">
+{% endblock %}
 {% block content %}
 <h2>Formularz</h2>
+<a href="{% url 'create_test' %}" style="text-decoration: none;">
+    <button class="btn button-func">Nowy test</button>
+</a> 
+<h5>Lista testów językowych:</h5>
+<table class="table table-responsive">
+    <thead>
+        <tr>
+            <th scope="col">Nazwa testu</th>
+            <th scope="col">Data utworzenia</th>
+            <th scope="col">Akcje</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for test in tests %}
+            <tr>
+                <td>{{ test.title }}</td>
+                <td>{{ test.created_at|date:"d/m/Y" }}</td>
+                <td>
+                    <a href="{% url 'edit_test' test.id %}" style="text-decoration: none;">
+                        <button class="btn btn-primary btn-sm">Edytuj</button>
+                    </a>
+                    <a href="{% url 'delete_test' test.id %}" style="text-decoration: none; color: red;" 
+                       onclick="return confirm('Czy na pewno chcesz usunąć ten test?');">
+                        <button class="btn btn-danger btn-sm">Usuń</button>
+                    </a>
+                </td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
 {% endblock %}

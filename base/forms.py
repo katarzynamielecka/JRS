@@ -1,8 +1,9 @@
 from django.core.exceptions import ValidationError
+from django.forms import inlineformset_factory
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
-from .models import Employee
+from .models import Employee, Question, Choice, LanguageTest
 from django.contrib.auth.password_validation import validate_password
 from .models import Refugee
 
@@ -150,3 +151,31 @@ class RefugeeRegistrationForm(forms.ModelForm):
             'residency': forms.Select(attrs={'class': 'form-control'}),
             'comments': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
         }
+
+class LanguageTestForm(forms.ModelForm):
+    class Meta:
+        model = LanguageTest
+        fields = ['title', 'description']
+        labels = {
+            'title': 'Tytuł', 
+            'description': 'Opis',
+        }
+
+class QuestionForm(forms.ModelForm):
+    class Meta:
+        model = Question
+        fields = ['text', 'question_type', 'order']
+
+class ChoiceForm(forms.ModelForm):
+    class Meta:
+        model = Choice
+        fields = ['text', 'is_correct']
+
+ChoiceFormSet = inlineformset_factory(
+    Question,
+    Choice,
+    form=ChoiceForm,
+    fields=['text', 'is_correct'],
+    extra=3,
+    can_delete=True
+)

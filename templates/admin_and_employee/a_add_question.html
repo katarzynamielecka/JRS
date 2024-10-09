@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Add Question to Test: {{ test.title }}</h1>
+
+<form method="post">
+    {% csrf_token %}
+    {{ question_form.as_p }}
+    
+    {% if choice_formset %}
+        <h3>Choices</h3>
+        {{ choice_formset.management_form }}
+        {% for form in choice_formset.forms %}
+            {{ form.as_p }}
+        {% endfor %}
+    {% endif %}
+    
+    <button type="submit">Save</button>
+</form>
+{% endblock %}
+

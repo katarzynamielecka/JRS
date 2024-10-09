@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% load static %}
+{% block head %}
+<link rel="stylesheet" href="{% static 'admin.css' %}">
+{% endblock %}
+{% block content %}
+<div class="container">
+    <h2>Edycja Testu: {{ test.title }}</h2>
+    <h4>Dodaj pytanie otwarte</h4>
+    <form method="post">
+        {% csrf_token %}
+        <input type="text" name="open_question_text" placeholder="Treść pytania otwartego" class="form-control mb-2" required>
+        <button type="submit" name="add_open_question" class="btn button-submit">Dodaj pytanie otwarte</button>
+    </form>
+    <hr>
+    <h4>Dodaj pytanie zamknięte</h4>
+    <form method="post">
+        {% csrf_token %}
+        <input type="text" name="choice_question_text" placeholder="Treść pytania zamkniętego" class="form-control mb-2" required>
+        <button type="submit" name="add_choice_question" class="btn button-submit">Dodaj pytanie zamknięte</button>
+    </form>
+    <hr>
+    <h4>Pytania w tym teście</h4>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Nr</th>
+                <th>Treść pytania</th>
+                <th>Typ pytania</th>
+                <th>Odpowiedzi</th>
+                <th>Akcje</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for question in questions %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ question.text }}</td>
+                <td>{{ question.get_question_type_display }}</td>
+                <td>
+                    <form method="post" style="display:inline-block;">
+                        {% csrf_token %}
+                        <input type="hidden" name="question_id" value="{{ question.id }}">
+                        <button type="submit" name="delete_question" class="btn btn-danger">Usuń</button>
+                    </form>
+                    {% if question.question_type == 'choice' %}
+                    <button class="btn btn-secondary" data-toggle="collapse" data-target="#answers-form-{{ question.id }}">Dodaj odpowiedź</button>
+                    <div id="answers-form-{{ question.id }}" class="collapse mt-2">
+                        <form method="post">
+                            {% csrf_token %}
+                            <input type="hidden" name="question_id" value="{{ question.id }}">
+                            <input type="text" name="answer_text" placeholder="Treść odpowiedzi" class="form-control mb-2" required>
+                            <div class="form-check">
+                                <input type="checkbox" name="is_correct" class="form-check-input">
+                                <label class="form-check-label">Odpowiedź poprawna</label>
+                            </div>
+                            <button type="submit" name="add_choice_answer" class="btn btn-primary">Dodaj odpowiedź</button>
+                        </form>
+                    </div>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if question.question_type == 'choice' %}
+                        <ul>
+                            {% for answer in question.choices.all %}
+                                <li>
+                                    {{ answer.text }} {% if answer.is_correct %} <strong>(Poprawna)</strong> {% endif %}
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        Brak odpowiedzi (pytanie otwarte)
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

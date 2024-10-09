@@ -17,6 +17,8 @@ urlpatterns = [
     path('systemadmin/form-management', views.form_management_section, name='frm_man_sec'),
     path('systemadmin/refugees', views.refugees_list_view, name='refugee_list'),
     path('delete_employee/<str:email>/', views.delete_employee, name='delete_employee'),
+    path('delete_test/<int:id>/', views.delete_test, name='delete_test'),
+    path('edit_test/<int:id>/', views.edit_test, name='edit_test'),
     path('systemadmin/create-test/', views.create_test_view, name='create_test'),
     path('logout/', views.logout_view, name='logout')
 ]

@@ -130,6 +130,29 @@ JRS zapisy na języki
             {% endif %}
         </div>
 
+        <!-- <h3 class="mt-4">Test Questions</h3>
+        <ol>
+            {% for question in questions %}
+            <li>
+                <strong>{{ question.text }}</strong>
+                {% if question.question_type == 'choice' %}
+                    <ul>
+                        {% for choice in question.choices.all %}
+                            <li>
+                                <input type="radio" name="question_{{ question.id }}" value="{{ choice.id }}"> 
+                                {{ choice.answer_text }}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% elif question.question_type == 'open' %}
+                    <textarea name="question_{{ question.id }}" class="form-control"></textarea>
+                {% endif %}
+            </li>
+            {% endfor %}
+        </ol>
+
+ -->
+
         <button type="submit" class="btn button-orange">Register Now</button>
     </form>
 </div>
