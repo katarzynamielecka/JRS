@@ -24,8 +24,6 @@ form{
     list-style-position: inside;
 }
 
-
-
 .radio-group {
     display: flex;
     flex-direction: column;

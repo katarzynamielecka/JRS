@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load static %}
 {% block head %}
-<link rel="stylesheet" href="{% static 'admin.css' %}">
+<link rel="stylesheet" href="{% static 'admin_and_employee.css' %}">
 {% endblock %}
 {% block content %}
 <div class="container">
@@ -10,14 +10,14 @@
     <form method="post">
         {% csrf_token %}
         <input type="text" name="open_question_text" placeholder="Treść pytania otwartego" class="form-control mb-2" required>
-        <button type="submit" name="add_open_question" class="btn button-submit">Dodaj pytanie otwarte</button>
+        <button type="submit" name="add_open_question" class="btn button-orange">Dodaj pytanie otwarte</button>
     </form>
     <hr>
     <h4>Dodaj pytanie zamknięte</h4>
     <form method="post">
         {% csrf_token %}
         <input type="text" name="choice_question_text" placeholder="Treść pytania zamkniętego" class="form-control mb-2" required>
-        <button type="submit" name="add_choice_question" class="btn button-submit">Dodaj pytanie zamknięte</button>
+        <button type="submit" name="add_choice_question" class="btn button-orange">Dodaj pytanie zamknięte</button>
     </form>
     <hr>
     <h4>Pytania w tym teście</h4>
@@ -54,7 +54,7 @@
                                 <input type="checkbox" name="is_correct" class="form-check-input">
                                 <label class="form-check-label">Odpowiedź poprawna</label>
                             </div>
-                            <button type="submit" name="add_choice_answer" class="btn btn-primary">Dodaj odpowiedź</button>
+                            <button type="submit" name="add_choice_answer" class="btn button-grey">Dodaj odpowiedź</button>
                         </form>
                     </div>
                     {% endif %}

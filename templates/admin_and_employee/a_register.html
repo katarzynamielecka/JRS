@@ -1,13 +1,13 @@
 {% extends "base.html" %}
 {% load static %}
 {% block head %}
-<link rel="stylesheet" href="{% static 'admin.css' %}">
+<link rel="stylesheet" href="{% static 'admin_and_employee.css' %}">
 {% endblock %}
 {% block content %}
 <h2>Zarejestruj pracownika</h2>
 <form method="post">
     {% csrf_token %}
     {{ form.as_p }}
-    <button class=" btn button-submit" type="submit">Zarejestruj</button>
+    <button class=" btn button-orange" type="submit">Zarejestruj</button>
 </form>
 {% endblock %}

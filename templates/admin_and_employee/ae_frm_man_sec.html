@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 {% load static %}
 {% block head %}
-<link rel="stylesheet" href="{% static 'admin.css' %}">
+<link rel="stylesheet" href="{% static 'admin_and_employee.css' %}">
 {% endblock %}
 {% block content %}
 <h2>Formularz</h2>
 <a href="{% url 'create_test' %}" style="text-decoration: none;">
-    <button class="btn button-func">Nowy test</button>
+    <button class="btn button-grey">Nowy test</button>
 </a> 
 <h5>Lista testów językowych:</h5>
 <table class="table table-responsive">

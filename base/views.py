@@ -10,20 +10,18 @@ from django.views.decorators.csrf import csrf_protect
 from .forms import QuestionForm, ChoiceFormSet
 from .forms import EmployeeRegisterForm, UploadFileForm, RefugeeRegistrationForm, LanguageTestForm
 from .models import Employee, User, Refugee, LanguageTest, Question, Choice
-from .decorators import admin_required, employee_required
+from .decorators import admin_required, employee_required, admin_or_employee_required
 import pandas as pd
 
 
 # REFUGEES
-
-def home(request):
+def home(request, user_role):
     context = {
-        'navbar_title': 'JRS Registration for Language Courses',
-        'role':'r'
+        'user_role': user_role,
     }
     return render(request, 'refugees/home.html', context)    
 
-def form(request):
+def form(request, user_role):
     test = get_object_or_404(LanguageTest, title="cur_test")
     questions = test.questions.all()  
     if request.method == 'POST':
@@ -36,24 +34,14 @@ def form(request):
     context = {
         'form': form,
         'questions': questions,
+        'user_role': user_role,
     }
     return render(request, 'refugees/form.html', context)
 
-# EMPLOYEE
-@login_required
-@employee_required
-def employee(request):
-    context = {
-        'navbar_title': 'JRS Employee',
-        'role': 'e'
-        }
-    return render(request, 'admin_and_employee/e.html', context)
-
 @csrf_protect
-def login_view(request):
+def login_view(request, user_role):
     context = {
-        'navbar_title': 'JRS Registration for Language Courses',
-        'role': 'a'
+        'user_role': user_role,
         }
     if request.method == 'POST':
         email = request.POST.get('email')
@@ -79,11 +67,20 @@ def logout_view(request):
     return redirect('/')
 
 
-
-# ADMIN
-@admin_required
+# EMPLOYEE AND ADMIN
 @login_required
-def create_test_view(request):
+@admin_or_employee_required
+def form_management_section(request, user_role):
+    tests = LanguageTest.objects.all()
+    context = {
+        'user_role': user_role,
+        'tests': tests,
+        }
+    return render(request, 'admin_and_employee/ae_frm_man_sec.html', context)
+
+@login_required
+@admin_or_employee_required
+def create_test_view(request, user_role):
     if request.method == 'POST':
         form = LanguageTestForm(request.POST)
         if form.is_valid():
@@ -92,22 +89,21 @@ def create_test_view(request):
     else:
         form = LanguageTestForm()
     context = {
-    'navbar_title': 'JRS Admin',
-    'role': 'a',
+    'user_role': user_role,
     'form': form
     }
-    return render(request, 'admin_and_employee/a_create_test.html', context)
+    return render(request, 'admin_and_employee/ae_create_test.html', context)
 
 @login_required
-@admin_required
+@admin_or_employee_required
 def delete_test(request, id):
     test = get_object_or_404(LanguageTest, id=id)
     test.delete()
     return redirect('/systemadmin/form-management')
 
 @login_required
-@admin_required
-def edit_test(request, id):
+@admin_or_employee_required
+def edit_test(request, user_role, id):
     test = get_object_or_404(LanguageTest, id=id)
     if request.method == 'POST':
         if 'add_open_question' in request.POST:
@@ -135,25 +131,36 @@ def edit_test(request, id):
             return redirect('edit_test', id=id)
     questions = test.questions.prefetch_related('choices').all()
     context = {
-        'navbar_title': 'JRS Admin',
-        'role': 'a',
+        'user_role': user_role,
         'test': test, 
         'questions': questions
     }
-    return render(request, 'admin_and_employee/a_edit_test.html', context)
+    return render(request, 'admin_and_employee/ae_edit_test.html', context)
 
+
+
+# EMPLOYEE
+@login_required
+@employee_required
+def employee(request, user_role):
+    context = {
+        'user_role': user_role,
+        }
+    return render(request, 'admin_and_employee/e.html', context)
+
+
+# ADMIN
 @login_required
 @admin_required
-def systemadmin(request):
+def systemadmin(request, user_role):
     context = {
-        'navbar_title': 'JRS Admin',
-        'role': 'a'
+        'user_role': user_role,
         }
     return render(request, 'admin_and_employee/a.html', context)
 
 @login_required
 @admin_required
-def register(request):
+def register(request, user_role):
     if request.method == 'POST':
         form = EmployeeRegisterForm(request.POST)
         if form.is_valid():
@@ -165,38 +172,27 @@ def register(request):
     context = {
     'navbar_title': 'JRS Admin',
     'form': form,
-    'role': 'a'
+    'user_role': user_role,
     }
     return render(request, 'admin_and_employee/a_register.html', context)
 
 @login_required
 @admin_required
-def employee_management_section(request):
+def employee_management_section(request, user_role):
     employees = Employee.objects.all()
     context = {
-        'navbar_title': 'JRS Admin',
         'employees': employees,
-        'role': 'a',
+        'user_role': user_role,
     }
     return render(request, 'admin_and_employee/a_emp_man_sec.html', context)
 
-@login_required
-@admin_required
-def form_management_section(request):
-    tests = LanguageTest.objects.all()
-    context = {
-        'navbar_title': 'JRS Admin',
-        'role': 'a',
-        'tests': tests,
-        }
-    return render(request, 'admin_and_employee/a_frm_man_sec.html', context)
+
 
 @login_required
 @admin_required
-def courses_management_section(request):
+def courses_management_section(request, user_role):
     context = {
-        'navbar_title': 'JRS Admin',
-        'role': 'a'
+        'user_role': user_role,
         }
     return render(request, 'admin_and_employee/a_crs_man_sec.html', context)
 
@@ -211,11 +207,10 @@ def delete_employee(request, email):
 
 @login_required
 @admin_required
-def refugees_list_view(request):
+def refugees_list_view(request, user_role):
     refugees = Refugee.objects.all() 
     context = {
-        'navbar_title': 'JRS Admin',
-        'role': 'a',
+        'user_role': user_role,
         'refugees': refugees
         }
     return render(request, 'admin_and_employee/a_refugees_list.html', context)

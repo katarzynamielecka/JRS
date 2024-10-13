@@ -12,7 +12,7 @@ services:
       - db
   
   db:
-    image: postgres:latest
+    image: postgres:16
     restart: always
     volumes:
       - ./data/db:/var/lib/postgresql/data
