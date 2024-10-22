@@ -48,14 +48,14 @@
   {% if user_role == 'admin' %}
   <nav class="second-navbar">
     <a href="/systemadmin" class="second-nav-item">Start</a>
-    <a href="/systemadmin/form-management" class="second-nav-item">Edycja - Formularz zapisu</a>
+    <a href="/systemadmin/form-management" class="second-nav-item">Edycja - Testy</a>
     <a href="/systemadmin/courses-management" class="second-nav-item">Zarządzanie kursami</a>
     <a href="/systemadmin/employee-management" class="second-nav-item">Zarządzanie pracownikami</a>
   </nav>
   {% elif user_role == 'employee' %}
   <nav class="second-navbar">
     <a href="/employee" class="second-nav-item">Start</a>
-    <a href="/employee/form-management" class="second-nav-item">Edycja - Formularz zapisu</a>
+    <a href="/employee/form-management" class="second-nav-item">Edycja - Testy</a>
     <a href="/employee/courses-management" class="second-nav-item">Zarządzanie kursami</a>
   </nav>
   {% endif %}

@@ -2,6 +2,7 @@
 {% load static %}
 {% block head %}
 <link rel="stylesheet" href="{% static 'admin_and_employee.css' %}">
+<script src="{% static 'js/test_choice_checkbox.js' %}"></script>
 {% endblock %}
 {% block content %}
 <h2>Formularz</h2>
@@ -15,6 +16,7 @@
             <th scope="col">Nazwa testu</th>
             <th scope="col">Data utworzenia</th>
             <th scope="col">Akcje</th>
+            <th scope="col">Aktualny test</th>
         </tr>
     </thead>
     <tbody>
@@ -30,6 +32,16 @@
                        onclick="return confirm('Czy na pewno chcesz usunąć ten test?');">
                         <button class="btn btn-danger btn-sm">Usuń</button>
                     </a>
+                </td>
+                <td>
+                    {% if not test.is_current %}
+                        <a href="{% url 'set_current_test' test.id %}" style="text-decoration: none;" 
+                           onclick="return confirm('Czy na pewno chcesz ustawić ten test jako aktualny test?');">
+                            <button class="btn btn-sm btn-warning">Ustaw jako aktualny</button>
+                        </a>
+                    {% else %}
+                        <button class="btn btn-sm btn-success" disabled>Aktualny</button>
+                    {% endif %}
                 </td>
             </tr>
         {% endfor %}

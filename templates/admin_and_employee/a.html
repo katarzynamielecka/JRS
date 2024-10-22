@@ -3,4 +3,37 @@
 
 {% block content %}
 <h2>HOME ADMIN</h2>
+
+<table>
+    <tr>
+        <th>ID uchodźcy</th>
+        <th>Imię i nazwisko</th>
+        <th>Odpowiedzi na pytania</th>
+    </tr>
+    {% for refugee in refugees %}
+    <tr>
+        <td>{{ refugee.id }}</td>
+        <td>{{ refugee.first_name }} {{ refugee.last_name }}</td>
+        <td>
+            <ul>
+                {% for answer in refugee_answers %}
+                    {% if answer.refugee.id == refugee.id %}  <!-- Sprawdź, czy odpowiedź należy do tego uchodźcy -->
+                        <li>
+                            Pytanie: {{ answer.question.text }} - 
+                            {% if answer.choice %}
+                                Odpowiedź: {{ answer.choice.text }}
+                            {% else %}
+                                Odpowiedź otwarta: {{ answer.text_answer }}
+                            {% endif %}
+                        </li>
+                    {% endif %}
+                {% empty %}
+                    <li>Brak odpowiedzi</li>
+                {% endfor %}
+            </ul>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+
 {% endblock %}

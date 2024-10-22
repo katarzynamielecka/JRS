@@ -2,24 +2,55 @@
 {% load static %}
 {% block head %}
 <link rel="stylesheet" href="{% static 'admin_and_employee.css' %}">
+<link rel="stylesheet" href="{% static 'ae_test_edition.css' %}">
 {% endblock %}
 {% block content %}
+{% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-danger">
+            {{ message }}
+        </div>
+    {% endfor %}
+{% endif %}
 <div class="container">
     <h2>Edycja Testu: {{ test.title }}</h2>
+    
+    <hr>
     <h4>Dodaj pytanie otwarte</h4>
     <form method="post">
         {% csrf_token %}
         <input type="text" name="open_question_text" placeholder="Treść pytania otwartego" class="form-control mb-2" required>
         <button type="submit" name="add_open_question" class="btn button-orange">Dodaj pytanie otwarte</button>
     </form>
+
     <hr>
     <h4>Dodaj pytanie zamknięte</h4>
-    <form method="post">
+    <form method="post" id="choice-question-form">
         {% csrf_token %}
         <input type="text" name="choice_question_text" placeholder="Treść pytania zamkniętego" class="form-control mb-2" required>
+        <div id="answers-container">
+            <div class="answer-item">
+                <input type="text" name="answer_text" placeholder="Treść odpowiedzi" class="form-control" required>
+                <input type="checkbox" name="is_correct" value="0"> Odpowiedź poprawna
+                <input type="text" name="answer_text" placeholder="Treść odpowiedzi" class="form-control" required>
+                <input type="checkbox" name="is_correct" value="1"> Odpowiedź poprawna
+                <input type="text" name="answer_text" placeholder="Treść odpowiedzi" class="form-control" required>
+                <input type="checkbox" name="is_correct" value="2"> Odpowiedź poprawna
+                <input type="text" name="answer_text" placeholder="Treść odpowiedzi" class="form-control" required>
+                <input type="checkbox" name="is_correct" value="3"> Odpowiedź poprawna
+            
+            </div>
+        </div>
+        <!-- <button type="button" id="add-answer-btn" class="button-new-answer">
+            <i class="fa-solid fa-circle-plus"></i>
+        </button> -->
+        <br>
+
         <button type="submit" name="add_choice_question" class="btn button-orange">Dodaj pytanie zamknięte</button>
     </form>
+
     <hr>
+
     <h4>Pytania w tym teście</h4>
     <table class="table">
         <thead>
@@ -28,7 +59,8 @@
                 <th>Treść pytania</th>
                 <th>Typ pytania</th>
                 <th>Odpowiedzi</th>
-                <th>Akcje</th>
+                <th>Punktacja</th>
+                <th></th>
             </tr>
         </thead>
         <tbody>
@@ -37,28 +69,6 @@
                 <td>{{ forloop.counter }}</td>
                 <td>{{ question.text }}</td>
                 <td>{{ question.get_question_type_display }}</td>
-                <td>
-                    <form method="post" style="display:inline-block;">
-                        {% csrf_token %}
-                        <input type="hidden" name="question_id" value="{{ question.id }}">
-                        <button type="submit" name="delete_question" class="btn btn-danger">Usuń</button>
-                    </form>
-                    {% if question.question_type == 'choice' %}
-                    <button class="btn btn-secondary" data-toggle="collapse" data-target="#answers-form-{{ question.id }}">Dodaj odpowiedź</button>
-                    <div id="answers-form-{{ question.id }}" class="collapse mt-2">
-                        <form method="post">
-                            {% csrf_token %}
-                            <input type="hidden" name="question_id" value="{{ question.id }}">
-                            <input type="text" name="answer_text" placeholder="Treść odpowiedzi" class="form-control mb-2" required>
-                            <div class="form-check">
-                                <input type="checkbox" name="is_correct" class="form-check-input">
-                                <label class="form-check-label">Odpowiedź poprawna</label>
-                            </div>
-                            <button type="submit" name="add_choice_answer" class="btn button-grey">Dodaj odpowiedź</button>
-                        </form>
-                    </div>
-                    {% endif %}
-                </td>
                 <td>
                     {% if question.question_type == 'choice' %}
                         <ul>
@@ -72,9 +82,21 @@
                         Brak odpowiedzi (pytanie otwarte)
                     {% endif %}
                 </td>
+                <td>
+                    <form method="post" class="max-points-form">
+                        {% csrf_token %}
+                        <input type="hidden" name="question_id" value="{{ question.id }}">
+                        <input type="number" name="max_points" placeholder="Maks. punkty" step="any" class="form-control"
+                               value="{{ question.max_points }}" 
+                               onblur="this.form.submit();" onkeydown="if(event.key === 'Enter') { this.form.submit(); }">
+                        <div class="error-message" style="color: red; display: none;"></div>
+                    </form>
+                </td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
+<script src="https://kit.fontawesome.com/a8f7e99427.js" crossorigin="anonymous"></script>
+<script src="{% static 'js/test_edition.js' %}"></script>
 {% endblock %}

@@ -3,13 +3,13 @@ from django.contrib.auth import authenticate, login
 from django.utils import formats
 from django.contrib import messages
 from django.contrib.auth import logout
-
+from datetime import datetime
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseRedirect
 from django.views.decorators.csrf import csrf_protect
 from .forms import QuestionForm, ChoiceFormSet
 from .forms import EmployeeRegisterForm, UploadFileForm, RefugeeRegistrationForm, LanguageTestForm
-from .models import Employee, User, Refugee, LanguageTest, Question, Choice
+from .models import Employee, User, Refugee, LanguageTest, Question, Choice, UserAnswer
 from .decorators import admin_required, employee_required, admin_or_employee_required
 import pandas as pd
 
@@ -21,14 +21,17 @@ def home(request, user_role):
     }
     return render(request, 'refugees/home.html', context)    
 
-def form(request, user_role):
+def refugee_registration_view(request, user_role):
     test = get_object_or_404(LanguageTest, title="cur_test")
-    questions = test.questions.all()  
+    questions = test.questions.all()
+
     if request.method == 'POST':
         form = RefugeeRegistrationForm(request.POST)
         if form.is_valid():
-            form.save()
-            return redirect('home')
+            refugee_data = form.cleaned_data
+            refugee_data['dob'] = refugee_data['dob'].strftime('%Y-%m-%d')
+            request.session['refugee_data'] = refugee_data
+            return redirect('language_test')
     else:
         form = RefugeeRegistrationForm()
     context = {
@@ -37,6 +40,55 @@ def form(request, user_role):
         'user_role': user_role,
     }
     return render(request, 'refugees/form.html', context)
+
+def language_test_view(request, user_role):
+    test = get_object_or_404(LanguageTest, is_current=True)
+    questions = test.questions.all()
+    if request.method == 'POST':
+        answers = {}
+        for question in questions:
+            if question.question_type == 'choice':
+                selected_choice_id = request.POST.get(f'question_{question.id}')
+                answers[question.id] = selected_choice_id
+            elif question.question_type == 'open':
+                open_answer = request.POST.get(f'question_{question.id}')
+                answers[question.id] = open_answer
+        request.session['test_answers'] = answers
+        refugee_data = request.session.get('refugee_data')
+        if refugee_data:
+            refugee_data['dob'] = datetime.strptime(refugee_data['dob'], '%Y-%m-%d').date()
+            refugee = Refugee.objects.create(**refugee_data)
+            for question_id, answer in answers.items():
+                question = Question.objects.get(id=question_id)
+                if question.question_type == 'choice':
+                    selected_choice = Choice.objects.get(id=answer)
+                    UserAnswer.objects.create(
+                        refugee=refugee, 
+                        question=question, 
+                        choice=selected_choice
+                    )
+                else:
+                    UserAnswer.objects.create(
+                        refugee=refugee, 
+                        question=question, 
+                        text_answer=answer
+                    )
+            request.session.pop('refugee_data', None)
+            request.session.pop('test_answers', None)
+            return redirect('success_view')
+    context = {
+        'questions': questions,
+        'user_role': user_role,
+    }
+    return render(request, 'refugees/language_test.html', context)
+
+
+def success_view(request, user_role):
+    context = {
+    'user_role': user_role,
+    }
+    return render(request, 'refugees/success.html', context)
+
 
 @csrf_protect
 def login_view(request, user_role):
@@ -71,12 +123,32 @@ def logout_view(request):
 @login_required
 @admin_or_employee_required
 def form_management_section(request, user_role):
-    tests = LanguageTest.objects.all()
+    if request.method == 'POST':
+        selected_test_id = request.POST.get('current_test')
+        if selected_test_id:
+            LanguageTest.objects.update(is_current=False)
+            test = LanguageTest.objects.get(pk=selected_test_id)
+            test.is_current = True
+            test.save()
+    tests = LanguageTest.objects.all().order_by('-is_current', '-created_at')
     context = {
         'user_role': user_role,
         'tests': tests,
         }
     return render(request, 'admin_and_employee/ae_frm_man_sec.html', context)
+
+@login_required
+@admin_or_employee_required
+def set_current_test(request, test_id, user_role):
+    try:
+        LanguageTest.objects.update(is_current=False)
+        test = LanguageTest.objects.get(pk=test_id)
+        test.is_current = True
+        test.save()
+        messages.success(request, f"Test '{test.title}' został ustawiony jako aktualny.")
+    except LanguageTest.DoesNotExist:
+        messages.error(request, "Wybrany test nie istnieje.")
+    return redirect('frm_man_sec')
 
 @login_required
 @admin_or_employee_required
@@ -96,7 +168,7 @@ def create_test_view(request, user_role):
 
 @login_required
 @admin_or_employee_required
-def delete_test(request, id):
+def delete_test(request, user_role, id):
     test = get_object_or_404(LanguageTest, id=id)
     test.delete()
     return redirect('/systemadmin/form-management')
@@ -112,22 +184,41 @@ def edit_test(request, user_role, id):
                 Question.objects.create(test=test, text=text, question_type='open')
                 return redirect('edit_test', id=id)
         elif 'add_choice_question' in request.POST:
+            print(request.POST)
             text = request.POST.get('choice_question_text')
-            if text:
-                Question.objects.create(test=test, text=text, question_type='choice')
+            answers = request.POST.getlist('answer_text')
+            correct_answers = request.POST.getlist('is_correct')
+            if text and answers:
+                question = Question.objects.create(test=test, text=text, question_type='choice')
+                for idx, answer_text in enumerate(answers):
+                    if str(idx) in correct_answers:
+                        is_correct=True
+                    else:
+                        is_correct=False
+                    Choice.objects.create(question=question, text=answer_text, is_correct=is_correct)
                 return redirect('edit_test', id=id)
-        elif 'add_choice_answer' in request.POST:
+        elif 'update_question' in request.POST:
             question_id = request.POST.get('question_id')
-            answer_text = request.POST.get('answer_text')
-            is_correct = 'is_correct' in request.POST
-            if question_id and answer_text:
-                question = get_object_or_404(Question, id=question_id)
-                Choice.objects.create(question=question, text=answer_text, is_correct=is_correct)
-                return redirect('edit_test', id=id)
+            question = get_object_or_404(Question, id=question_id)
+            question.text = request.POST.get('updated_question_text')
+            question.save()
+            return redirect('edit_test', id=id)
         elif 'delete_question' in request.POST:
             question_id = request.POST.get('question_id')
             question = get_object_or_404(Question, id=question_id)
             question.delete()
+            return redirect('edit_test', id=id)
+        if 'question_id' in request.POST and 'max_points' in request.POST:
+            question_id = request.POST.get('question_id')
+            max_points = request.POST.get('max_points')
+            if question_id and max_points:
+                try:
+                    max_points = float(max_points)
+                    question = get_object_or_404(Question, id=question_id)
+                    question.max_points = max_points
+                    question.save()
+                except ValueError:
+                    messages.error(request, 'Wpisana wartość musi być liczbą.')
             return redirect('edit_test', id=id)
     questions = test.questions.prefetch_related('choices').all()
     context = {
@@ -136,6 +227,8 @@ def edit_test(request, user_role, id):
         'questions': questions
     }
     return render(request, 'admin_and_employee/ae_edit_test.html', context)
+
+
 
 
 
@@ -152,11 +245,23 @@ def employee(request, user_role):
 # ADMIN
 @login_required
 @admin_required
+# def systemadmin(request, user_role):
+#     context = {
+#         'user_role': user_role,
+#         }
+#     return render(request, 'admin_and_employee/a.html', context)
+
 def systemadmin(request, user_role):
+    refugees = Refugee.objects.all()
+    refugee_answers = UserAnswer.objects.select_related('question').prefetch_related('refugee')
     context = {
+        'refugees': refugees,
+        'refugee_answers': refugee_answers,
         'user_role': user_role,
-        }
+    }
     return render(request, 'admin_and_employee/a.html', context)
+
+
 
 @login_required
 @admin_required

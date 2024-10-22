@@ -6,7 +6,9 @@ from django.conf.urls.static import static
 
 urlpatterns = [
     path('', views.home, {'user_role': 'refugee'}, name="home"),
-    path('form/', views.form, {'user_role': 'refugee'}, name="form"),
+    path('form/', views.refugee_registration_view, {'user_role': 'refugee'}, name="form"),
+    path('language_test/', views.language_test_view, {'user_role': 'refugee'}, name="language_test"),
+    path('success/', views.success_view, {'user_role': 'refugee'}, name="success_view"),
     path('employee/', views.employee, {'user_role': 'employee'}, name="employee"),
     path('systemadmin/', views.systemadmin, {'user_role': 'admin'}, name="systemadmin"), 
     path('login/', views.login_view, {'user_role': 'refugee'}, name="login"),
@@ -15,6 +17,7 @@ urlpatterns = [
     path('systemadmin/courses-management', views.courses_management_section, {'user_role': 'admin'}, name='crs_man_sec'),
     path('systemadmin/form-management', views.form_management_section, {'user_role': 'admin'}, name='frm_man_sec'),
     path('systemadmin/refugees', views.refugees_list_view, {'user_role': 'admin'}, name='refugee_list'),
+    path('systemadmin/set-current-test/<int:test_id>/', views.set_current_test, {'user_role': 'admin'}, name='set_current_test'),
     path('delete_employee/<str:email>/', views.delete_employee, {'user_role': 'admin'}, name='delete_employee'),
     path('systemadmin/delete_test/<int:id>/', views.delete_test, {'user_role': 'admin'}, name='delete_test'),
     path('systemadmin/edit_test/<int:id>/', views.edit_test, {'user_role': 'admin'}, name='edit_test'),

@@ -1,3 +1,7 @@
+body{
+    color: #333;
+}
+
 .home {
     display: block;
     text-align: center;
@@ -7,7 +11,9 @@
 .button-orange{
     background-color: var(--jrs-orange);
     color: white;
-    margin-top: 1%;
+    margin-top: 10px;
+    margin-bottom: 20px;;
+
 }
 
 form{
@@ -34,4 +40,32 @@ form{
 
 .choice {
     margin-bottom: 0.5em;
+}
+
+.success-message {
+    max-width: 600px;
+    margin: 50px auto;
+    padding: 30px;
+    background-color: #f9f9f9;
+    border: 2px solid #E0E0E0; 
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); 
+    text-align: center;
+    color: #333;
+}
+.success-message h1 {
+    color: var(--jrs-orange);
+    font-size: 2.5em;
+    margin-bottom: 20px;
+}
+
+.success-message p {
+    font-size: 1.2em;
+    margin-bottom: 15px;
+}
+
+.success-message a {
+    color: var(--jrs-orange);
+    text-decoration: none;
+    font-weight: bold;
 }
