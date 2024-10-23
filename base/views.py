@@ -11,19 +11,21 @@ from django.views.decorators.csrf import csrf_protect
 from .forms import QuestionForm, ChoiceFormSet
 from .forms import (
     EmployeeRegisterForm,
-    UploadFileForm,
+    LanguageCourseForm,
     RefugeeRegistrationForm,
     LanguageTestForm,
 )
-from .models import Employee, User, Refugee, LanguageTest, Question, Choice, UserAnswer
+from .models import Employee, User, Refugee, LanguageTest, Question, Choice, UserAnswer, LanguageCourse
 from .decorators import admin_required, employee_required, admin_or_employee_required
 import pandas as pd
 
 
 # REFUGEES
 def home(request, user_role):
+    courses = LanguageCourse.objects.all()
     context = {
         "user_role": user_role,
+        "courses": courses, 
     }
     return render(request, "refugees/home.html", context)
 
@@ -54,76 +56,49 @@ from .models import LanguageTest, Refugee, Question, Choice, UserAnswer
 from datetime import datetime
 
 def language_test_view(request, user_role):
-    # Pobieramy aktualny test językowy
     test = get_object_or_404(LanguageTest, is_current=True)
     questions = test.questions.all()
-    
     if request.method == "POST":
         answers = {}
         for question in questions:
-            # Pobieramy odpowiedzi z formularza
             if question.question_type == "choice":
                 selected_choice_id = request.POST.get(f"question_{question.id}")
                 answers[question.id] = selected_choice_id
             elif question.question_type == "open":
                 open_answer = request.POST.get(f"question_{question.id}")
                 answers[question.id] = open_answer
-        
-        # Zapisujemy odpowiedzi do sesji
         request.session["test_answers"] = answers
-        
-        # Pobieramy dane uchodźcy z sesji
         refugee_data = request.session.get("refugee_data")
         if refugee_data:
-            # Konwertujemy datę urodzenia na obiekt daty
             refugee_data["dob"] = datetime.strptime(refugee_data["dob"], "%Y-%m-%d").date()
-            
-            # Tworzymy nowego uchodźcę w bazie danych
             refugee = Refugee.objects.create(**refugee_data)
-            
-            # Przetwarzamy odpowiedzi i zapisujemy w bazie danych
             for question_id, answer in answers.items():
                 question = Question.objects.get(id=question_id)
-                
                 if question.question_type == "choice":
-                    # Pobieramy wybraną odpowiedź typu "choice"
                     selected_choice = Choice.objects.get(id=answer)
-                    
-                    # Sprawdzamy, czy odpowiedź jest poprawna
                     if selected_choice.is_correct:
-                        awarded_points = question.max_points  # Maksymalne punkty, jeśli poprawna odpowiedź
+                        awarded_points = question.max_points
                     else:
-                        awarded_points = 0  # Zero punktów, jeśli błędna odpowiedź
-                    
-                    # Tworzymy obiekt UserAnswer z przypisanymi punktami
+                        awarded_points = 0
                     UserAnswer.objects.create(
                         refugee=refugee,
                         question=question,
                         choice=selected_choice,
-                        awarded_points=awarded_points  # Zapisujemy przydzielone punkty
+                        awarded_points=awarded_points 
                     )
-                
                 else:
-                    # Tworzymy odpowiedź tekstową (bez przydzielania punktów)
                     UserAnswer.objects.create(
                         refugee=refugee,
                         question=question,
                         text_answer=answer
                     )
-            
-            # Czyszczenie danych z sesji
             request.session.pop("refugee_data", None)
             request.session.pop("test_answers", None)
-            
-            # Przekierowanie do strony sukcesu
             return redirect("success_view")
-    
-    # Kontekst do szablonu
     context = {
         "questions": questions,
         "user_role": user_role,
     }
-    
     return render(request, "refugees/language_test.html", context)
 
 
@@ -399,11 +374,31 @@ def employee_management_section(request, user_role):
 @login_required
 @admin_required
 def courses_management_section(request, user_role):
+    course_id = request.POST.get('course_id')
+    if course_id:
+        course = get_object_or_404(LanguageCourse, id=course_id)
+        form = LanguageCourseForm(request.POST, instance=course)
+    else:
+        form = LanguageCourseForm(request.POST or None)
+    if request.method == "POST" and form.is_valid():
+        form.save()
+        return redirect('crs_man_sec')
+    if request.GET.get('edit'):
+        course = get_object_or_404(LanguageCourse, id=request.GET.get('edit'))
+        form = LanguageCourseForm(instance=course) 
+    else:
+        form = LanguageCourseForm()
+    if request.GET.get('delete'):
+        course_to_delete = get_object_or_404(LanguageCourse, id=request.GET.get('delete'))
+        course_to_delete.delete()
+        return redirect('crs_man_sec')
+    courses = LanguageCourse.objects.all()
     context = {
         "user_role": user_role,
+        "form": form,
+        "courses": courses, 
     }
     return render(request, "admin_and_employee/a_crs_man_sec.html", context)
-
 
 @login_required
 @admin_required

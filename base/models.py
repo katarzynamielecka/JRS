@@ -69,3 +69,10 @@ class UserAnswer(models.Model):
 
     def __str__(self):
         return f'Answer by {self.refugee} to {self.question}'
+    
+class LanguageCourse(models.Model):
+    name = models.CharField(max_length=255)
+    language = models.CharField(max_length=100)
+
+    def __str__(self):
+        return f"{self.name} ({self.language})"

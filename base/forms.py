@@ -5,7 +5,7 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from .models import Employee, Question, Choice, LanguageTest
 from django.contrib.auth.password_validation import validate_password
-from .models import Refugee
+from .models import Refugee, LanguageCourse
 
 
 class EmployeeRegisterForm(UserCreationForm):
@@ -179,3 +179,21 @@ ChoiceFormSet = inlineformset_factory(
     extra=3,
     can_delete=True
 )
+
+class LanguageCourseForm(forms.ModelForm):
+    class Meta:
+        model = LanguageCourse
+        fields = ['name', 'language'] 
+        labels = {
+            'name': 'Nazwa (PO ANGIELSKU)', 
+            'language': 'Język',
+        }
+ 
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'language': forms.Select(attrs={'class': 'form-control'}, choices=[
+                ('Polish', 'Polski'),
+                ('English', 'Angielski')
+            ]),
+        }
+

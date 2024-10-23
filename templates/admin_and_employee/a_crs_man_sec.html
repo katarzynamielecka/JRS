@@ -4,8 +4,48 @@
 <link rel="stylesheet" href="{% static 'admin_and_employee.css' %}">
 {% endblock %}
 {% block content %}
-<h2>Kursy</h2>
+
+<h1>Zarządzanie Kursami</h1>
+
 <a href="{% url 'refugee_list' %}" style="text-decoration: none;">
     <button class="btn button-grey">Zobacz listę kursantów</button>
-</a> 
+</a>
+
+<h2>Dostępne kursy:</h2>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Nazwa kursu</th>
+            <th>Język</th>
+            <th>Akcje</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for course in courses %}
+        <tr>
+            <td>{{ course.name }}</td>
+            <td>{{ course.language }}</td>
+            <td>
+                <a href="?edit={{ course.id }}" class="btn btn-primary">Edytuj</a>
+                <a href="?delete={{ course.id }}" class="btn btn-danger" onclick="return confirm('Czy na pewno chcesz usunąć kurs?')">Usuń</a>
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="3">Brak dostępnych kursów</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<h2>Dodaj/Edytuj kurs:</h2>
+<form method="POST">
+    {% csrf_token %}
+    {{ form.as_p }}
+    {% if request.GET.edit %}
+    <input type="hidden" name="course_id" value="{{ request.GET.edit }}">
+    {% endif %}
+    <button type="submit" class="btn btn-success">Zapisz</button>
+</form>
+
 {% endblock %}
