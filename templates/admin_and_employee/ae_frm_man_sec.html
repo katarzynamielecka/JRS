@@ -17,6 +17,7 @@
             <th scope="col">Data utworzenia</th>
             <th scope="col">Akcje</th>
             <th scope="col">Aktualny test</th>
+            <th></th>
         </tr>
     </thead>
     <tbody>
@@ -42,6 +43,11 @@
                     {% else %}
                         <button class="btn btn-sm btn-success" disabled>Aktualny</button>
                     {% endif %}
+                </td>
+                <td>
+                    <a href="{% url 'test_check' test.id %}" style="text-decoration: none;">
+                        <button class="btn btn-info btn-sm">Wypełnione testy</button>
+                    </a>
                 </td>
             </tr>
         {% endfor %}

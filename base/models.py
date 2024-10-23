@@ -63,7 +63,7 @@ class Choice(models.Model):
 class UserAnswer(models.Model):
     refugee = models.ForeignKey(Refugee, on_delete=models.CASCADE)
     question = models.ForeignKey(Question, on_delete=models.CASCADE)
-    choice = models.ForeignKey(Choice, null=True, blank=True, on_delete=models.CASCADE)  # Jeśli pytanie to choice
+    choice = models.ForeignKey(Choice, null=True, blank=True, on_delete=models.CASCADE)
     text_answer = models.TextField(null=True, blank=True) 
     awarded_points = models.FloatField(null=True, blank=True) 
 

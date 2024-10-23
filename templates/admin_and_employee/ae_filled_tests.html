@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Wypełnione testy: {{ test.title }}</h1>
+<form method="post" action="{% url 'save_points' %}">
+    {% csrf_token %}
+    <input type="hidden" name="test_id" value="{{ test.id }}">
+    <table class="table table-responsive">
+        <thead>
+            <tr>
+                <th scope="col">Imię i nazwisko</th>
+                <th scope="col">Sprawdzone zadania</th>
+                <th scope="col">Punkty</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for data in refugee_data %}
+                <tr>
+                    <td>
+                        {{ data.refugee.first_name }} {{ data.refugee.last_name }}
+                    </td>
+                    <td>
+                        {{ data.checked_tasks }}/{{ data.total_tasks }}
+                    </td>
+                    <td>{{ data.total_points }} / {{ total_max_points }}</td>
+
+                    <td>
+                        <a href="#" onclick="toggleDetails('{{ data.refugee.id }}'); return false;">Zobacz test</a>
+                    </td>
+                </tr>
+                
+                <!-- Ukryty wiersz z pytaniami i odpowiedziami -->
+                <tr id="details-{{ data.refugee.id }}" class="details-row" style="display: none;">
+                    <td colspan="4">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Pytanie</th>
+                                    <th>Odpowiedź</th>
+                                    <th>Punkty</th>
+                                    <th>Max Punkty</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for answer in data.answers %}
+                                    <tr>
+                                        <td>{{ answer.question.text }}</td>
+                                        <td>
+                                            {% if answer.text_answer %}
+                                                {{ answer.text_answer }}
+                                            {% elif answer.choice %}
+                                                {{ answer.choice.text }}
+                                            {% else %}
+                                                Brak odpowiedzi
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <!-- Pole input do edycji punktów -->
+                                            <input type="number" name="points_{{ answer.id }}" value="{{ answer.awarded_points }}" min="0" max="{{ answer.question.max_points }}" class="form-control">
+                                        </td>
+                                        <td>
+                                            {{ answer.question.max_points }}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Przycisk do zapisywania wprowadzonych punktów -->
+    <button type="submit" class="btn btn-primary">Zapisz punkty</button>
+</form>
+
+<script>
+function toggleDetails(refugeeId) {
+    const row = document.getElementById('details-' + refugeeId);
+    if (row.style.display === 'none') {
+        row.style.display = 'table-row';
+    } else {
+        row.style.display = 'none';
+    }
+}
+</script>
+{% endblock %}
