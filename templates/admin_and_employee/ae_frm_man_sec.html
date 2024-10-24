@@ -1,56 +1,61 @@
 {% extends "base.html" %}
 {% load static %}
-{% block head %}
-<link rel="stylesheet" href="{% static 'admin_and_employee.css' %}">
-<script src="{% static 'js/test_choice_checkbox.js' %}"></script>
-{% endblock %}
+
 {% block content %}
-<h2>Formularz</h2>
-<a href="{% url 'create_test' %}" style="text-decoration: none;">
-    <button class="btn button-grey">Nowy test</button>
-</a> 
-<h5>Lista testów językowych:</h5>
-<table class="table table-responsive">
-    <thead>
-        <tr>
-            <th scope="col">Nazwa testu</th>
-            <th scope="col">Data utworzenia</th>
-            <th scope="col">Akcje</th>
-            <th scope="col">Aktualny test</th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for test in tests %}
-            <tr>
-                <td>{{ test.title }}</td>
-                <td>{{ test.created_at|date:"d/m/Y" }}</td>
-                <td>
-                    <a href="{% url 'edit_test' test.id %}" style="text-decoration: none;">
-                        <button class="btn btn-primary btn-sm">Edytuj</button>
-                    </a>
-                    <a href="{% url 'delete_test' test.id %}" style="text-decoration: none; color: red;" 
-                       onclick="return confirm('Czy na pewno chcesz usunąć ten test?');">
-                        <button class="btn btn-danger btn-sm">Usuń</button>
-                    </a>
-                </td>
-                <td>
-                    {% if not test.is_current %}
-                        <a href="{% url 'set_current_test' test.id %}" style="text-decoration: none;" 
-                           onclick="return confirm('Czy na pewno chcesz ustawić ten test jako aktualny test?');">
-                            <button class="btn btn-sm btn-warning">Ustaw jako aktualny</button>
-                        </a>
-                    {% else %}
-                        <button class="btn btn-sm btn-success" disabled>Aktualny</button>
-                    {% endif %}
-                </td>
-                <td>
-                    <a href="{% url 'test_check' test.id %}" style="text-decoration: none;">
-                        <button class="btn btn-info btn-sm">Wypełnione testy</button>
-                    </a>
-                </td>
-            </tr>
-        {% endfor %}
-    </tbody>
-</table>
+<div class="container mt-5">
+    <h2>Formularz</h2>
+    <a href="{% url 'create_test' %}" style="text-decoration: none;">
+        <button class="btn button-grey">Nowy test</button>
+    </a> 
+    <h2 class="mb-4">Zarządzaj testami językowymi</h2>
+    {% for language in languages %}
+        <h5>Lista testów językowych: {{ language.name }}</h5>
+        <table class="table table-responsive">
+            <thead>
+                <tr>
+                    <th scope="col">Nazwa testu</th>
+                    <th scope="col">Data utworzenia</th>
+                    <th scope="col">Akcje</th>
+                    <th scope="col">Aktualny test</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for test in language.languagetest_set.all %}
+                    <tr>
+                        <td>{{ test.title }}</td>
+                        <td>{{ test.created_at|date:"d/m/Y" }}</td>
+                        <td>
+                            <a href="{% url 'edit_test' test.id %}" style="text-decoration: none;">
+                                <button class="btn btn-primary btn-sm">Edytuj</button>
+                            </a>
+                            <a href="{% url 'delete_test' test.id %}" style="text-decoration: none; color: red;" 
+                               onclick="return confirm('Czy na pewno chcesz usunąć ten test?');">
+                                <button class="btn btn-danger btn-sm">Usuń</button>
+                            </a>
+                        </td>
+                        <td>
+                            {% if not test.is_current %}
+                                <form method="post">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="current_test" value="{{ test.id }}">
+                                    <button type="submit" class="btn btn-sm btn-warning">
+                                        Ustaw jako aktualny
+                                    </button>
+                                </form>
+                            {% else %}
+                                <button class="btn btn-sm btn-success" disabled>Aktualny</button>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'test_check' test.id %}" style="text-decoration: none;">
+                                <button class="btn btn-info btn-sm">Wypełnione testy</button>
+                            </a>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endfor %}
+</div>
 {% endblock %}

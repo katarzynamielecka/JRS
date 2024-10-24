@@ -3,7 +3,7 @@ from django.forms import inlineformset_factory
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
-from .models import Employee, Question, Choice, LanguageTest
+from .models import Employee, Question, Choice, LanguageTest, Language
 from django.contrib.auth.password_validation import validate_password
 from .models import Refugee, LanguageCourse
 
@@ -137,7 +137,7 @@ class RefugeeRegistrationForm(forms.ModelForm):
     )
     class Meta:
         model = Refugee
-        fields = ['first_name', 'last_name', 'gender', 'dob', 'phone_number', 'nationality', 'residency', 'comments']
+        fields = ['first_name', 'last_name', 'gender', 'dob', 'phone_number', 'nationality', 'residency', 'language', 'comments']
         labels = {
             'dob': 'Date of Birth',
         }
@@ -149,17 +149,23 @@ class RefugeeRegistrationForm(forms.ModelForm):
             'phone_number': forms.TextInput(attrs={'class': 'form-control'}),
             'nationality': forms.Select(attrs={'class': 'form-control'}),
             'residency': forms.Select(attrs={'class': 'form-control'}),
+            'language': forms.Select(attrs={'class': 'form-control'}),
             'comments': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['language'].queryset = Language.objects.all() 
+        self.fields['language'].label = "Wybierz język"
 
 class LanguageTestForm(forms.ModelForm):
     class Meta:
         model = LanguageTest
-        fields = ['title', 'description']
-        labels = {
-            'title': 'Tytuł', 
-            'description': 'Opis',
-        }
+        fields = ['title', 'description', 'language']
+    def __init__(self, *args, **kwargs):
+        super(LanguageTestForm, self).__init__(*args, **kwargs)
+        self.fields['language'].queryset = Language.objects.all()
+        self.fields['language'].label = "Wybierz język"
 
 class QuestionForm(forms.ModelForm):
     class Meta:
@@ -183,17 +189,27 @@ ChoiceFormSet = inlineformset_factory(
 class LanguageCourseForm(forms.ModelForm):
     class Meta:
         model = LanguageCourse
-        fields = ['name', 'language'] 
+        fields = ['name', 'language']
         labels = {
             'name': 'Nazwa (PO ANGIELSKU)', 
             'language': 'Język',
         }
- 
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control'}),
-            'language': forms.Select(attrs={'class': 'form-control'}, choices=[
-                ('Polish', 'Polski'),
-                ('English', 'Angielski')
-            ]),
+            'language': forms.Select(attrs={'class': 'form-control'}),
         }
 
+    def __init__(self, *args, **kwargs):
+        super(LanguageCourseForm, self).__init__(*args, **kwargs)
+        self.fields['language'].queryset = Language.objects.all()
+
+class LanguageForm(forms.ModelForm):
+    class Meta:
+        model = Language
+        fields = ['name']
+        labels = {
+            'name': 'Nazwa języka (PO ANGIELSKU)',
+        }
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Dodaj nowy język'}),
+        }

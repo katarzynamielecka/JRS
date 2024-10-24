@@ -48,4 +48,13 @@
     <button type="submit" class="btn btn-success">Zapisz</button>
 </form>
 
+<hr>
+
+<h2>Dodaj nowy język:</h2>
+<form method="POST">
+    {% csrf_token %}
+    {{ language_form.as_p }}
+    <button type="submit" class="btn btn-info">Dodaj język</button>
+</form>
+
 {% endblock %}

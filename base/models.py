@@ -9,7 +9,14 @@ class Employee(models.Model):
 
     def __str__(self):
         return f'{self.user.first_name} {self.user.last_name}'
-    
+
+class Language(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+
+    def __str__(self):
+        return self.name
+
+
 class Refugee(models.Model):
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
@@ -21,17 +28,20 @@ class Refugee(models.Model):
     rodo_consent = models.BooleanField(default=False)  
     truth_confirmation = models.BooleanField(default=False)
     comments = models.TextField(blank=True)
+    language = models.ForeignKey(Language, on_delete=models.CASCADE)
 
     def get_nationality_name(self):
         return self.nationality.name
     
     def __str__(self):
         return f"{self.first_name} {self.last_name}"
+    
 
 class LanguageTest(models.Model):
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    language = models.ForeignKey(Language, on_delete=models.CASCADE)
     is_current = models.BooleanField(default=False)
 
     def __str__(self):
@@ -72,7 +82,8 @@ class UserAnswer(models.Model):
     
 class LanguageCourse(models.Model):
     name = models.CharField(max_length=255)
-    language = models.CharField(max_length=100)
+    language = models.ForeignKey(Language, on_delete=models.CASCADE)
 
     def __str__(self):
         return f"{self.name} ({self.language})"
+    

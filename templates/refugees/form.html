@@ -83,6 +83,19 @@ JRS zapisy na języki
         </div>
 
         <div class="form-group">
+            {{ form.language.label_tag }}
+            {{ form.language }}
+            {% if form.language.errors %}
+                <div class="text-danger">
+                    {% for error in form.language.errors %}
+                        <small>{{ error }}</small>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+        
+
+        <div class="form-group">
             {{ form.residency.label_tag }}
             {{ form.residency }}
             {% if form.residency.errors %}
