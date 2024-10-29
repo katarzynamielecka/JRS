@@ -1,6 +1,7 @@
 from django.core.exceptions import ValidationError
 from django.forms import inlineformset_factory
 from django import forms
+from datetime import datetime
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from .models import Employee, Question, Choice, LanguageTest, Language
@@ -114,16 +115,6 @@ class EmployeeRegisterForm(UserCreationForm):
             is_admin=self.cleaned_data['is_admin']
         )
         return user
-
-
-class UploadFileForm(forms.Form):
-    file = forms.FileField()
-
-    def clean_file(self):
-        file = self.cleaned_data['file']
-        if not file.name.endswith('.xlsx') and not file.name.endswith('.xls'):
-            raise forms.ValidationError('Plik musi być w formacie Excel (.xlsx lub .xls)')
-        return file
     
 
 class RefugeeRegistrationForm(forms.ModelForm):
@@ -146,26 +137,46 @@ class RefugeeRegistrationForm(forms.ModelForm):
             'last_name': forms.TextInput(attrs={'class': 'form-control'}),
             'gender': forms.Select(attrs={'class': 'form-control'}),
             'dob': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-            'phone_number': forms.TextInput(attrs={'class': 'form-control'}),
+            'phone_number': forms.TextInput(attrs={'class': 'form-control', 'inputmode': 'numeric', 'pattern': '\d*', 'oninput': 'this.value = this.value.replace(/[^0-9]/g, "")'}),
             'nationality': forms.Select(attrs={'class': 'form-control'}),
             'residency': forms.Select(attrs={'class': 'form-control'}),
             'language': forms.Select(attrs={'class': 'form-control'}),
             'comments': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
         }
 
+    def clean_dob(self):
+        dob = self.cleaned_data.get('dob')
+        if not dob:
+            raise forms.ValidationError("Date of birth is required.")
+        try:
+            dob_str = dob.strftime("%Y-%m-%d")
+            parsed_dob = datetime.strptime(dob_str, "%Y-%m-%d")
+        except ValueError:
+            raise forms.ValidationError("Invalid date format.")
+        if parsed_dob > datetime.now():
+            raise forms.ValidationError("Date of birth cannot be in the future.")
+        return dob
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['language'].queryset = Language.objects.all() 
-        self.fields['language'].label = "Wybierz język"
+        available_languages = Language.objects.filter(languagecourse__isnull=False).distinct()
+        self.fields['language'].queryset = available_languages
+        self.fields['language'].label = "Select language (available courses)"
 
 class LanguageTestForm(forms.ModelForm):
     class Meta:
         model = LanguageTest
         fields = ['title', 'description', 'language']
-    def __init__(self, *args, **kwargs):
-        super(LanguageTestForm, self).__init__(*args, **kwargs)
-        self.fields['language'].queryset = Language.objects.all()
-        self.fields['language'].label = "Wybierz język"
+        labels = {
+            'title': 'Nazwa testu', 
+            'description': 'Opis',
+            'language': 'Język',
+        }
+        widgets = {
+            'title': forms.TextInput(attrs={'class': 'form-control'}),
+            'description': forms.TextInput(attrs={'class': 'form-control'}),
+            'language': forms.Select(attrs={'class': 'form-control'}),
+        }
 
 class QuestionForm(forms.ModelForm):
     class Meta:

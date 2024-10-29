@@ -1,16 +1,22 @@
 {% extends "base.html" %}
+{% block head %}
 {% load static %}
-
+<link rel="stylesheet" href="{% static 'admin_and_employee.css' %}">
+<link rel="stylesheet" href="{% static 'ae_test_edition.css' %}">
+{% endblock %}
 {% block content %}
-<div class="container mt-5">
-    <h2>Formularz</h2>
-    <a href="{% url 'create_test' %}" style="text-decoration: none;">
-        <button class="btn button-grey">Nowy test</button>
-    </a> 
-    <h2 class="mb-4">Zarządzaj testami językowymi</h2>
+<div class="container tests-management-container">
+    <h1 class="page-title">TESTY JĘZYKOWE</h1>
+    <div class="tests-management-header">
+        <h2 class="tests-managment-title">Zarządzaj testami językowymi</h2>
+        <a href="{% url 'create_test' %}" style="text-decoration: none;">
+            <button class="btn  button-grey new-test-button">Utwórz nowy test</button>
+        </a> 
+    </div>
     {% for language in languages %}
         <h5>Lista testów językowych: {{ language.name }}</h5>
-        <table class="table table-responsive">
+        <div class="table-container">
+        <table class="table">
             <thead>
                 <tr>
                     <th scope="col">Nazwa testu</th>
@@ -27,11 +33,11 @@
                         <td>{{ test.created_at|date:"d/m/Y" }}</td>
                         <td>
                             <a href="{% url 'edit_test' test.id %}" style="text-decoration: none;">
-                                <button class="btn btn-primary btn-sm">Edytuj</button>
+                                <button class="btn btn-outline-primary table-button">Edytuj</button>
                             </a>
                             <a href="{% url 'delete_test' test.id %}" style="text-decoration: none; color: red;" 
                                onclick="return confirm('Czy na pewno chcesz usunąć ten test?');">
-                                <button class="btn btn-danger btn-sm">Usuń</button>
+                                <button class="btn btn-outline-danger table-button">Usuń</button>
                             </a>
                         </td>
                         <td>
@@ -39,23 +45,24 @@
                                 <form method="post">
                                     {% csrf_token %}
                                     <input type="hidden" name="current_test" value="{{ test.id }}">
-                                    <button type="submit" class="btn btn-sm btn-warning">
-                                        Ustaw jako aktualny
+                                    <button type="submit" class="btn table-button btn-outline-success">
+                                        Wybierz
                                     </button>
                                 </form>
                             {% else %}
-                                <button class="btn btn-sm btn-success" disabled>Aktualny</button>
+                                <button class="btn table-button btn-success" disabled>Aktualny</button>
                             {% endif %}
                         </td>
                         <td>
                             <a href="{% url 'test_check' test.id %}" style="text-decoration: none;">
-                                <button class="btn btn-info btn-sm">Wypełnione testy</button>
+                                <button class="btn btn-outline-info" table-button">Wypełnione testy</button>
                             </a>
                         </td>
                     </tr>
                 {% endfor %}
             </tbody>
         </table>
+    </div>
     {% endfor %}
 </div>
 {% endblock %}

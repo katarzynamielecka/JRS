@@ -1,10 +1,18 @@
-form {
-    margin-top: 2%;
-    
+.container {
+    max-width: 1196px;
+    padding: 10px;
+    margin: 0 auto;
 }
 
-h2{
-    margin: 3%;
-    color: rgb(39, 38, 38);
+.page-title {
+    color: rgb(77, 85, 91);
+    font-weight: 600;
+    font-size: 20px;
+    line-height: 24px;
+    text-align: center;
+    margin-bottom: 20px;
 }
 
+hr{
+    margin: 50px 0;
+}

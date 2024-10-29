@@ -220,9 +220,7 @@ def test_check_view(request, test_id, user_role):
 @admin_or_employee_required
 def save_points(request, user_role):
     if request.method == 'POST':
-        print("Received POST data:", request.POST)
         test_id = request.POST.get('test_id') 
-        print("test_id:", test_id)
         for key, value in request.POST.items():
             if key.startswith('points_'):
                 try:
@@ -270,7 +268,6 @@ def edit_test(request, user_role, id):
                 Question.objects.create(test=test, text=text, question_type="open")
                 return redirect("edit_test", id=id)
         elif "add_choice_question" in request.POST:
-            print(request.POST)
             text = request.POST.get("choice_question_text")
             answers = request.POST.getlist("answer_text")
             correct_answers = request.POST.getlist("is_correct")
@@ -298,17 +295,12 @@ def edit_test(request, user_role, id):
             question = get_object_or_404(Question, id=question_id)
             question.delete()
             return redirect("edit_test", id=id)
-        if "question_id" in request.POST and "max_points" in request.POST:
+        elif "question_id" in request.POST and "max_points" in request.POST:
             question_id = request.POST.get("question_id")
             max_points = request.POST.get("max_points")
-            if question_id and max_points:
-                try:
-                    max_points = float(max_points)
-                    question = get_object_or_404(Question, id=question_id)
-                    question.max_points = max_points
-                    question.save()
-                except ValueError:
-                    messages.error(request, "Wpisana wartość musi być liczbą.")
+            question = get_object_or_404(Question, id=question_id)
+            question.max_points = max_points
+            question.save()
             return redirect("edit_test", id=id)
     questions = test.questions.prefetch_related("choices").all()
     context = {"user_role": user_role, "test": test, "questions": questions}
@@ -388,12 +380,18 @@ def courses_management_section(request, user_role):
         course_to_delete = get_object_or_404(LanguageCourse, id=request.GET.get('delete'))
         course_to_delete.delete()
         return redirect('crs_man_sec')
+    if request.GET.get('delete_language'):
+        language_to_delete = get_object_or_404(Language, id=request.GET.get('delete_language'))
+        language_to_delete.delete()
+        return redirect('crs_man_sec')
     courses = LanguageCourse.objects.all()
+    languages = Language.objects.all()
     context = {
         "user_role": user_role,
         "form": form,
         "language_form": language_form, 
         "courses": courses,
+        "languages": languages,
     }
     return render(request, "admin_and_employee/a_crs_man_sec.html", context)
 
@@ -405,6 +403,14 @@ def delete_employee(request, email):
     employee.delete()
     user.delete()
     return redirect("/systemadmin/employee-management")
+
+@login_required
+@admin_required
+def delete_refugee_view(request, refugee_id, user_role):
+    refugee = get_object_or_404(Refugee, id=refugee_id)
+    refugee.delete()
+    context = {"user_role": user_role}
+    return redirect(refugees_list_view)
 
 
 @login_required

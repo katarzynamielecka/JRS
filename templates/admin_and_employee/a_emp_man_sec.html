@@ -2,16 +2,18 @@
 {% load static %}
 {% block head %}
 <link rel="stylesheet" href="{% static 'admin_and_employee.css' %}">
+<link rel="stylesheet" href="{% static 'ae_employee_management.css' %}">
 {% endblock %}
 {% block content %}
-<h2>Zarządzanie pracownikami</h2>
+<div class="container">
+<h2 class="page-title">ZARZĄDZANIE PRACOWNIKAMI</h2>
 <a href="{% url 'register' %}" style="text-decoration: none;">
     <button class="btn button-grey">Zarejestruj pracownika</button>
 </a> 
 <br>
 <br>
-<h5>Zarejestrowani pracownicy:</h5>
-<table class="table table-responsive">
+<h2 class="employee-management-title">Zarejestrowani pracownicy:</h2>
+<table class="table">
     <thead>
         <tr>
             <th scope="col">Imię</th>
@@ -40,6 +42,6 @@
         {% endfor %}
     </tbody>
 </table>
-
+</div>
 
 {% endblock %}

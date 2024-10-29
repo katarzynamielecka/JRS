@@ -1,11 +1,16 @@
 {% extends "base.html" %}
-
+{% load static %}
+{% block head %}
+<link rel="stylesheet" href="{% static 'admin_and_employee.css' %}">
+<link rel="stylesheet" href="{% static 'ae_test_edition.css' %}">
+{% endblock %}
 {% block content %}
-<h1>Wypełnione testy: {{ test.title }}</h1>
+<div class="container">
+<h1 class="page-title">WYPEŁNIONE TESTY: {{ test.title }}</h1>
 <form method="post" action="{% url 'save_points' %}">
     {% csrf_token %}
     <input type="hidden" name="test_id" value="{{ test.id }}">
-    <table class="table table-responsive">
+    <table class="table">
         <thead>
             <tr>
                 <th scope="col">Imię i nazwisko</th>
@@ -26,11 +31,10 @@
                     <td>{{ data.total_points }} / {{ total_max_points }}</td>
 
                     <td>
-                        <a href="#" onclick="toggleDetails('{{ data.refugee.id }}'); return false;">Zobacz test</a>
+                        <a href="#" class="text-dark-blue" onclick="toggleDetails('{{ data.refugee.id }}'); return false;">Zobacz test</a>
                     </td>
                 </tr>
-                
-                <!-- Ukryty wiersz z pytaniami i odpowiedziami -->
+      
                 <tr id="details-{{ data.refugee.id }}" class="details-row" style="display: none;">
                     <td colspan="4">
                         <table class="table">
@@ -56,8 +60,7 @@
                                             {% endif %}
                                         </td>
                                         <td>
-                                            <!-- Pole input do edycji punktów -->
-                                            <input type="number" name="points_{{ answer.id }}" value="{{ answer.awarded_points }}" min="0" max="{{ answer.question.max_points }}" class="form-control">
+                                            <input type="number" name="points_{{ answer.id }}" value="{{ answer.awarded_points }}" min="0" max="{{ answer.question.max_points }}"  step="0.5" class="form-control">
                                         </td>
                                         <td>
                                             {{ answer.question.max_points }}
@@ -72,10 +75,9 @@
         </tbody>
     </table>
 
-    <!-- Przycisk do zapisywania wprowadzonych punktów -->
-    <button type="submit" class="btn btn-primary">Zapisz punkty</button>
+    <button type="submit" class="btn button-grey">Zapisz punkty</button>
 </form>
-
+</div>
 <script>
 function toggleDetails(refugeeId) {
     const row = document.getElementById('details-' + refugeeId);

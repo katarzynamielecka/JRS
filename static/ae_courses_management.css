@@ -1,0 +1,22 @@
+.courses-managment-title{
+    color: rgb(77, 85, 91);
+}
+.courses-header-container{
+    display: flex;
+    justify-content: space-between;
+    align-items: center; 
+    margin-top: 40px;
+}
+
+.elem-left {
+    order: 1; 
+}
+
+.elem-right {
+    order: 2; 
+}
+
+.crs-man-button{
+    min-width: 120px;
+    min-height: 20px;
+}

@@ -13,10 +13,10 @@
     {% endfor %}
 {% endif %}
 <div class="container">
-    <h2>Edycja Testu: {{ test.title }}</h2>
+    <h1 class="page-title">EDYCJA TESTU: {{ test.title }}</h1>
     
     <hr>
-    <h4>Dodaj pytanie otwarte</h4>
+    <h2 class="test-management-title">Dodaj pytanie otwarte</h2>
     <form method="post">
         {% csrf_token %}
         <input type="text" name="open_question_text" placeholder="Treść pytania otwartego" class="form-control mb-2" required>
@@ -24,7 +24,7 @@
     </form>
 
     <hr>
-    <h4>Dodaj pytanie zamknięte</h4>
+    <h2 class="test-management-title">Dodaj pytanie zamknięte</h2>
     <form method="post" id="choice-question-form">
         {% csrf_token %}
         <input type="text" name="choice_question_text" placeholder="Treść pytania zamkniętego" class="form-control mb-2" required>
@@ -51,7 +51,7 @@
 
     <hr>
 
-    <h4>Pytania w tym teście</h4>
+    <h2 class="test-management-title">Pytania w tym teście</h2>
     <table class="table">
         <thead>
             <tr>
@@ -86,10 +86,18 @@
                     <form method="post" class="max-points-form">
                         {% csrf_token %}
                         <input type="hidden" name="question_id" value="{{ question.id }}">
-                        <input type="number" name="max_points" placeholder="Maks. punkty" step="any" class="form-control"
-                               value="{{ question.max_points }}" 
-                               onblur="this.form.submit();" onkeydown="if(event.key === 'Enter') { this.form.submit(); }">
+                        <input type="number" name="max_points" placeholder="Maks. punkty" 
+                        step="0.5" min="0" class="form-control"
+                        value="{{ question.max_points }}"
+                        onblur="this.form.submit();" onkeydown="if(event.key === 'Enter') { this.form.submit(); }">
                         <div class="error-message" style="color: red; display: none;"></div>
+                    </form>
+                </td>
+                <td>
+                    <form method="post" onsubmit="return confirm('Czy na pewno chcesz usunąć to pytanie?');">
+                        {% csrf_token %}
+                        <input type="hidden" name="question_id" value="{{ question.id }}">
+                        <button type="submit" name="delete_question" class="btn btn-danger">Usuń</button>
                     </form>
                 </td>
             </tr>

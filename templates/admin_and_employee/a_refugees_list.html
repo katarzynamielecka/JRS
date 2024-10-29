@@ -4,7 +4,8 @@
 <link rel="stylesheet" href="{% static 'admin_and_employee.css' %}">
 {% endblock %}
 {% block content %}
-<h2>Lista kursantów</h2>
+<div class="container">
+<h1 class="page-title">LISTA KURSANTÓW</h1>
 <div class="table-responsive">
 <table class="table table-bordered table-hover">
     <thead>
@@ -17,6 +18,7 @@
             <th>Narodowość</th>
             <th>Typ pobytu</th>
             <th>Komentarze</th>
+            <th></th>
         </tr>
     </thead>
     <tbody>
@@ -38,9 +40,15 @@
                 <td>{{ refugee.get_nationality_name }}</td>
                 <td>{{ refugee.residency }}</td>
                 <td>{{ refugee.comments }}</td>
+                <td>
+                    <a href="{% url 'delete_refugee' refugee.id %}" class="text-danger" onclick="return confirm('Czy na pewno chcesz usunąć tego kursanta?')">
+                        &times;
+                    </a>
+                </td>
             </tr>
         {% endfor %}
     </tbody>
 </table>
+</div>
 </div>
 {% endblock %}

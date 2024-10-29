@@ -17,6 +17,7 @@ urlpatterns = [
     path('systemadmin/courses-management', views.courses_management_section, {'user_role': 'admin'}, name='crs_man_sec'),
     path('systemadmin/form-management', views.form_management_section, {'user_role': 'admin'}, name='frm_man_sec'),
     path('systemadmin/refugees', views.refugees_list_view, {'user_role': 'admin'}, name='refugee_list'),
+    path("refugee/delete/<int:refugee_id>/", views.delete_refugee_view, {'user_role': 'admin'}, name="delete_refugee"),
     path('systemadmin/set-current-test/<int:test_id>/', views.set_current_test, {'user_role': 'admin'}, name='set_current_test'),
     path('delete_employee/<str:email>/', views.delete_employee, {'user_role': 'admin'}, name='delete_employee'),
     path('systemadmin/delete_test/<int:id>/', views.delete_test, {'user_role': 'admin'}, name='delete_test'),

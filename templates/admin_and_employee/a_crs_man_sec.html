@@ -2,17 +2,18 @@
 {% load static %}
 {% block head %}
 <link rel="stylesheet" href="{% static 'admin_and_employee.css' %}">
+<link rel="stylesheet" href="{% static 'ae_courses_management.css' %}">
 {% endblock %}
 {% block content %}
-
-<h1>Zarządzanie Kursami</h1>
-
-<a href="{% url 'refugee_list' %}" style="text-decoration: none;">
-    <button class="btn button-grey">Zobacz listę kursantów</button>
-</a>
-
-<h2>Dostępne kursy:</h2>
-<table class="table table-striped">
+<div class="container">
+<h1 class="page-title">ZARZĄDZANIE KURSAMI</h1>
+<div class="courses-header-container">
+    <a class="elem-right" href="{% url 'refugee_list' %}" style="text-decoration: none;">
+        <button class="btn button-grey">Zobacz listę kursantów</button>
+    </a>
+    <h2 class="courses-managment-title elem-left">Dostępne kursy:</h2>
+</div>
+<table class="table">
     <thead>
         <tr>
             <th>Nazwa kursu</th>
@@ -26,8 +27,8 @@
             <td>{{ course.name }}</td>
             <td>{{ course.language }}</td>
             <td>
-                <a href="?edit={{ course.id }}" class="btn btn-primary">Edytuj</a>
-                <a href="?delete={{ course.id }}" class="btn btn-danger" onclick="return confirm('Czy na pewno chcesz usunąć kurs?')">Usuń</a>
+                <a href="?edit={{ course.id }}" class="btn btn-outline-primary crs-man-button">Edytuj</a>
+                <a href="?delete={{ course.id }}" class="btn btn-outline-danger crs-man-button" onclick="return confirm('Czy na pewno chcesz usunąć kurs?')">Usuń</a>
             </td>
         </tr>
         {% empty %}
@@ -37,24 +38,49 @@
         {% endfor %}
     </tbody>
 </table>
-
-<h2>Dodaj/Edytuj kurs:</h2>
+<h2 class="courses-managment-title">Dodaj/Edytuj kurs:</h2>
 <form method="POST">
     {% csrf_token %}
     {{ form.as_p }}
     {% if request.GET.edit %}
     <input type="hidden" name="course_id" value="{{ request.GET.edit }}">
     {% endif %}
-    <button type="submit" class="btn btn-success">Zapisz</button>
+    <button type="submit" class="btn button-grey crs-man-button">Zapisz</button>
 </form>
 
 <hr>
 
-<h2>Dodaj nowy język:</h2>
+<h2 class="courses-managment-title">Dodaj nowy język:</h2>
 <form method="POST">
     {% csrf_token %}
     {{ language_form.as_p }}
-    <button type="submit" class="btn btn-info">Dodaj język</button>
+    <button type="submit" class="btn button-grey crs-man-button">Dodaj język</button>
 </form>
-
+<br>
+<h2 class="courses-managment-title">Dostępne języki:</h2>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Język</th>
+            <th>Usuń</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for language in languages %}
+        <tr>
+            <td>{{ language.name }}</td>
+            <td>
+                <a href="?delete_language={{ language.id }}" class="text-danger" onclick="return confirm('Czy na pewno chcesz usunąć ten język?')">
+                    &times;
+                </a>
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="2">Brak dostępnych języków</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+</div>
 {% endblock %}

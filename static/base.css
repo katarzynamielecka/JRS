@@ -1,7 +1,6 @@
 .button-grey{
     background-color: grey;
     color: white;
-    margin-top: 1%;
 }
 
 .button-grey:hover{
@@ -17,7 +16,6 @@
 .button-orange{
     background-color: var(--jrs-orange);
     color: white;
-    margin-top: 1%;
 }
 
 .button-orange:hover{
