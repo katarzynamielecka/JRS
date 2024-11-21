@@ -30,20 +30,35 @@
         <input type="text" name="choice_question_text" placeholder="Treść pytania zamkniętego" class="form-control mb-2" required>
         <div id="answers-container">
             <div class="answer-item">
-                <input type="text" name="answer_text" placeholder="Treść odpowiedzi" class="form-control" required>
-                <input type="checkbox" name="is_correct" value="0"> Odpowiedź poprawna
-                <input type="text" name="answer_text" placeholder="Treść odpowiedzi" class="form-control" required>
-                <input type="checkbox" name="is_correct" value="1"> Odpowiedź poprawna
-                <input type="text" name="answer_text" placeholder="Treść odpowiedzi" class="form-control" required>
-                <input type="checkbox" name="is_correct" value="2"> Odpowiedź poprawna
-                <input type="text" name="answer_text" placeholder="Treść odpowiedzi" class="form-control" required>
-                <input type="checkbox" name="is_correct" value="3"> Odpowiedź poprawna
-            
+                <input type="text" name="answer_text" placeholder="Treść odpowiedzi" class="form-control mb-2" required>
+                <input type="radio" name="is_correct" value="0"> Odpowiedź poprawna
             </div>
         </div>
-        <!-- <button type="button" id="add-answer-btn" class="button-new-answer">
-            <i class="fa-solid fa-circle-plus"></i>
-        </button> -->
+        
+        <button type="button" id="add-answer-btn" class="button-new-answer" onclick="addAnswer()">
+            <i class="fa-solid fa-plus" style="color: #26528c"></i>
+        </button>
+
+        <script>
+            let answerCount = 1;
+        
+            function addAnswer() {
+                if (answerCount >= 5) return;
+        
+                const container = document.getElementById('answers-container');
+                const answerItem = document.createElement('div');
+                answerItem.classList.add('answer-item');
+        
+                answerItem.innerHTML = `
+                    <input type="text" name="answer_text" placeholder="Treść odpowiedzi" class="form-control mb-2" required>
+                    <input type="radio" name="is_correct" value="${answerCount}"> Odpowiedź poprawna
+                `;
+        
+                container.appendChild(answerItem);
+                answerCount++;
+            }
+        </script>
+        
         <br>
 
         <button type="submit" name="add_choice_question" class="btn button-orange">Dodaj pytanie zamknięte</button>

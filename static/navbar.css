@@ -1,47 +1,48 @@
-:root{
+:root {
     --jrs-blue: rgb(38, 82, 140);
     --jrs-orange: #D97014;
 }
 
-.navbar{
+.navbar {
     background-color: var(--jrs-blue);
 }
 
-nav img{
+nav img {
     display: flex;
     justify-content: space-between;
 }
 
-h3{
+h3 {
     color: whitesmoke;
 }
 
-.nav-menu{
+.nav-menu {
     color: orange;
 }
-.menu-button{
+
+.menu-button {
     border-style: solid;
     border-color: orange;
 }
 
 @media (max-width: 768px) {
     .navbar-title {
-      font-size: 1rem;
+        font-size: 1rem;
     }
-  }
+}
 
 @media (max-width: 576px) {
     .navbar-title {
-      display: none;
+        display: none;
     }
-  }
+}
 
 .second-navbar {
     display: flex;
     flex-wrap: wrap;
-    background-color: lightgray; 
-    height: 35px; 
-    width: 100%; 
+    background-color: white;
+    height: 45px;
+    width: 100%;
     padding: 0;
     margin: 0;
 }
@@ -52,24 +53,23 @@ h3{
     justify-content: center;
     align-items: center;
     flex-grow: 1;
+    border-bottom: solid 1px lightgray;
     text-align: center;
     text-decoration: none;
-    border-width: 1px;
-    border-style: solid;
-    border-color: transparent gray gray gray;
-    color: rgb(101, 100, 100);
+    color: rgb(91, 97, 107);
     padding: 0;
     margin: 0;
 }
 
-a.second-nav-item:hover{
+a.second-nav-item:hover {
     text-decoration: none;
 }
 
 @media (max-width: 768px) {
     .second-navbar {
-        height: auto; 
+        height: auto;
     }
+
     .second-nav-item {
         flex-basis: 50%;
     }

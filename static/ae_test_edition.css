@@ -33,9 +33,10 @@
     min-height: 20px;
 }
 
-.tests-managment-header{
+.tests-management-header{
     display: flex;
     justify-content: space-between;
+    align-items: center;
     margin-bottom: 50px;
 }
 
@@ -99,4 +100,14 @@
     display: flex;
     justify-content: center !important;
     align-items: center;
+}
+
+.button-new-answer{
+    width: 30px;
+    height: 30px;
+    border-radius: 50px;
+    border: solid;
+    border-color: var(--jrs-blue);
+    border-width: 2px;
+    background-color: white;
 }

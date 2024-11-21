@@ -1,10 +1,14 @@
 from django.shortcuts import render, redirect, get_object_or_404
+import random
 from django.contrib.auth import authenticate, login
 from django.utils import formats
+from django.db import transaction
 from django.contrib import messages
 from django.contrib.auth import logout
 from datetime import datetime
+from collections import defaultdict
 from django.db.models import Sum
+from datetime import time
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseRedirect
 from django.views.decorators.csrf import csrf_protect
@@ -14,9 +18,22 @@ from .forms import (
     LanguageCourseForm,
     RefugeeRegistrationForm,
     LanguageTestForm,
-    LanguageForm
+    LanguageForm,
 )
-from .models import Employee, User, Refugee, LanguageTest, Question, Choice, UserAnswer, LanguageCourse, Language
+from .models import (
+    Employee,
+    User,
+    Refugee,
+    LanguageTest,
+    Question,
+    Choice,
+    UserAnswer,
+    LanguageCourse,
+    Language,
+    TimeInterval,
+    Classroom,
+    Availability,
+)
 from .decorators import admin_required, employee_required, admin_or_employee_required
 import pandas as pd
 from django.shortcuts import get_object_or_404, redirect
@@ -29,7 +46,7 @@ def home(request, user_role):
     courses = LanguageCourse.objects.all()
     context = {
         "user_role": user_role,
-        "courses": courses, 
+        "courses": courses,
     }
     return render(request, "refugees/home.html", context)
 
@@ -55,8 +72,6 @@ def refugee_registration_view(request, user_role):
     return render(request, "refugees/form.html", context)
 
 
-
-
 def language_test_view(request, user_role):
     refugee_data = request.session.get("refugee_data")
     if not refugee_data:
@@ -76,24 +91,26 @@ def language_test_view(request, user_role):
                 answers[question.id] = open_answer
         request.session["test_answers"] = answers
         if refugee_data:
-            refugee_data["dob"] = datetime.strptime(refugee_data["dob"], "%Y-%m-%d").date()
+            refugee_data["dob"] = datetime.strptime(
+                refugee_data["dob"], "%Y-%m-%d"
+            ).date()
             refugee = Refugee.objects.create(**refugee_data)
             for question_id, answer in answers.items():
                 question = Question.objects.get(id=question_id)
                 if question.question_type == "choice":
                     selected_choice = Choice.objects.get(id=answer)
-                    awarded_points = question.max_points if selected_choice.is_correct else 0
+                    awarded_points = (
+                        question.max_points if selected_choice.is_correct else 0
+                    )
                     UserAnswer.objects.create(
                         refugee=refugee,
                         question=question,
                         choice=selected_choice,
-                        awarded_points=awarded_points
+                        awarded_points=awarded_points,
                     )
                 else:
                     UserAnswer.objects.create(
-                        refugee=refugee,
-                        question=question,
-                        text_answer=answer
+                        refugee=refugee, question=question, text_answer=answer
                     )
 
             request.session.pop("refugee_data", None)
@@ -106,8 +123,6 @@ def language_test_view(request, user_role):
         "user_role": user_role,
     }
     return render(request, "refugees/language_test.html", context)
-
-
 
 
 def success_view(request, user_role):
@@ -158,7 +173,7 @@ def form_management_section(request, user_role):
             LanguageTest.objects.filter(language=test.language).update(is_current=False)
             test.is_current = True
             test.save()
-    languages = Language.objects.prefetch_related('languagetest_set').all()
+    languages = Language.objects.prefetch_related("languagetest_set").all()
     context = {
         "user_role": user_role,
         "languages": languages,
@@ -167,7 +182,7 @@ def form_management_section(request, user_role):
 
 
 @login_required
-@admin_or_employee_required
+@admin_required
 def set_current_test(request, test_id, user_role):
     try:
         LanguageTest.objects.update(is_current=False)
@@ -188,26 +203,35 @@ def test_check_view(request, test_id, user_role):
     test = LanguageTest.objects.get(pk=test_id)
     refugees = Refugee.objects.filter(useranswer__question__test=test).distinct()
     refugee_data = []
-    total_max_points = Question.objects.filter(test=test).aggregate(total_max=Sum('max_points'))['total_max'] or 0
+    total_max_points = (
+        Question.objects.filter(test=test).aggregate(total_max=Sum("max_points"))[
+            "total_max"
+        ]
+        or 0
+    )
     total_questions = test.questions.count()
     for refugee in refugees:
-        total_points = UserAnswer.objects.filter(
-            refugee=refugee, 
-            question__test=test
-        ).aggregate(total_awarded_points=Sum('awarded_points'))['total_awarded_points'] or 0
+        total_points = (
+            UserAnswer.objects.filter(refugee=refugee, question__test=test).aggregate(
+                total_awarded_points=Sum("awarded_points")
+            )["total_awarded_points"]
+            or 0
+        )
         checked_tasks = UserAnswer.objects.filter(
-            refugee=refugee, 
-            question__test=test,
-            awarded_points__isnull=False
+            refugee=refugee, question__test=test, awarded_points__isnull=False
         ).count()
-        answers = UserAnswer.objects.filter(refugee=refugee, question__test=test).select_related('question')
-        refugee_data.append({
-            'refugee': refugee,
-            'total_points': total_points,
-            'checked_tasks': checked_tasks,
-            'total_tasks': total_questions,
-            'answers': answers 
-        })
+        answers = UserAnswer.objects.filter(
+            refugee=refugee, question__test=test
+        ).select_related("question")
+        refugee_data.append(
+            {
+                "refugee": refugee,
+                "total_points": total_points,
+                "checked_tasks": checked_tasks,
+                "total_tasks": total_questions,
+                "answers": answers,
+            }
+        )
     context = {
         "user_role": user_role,
         "test": test,
@@ -216,23 +240,23 @@ def test_check_view(request, test_id, user_role):
     }
     return render(request, "admin_and_employee/ae_filled_tests.html", context)
 
+
 @login_required
 @admin_or_employee_required
 def save_points(request, user_role):
-    if request.method == 'POST':
-        test_id = request.POST.get('test_id') 
+    if request.method == "POST":
+        test_id = request.POST.get("test_id")
         for key, value in request.POST.items():
-            if key.startswith('points_'):
+            if key.startswith("points_"):
                 try:
-                    answer_id = key.split('_')[1]
+                    answer_id = key.split("_")[1]
                     points = float(value)
                     user_answer = UserAnswer.objects.get(pk=answer_id)
                     user_answer.awarded_points = points
                     user_answer.save()
                 except (ValueError, UserAnswer.DoesNotExist):
                     pass
-        return redirect('test_check', test_id=test_id, user_role=user_role)
-
+        return redirect("test_check", test_id=test_id, user_role=user_role)
 
 
 @login_required
@@ -250,7 +274,7 @@ def create_test_view(request, user_role):
 
 
 @login_required
-@admin_or_employee_required
+@admin_required
 def delete_test(request, user_role, id):
     test = get_object_or_404(LanguageTest, id=id)
     test.delete()
@@ -267,7 +291,7 @@ def edit_test(request, user_role, id):
             if text:
                 Question.objects.create(test=test, text=text, question_type="open")
                 return redirect("edit_test", id=id)
-        elif "add_choice_question" in request.POST:
+        if "add_choice_question" in request.POST:
             text = request.POST.get("choice_question_text")
             answers = request.POST.getlist("answer_text")
             correct_answers = request.POST.getlist("is_correct")
@@ -276,14 +300,12 @@ def edit_test(request, user_role, id):
                     test=test, text=text, question_type="choice"
                 )
                 for idx, answer_text in enumerate(answers):
-                    if str(idx) in correct_answers:
-                        is_correct = True
-                    else:
-                        is_correct = False
+                    is_correct = str(idx) in correct_answers
                     Choice.objects.create(
                         question=question, text=answer_text, is_correct=is_correct
                     )
                 return redirect("edit_test", id=id)
+
         elif "update_question" in request.POST:
             question_id = request.POST.get("question_id")
             question = get_object_or_404(Question, id=question_id)
@@ -322,9 +344,9 @@ def employee(request, user_role):
 @admin_required
 def systemadmin(request, user_role):
     context = {
-        'user_role': user_role,
-        }
-    return render(request, 'admin_and_employee/a.html', context)
+        "user_role": user_role,
+    }
+    return render(request, "admin_and_employee/a.html", context)
 
 
 @login_required
@@ -360,7 +382,7 @@ def employee_management_section(request, user_role):
 @login_required
 @admin_required
 def courses_management_section(request, user_role):
-    course_id = request.POST.get('course_id')
+    course_id = request.POST.get("course_id")
     if course_id:
         course = get_object_or_404(LanguageCourse, id=course_id)
         form = LanguageCourseForm(request.POST, instance=course)
@@ -369,31 +391,48 @@ def courses_management_section(request, user_role):
     language_form = LanguageForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
         form.save()
-        return redirect('crs_man_sec')
+        return redirect("crs_man_sec")
     if request.method == "POST" and language_form.is_valid():
         language_form.save()
-        return redirect('crs_man_sec')
-    if request.GET.get('edit'):
-        course = get_object_or_404(LanguageCourse, id=request.GET.get('edit'))
+        return redirect("crs_man_sec")
+    if request.GET.get("edit"):
+        course = get_object_or_404(LanguageCourse, id=request.GET.get("edit"))
         form = LanguageCourseForm(instance=course)
-    if request.GET.get('delete'):
-        course_to_delete = get_object_or_404(LanguageCourse, id=request.GET.get('delete'))
+    if request.GET.get("delete"):
+        course_to_delete = get_object_or_404(
+            LanguageCourse, id=request.GET.get("delete")
+        )
         course_to_delete.delete()
-        return redirect('crs_man_sec')
-    if request.GET.get('delete_language'):
-        language_to_delete = get_object_or_404(Language, id=request.GET.get('delete_language'))
+        return redirect("crs_man_sec")
+    if request.GET.get("delete_language"):
+        language_to_delete = get_object_or_404(
+            Language, id=request.GET.get("delete_language")
+        )
         language_to_delete.delete()
-        return redirect('crs_man_sec')
+        return redirect("crs_man_sec")
+    if "teachers" in request.POST:
+        teacher_ids = request.POST.getlist("teachers")
+        # Pobranie wszystkich lektorów i ustawienie relacji z kursem
+        employees = Employee.objects.filter(id__in=teacher_ids)
+        for employee in Employee.objects.all():
+            if employee in employees:
+                employee.courses.add(course)
+            else:
+                employee.courses.remove(course)
+        return redirect("crs_man_sec")
     courses = LanguageCourse.objects.all()
     languages = Language.objects.all()
+    employees = Employee.objects.all()
     context = {
         "user_role": user_role,
         "form": form,
-        "language_form": language_form, 
+        "language_form": language_form,
         "courses": courses,
         "languages": languages,
+        "employees": employees,
     }
     return render(request, "admin_and_employee/a_crs_man_sec.html", context)
+
 
 @login_required
 @admin_required
@@ -403,6 +442,7 @@ def delete_employee(request, email):
     employee.delete()
     user.delete()
     return redirect("/systemadmin/employee-management")
+
 
 @login_required
 @admin_required
@@ -419,3 +459,104 @@ def refugees_list_view(request, user_role):
     refugees = Refugee.objects.all()
     context = {"user_role": user_role, "refugees": refugees}
     return render(request, "admin_and_employee/a_refugees_list.html", context)
+
+
+@login_required
+@admin_required
+def timetable_view(request, user_role):
+    schedule = [
+        ("Mon", time(8, 0), time(9, 0), "English Basics", "John Doe", "Sala 101"),
+        ("Mon", time(11, 0), time(13, 0), "German Basics", "John Nowak", "105"),
+    ]
+    hours = range(8, 18)
+    days = ["Mon", "Tue", "Wed", "Thu", "Fri"]
+    availability = Availability.objects.prefetch_related("classrooms", "employees").all()
+    intervals = list(TimeInterval.objects.all())
+    classrooms = Classroom.objects.all()
+    employees = Employee.objects.filter(courses__isnull=False).distinct()
+    while len(intervals) < 12:
+        intervals.append(None)
+    availability_list = [
+        {
+            "day": a.day,
+            "time_interval_id": a.time_interval_id,
+            "classroom_id": classroom_id,
+            "type": "classroom",
+        }
+        for a in availability
+        for classroom_id in a.classrooms.values_list("id", flat=True)
+    ] + [
+        {
+            "day": a.day,
+            "time_interval_id": a.time_interval_id,
+            "employee_id": employee_id,
+            "type": "employee",
+        }
+        for a in availability
+        for employee_id in a.employees.values_list("id", flat=True)
+    ]
+    if request.method == "POST":
+        if "update_availability" in request.POST:
+            print(request.POST)
+            with transaction.atomic():
+                for day in days:
+                    for interval in intervals:
+                        Availability.objects.filter(day=day, time_interval=interval).delete()
+                for key, classroom_ids in request.POST.lists():
+                    if key.startswith("availability-classroom-"):
+                        _, _, day, interval_id = key.split("-", 3)
+                        interval = get_object_or_404(TimeInterval, id=interval_id)
+                        availability, _ = Availability.objects.get_or_create(
+                            day=day, time_interval=interval
+                        )
+                        availability.classrooms.set(classroom_ids)
+                        availability.save()
+                for key, employee_ids in request.POST.lists():
+                    if key.startswith("availability-employee-"):
+                        _, _, day, interval_id = key.split("-", 3)
+                        interval = get_object_or_404(TimeInterval, id=interval_id)
+                        availability, _ = Availability.objects.get_or_create(
+                            day=day, time_interval=interval
+                        )
+                        availability.employees.set(employee_ids)
+                        availability.save()
+            return redirect("timetable", user_role=user_role)
+
+        if "add_edit_classroom" in request.POST:
+            classroom_id = request.POST.get("classroom_id")
+            name = request.POST.get("name")
+            if name:
+                if classroom_id:
+                    classroom = get_object_or_404(Classroom, id=classroom_id)
+                    classroom.name = name
+                    classroom.save()
+                else:
+                    Classroom.objects.create(name=name)
+            return redirect("timetable", user_role=user_role)
+        if "delete_classroom" in request.POST:
+            classroom_id = request.POST.get("classroom_id")
+            if classroom_id:
+                classroom = get_object_or_404(Classroom, id=classroom_id)
+                classroom.delete()
+            return redirect("timetable", user_role=user_role)
+
+        if "update_intervals" in request.POST:
+            start_times = request.POST.getlist("startTime[]")
+            end_times = request.POST.getlist("endTime[]")
+            TimeInterval.objects.all().delete()
+            for start, end in zip(start_times, end_times):
+                if start and end and start != "--:--" and end != "--:--":
+                    TimeInterval.objects.create(start_time=start, end_time=end)
+
+
+    context = {
+        "days": days,
+        "hours": hours,
+        "schedule": schedule,
+        "user_role": user_role,
+        "intervals": intervals,
+        "classrooms": classrooms,
+        "availability_list": availability_list,
+        "employees": employees
+    }
+    return render(request, "admin_and_employee/a_timetable.html", context)

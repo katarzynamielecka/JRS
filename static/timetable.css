@@ -1,0 +1,134 @@
+.timetable {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0 auto;
+}
+
+.timetable th,
+.timetable td {
+    border: 1px solid #ddd;
+    padding: 10px;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.timetable th {
+    background-color: #f4f4f4;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.timetable tr:nth-child(odd) {
+    background-color: #f9f9f9;
+}
+
+.timetable tr:nth-child(even) {
+    background-color: #ffffff;
+}
+
+.lesson {
+    padding: 10px;
+    border-radius: 8px;
+    color: #fff;
+    margin-bottom: 5px;
+    font-size: 14px;
+    text-align: left;
+    background-color: #ADD8E6;
+}
+
+.time-intervals {
+    max-height: 250px;
+    max-width: 100% !important;
+    display: flex;
+    flex-wrap: wrap;
+    flex-direction: column;
+    height: auto;
+    gap: 10px;
+}
+
+.time-interval {
+    flex-basis: 25%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 5px;
+}
+
+.time-input {
+    margin: 5px !important;
+}
+
+input[type="time"] {
+    margin: 4px 0;
+}
+
+/* .save-button {
+    margin-left: 45%;
+} */
+
+.removeIntervalButton {
+    color: red;
+    size: 20px;
+    width: 20px;
+    height: 20px;
+    border: none;
+    background-color: white;
+    transition-duration: 0.4s;
+}
+
+.removeIntervalButton:hover {
+    border: none;
+    size: 25px !important;
+}
+
+.removeIntervalButton:active {
+    border: none !important;
+    size: 20px;
+}
+
+
+.classroom-table {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    justify-content: center;
+}
+
+.button-classroom {
+    width: 80px;
+    height: 35px;
+}
+
+.classroom-name {
+    min-width: 180px;
+}
+
+.classroom-avability-checkbox{
+    display:block !important;
+}
+@media (max-width: 768px) {
+    .timetable {
+        font-size: 12px;
+    }
+
+    .lesson {
+        font-size: 12px;
+        padding: 8px;
+    }
+}
+
+@media (max-width: 480px) {
+    .timetable {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+
+    .lesson {
+        font-size: 10px;
+        padding: 6px;
+    }
+}
+
+
