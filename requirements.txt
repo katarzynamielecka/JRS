@@ -3,3 +3,4 @@ psycopg2-binary>=2.8
 pandas
 openpyxl
 django-countries
+deap==1.4.1

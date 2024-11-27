@@ -4,13 +4,19 @@ services:
   web:
     build: .
     command: >
-      sh -c " ./wait-for-it.sh db:5432 --strict --  python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
+      sh -c "./wait-for-it.sh db:5432 --strict -- python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
     volumes:
       - .:/code
     ports:
       - "8000:8000"
     depends_on:
       - db
+    environment:
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=postgres
+      - DB_HOST=db
+      - DB_PORT=5432
 
   db:
     image: postgres:16
@@ -18,8 +24,13 @@ services:
     volumes:
       - ./data/db:/var/lib/postgresql/data
     environment:
-      POSTGRES_DB: postgres
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
     ports:
       - "5432:5432"
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "${DB_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5

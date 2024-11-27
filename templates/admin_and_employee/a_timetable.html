@@ -173,6 +173,7 @@
     <script src="/static/js/avability_table.js"></script>
   </div>
 
+<a class="btn button-orange" href="{% url 'generate_timetable' %}">Wygeneruj plan zajęć</a>
 <table class="timetable">
   <thead>
     <tr>
@@ -185,27 +186,34 @@
     </tr>
   </thead>
   <tbody>
-    {% for hour in hours %}
+    {% for entry in timetable %}
     <tr>
-      <td>{{ hour }}:00 - {{ hour|add:1 }}:00</td>
-      {% for day in days %}
       <td>
-        {% for lesson in schedule %} 
-        {% if lesson.0 == day and not lesson.1.hour > hour and lesson.2.hour > hour %}
-        <div class="lesson" style="background-color: #add8e6">
-          <strong>{{ lesson.3 }}</strong><br />
-          {{ lesson.4 }}<br />
-          Sala: {{ lesson.5 }}
-          <br /><small>Od {{ lesson.1.hour }}:00</small>
-          <small>Do {{ lesson.2.hour }}:00</small>
+        {{ entry.interval.start_time|time:"H:i" }} - {{ entry.interval.end_time|time:"H:i" }}
+      </td>
+      {% for day_data in entry.days %}
+      <td>
+        {% for lesson in day_data.lessons %}
+        <div class="lesson" style="background-color: #add8e6;">
+          <strong>{{ lesson.course__name }}</strong><br />
+          {{ lesson.teacher__user__last_name }}<br />
+          Sala: {{ lesson.classroom__name }}<br />
+          <small>{{ day_data.day }}</small><br />
+          <small>Od {{ lesson.time_interval__start_time|time:"H:i" }}</small> -
+          <small>Do {{ lesson.time_interval__end_time|time:"H:i" }}</small>
         </div>
-        {% endif %} {% endfor %}
+        {% empty %}
+        <div class="empty-slot">---</div>
+        {% endfor %}
       </td>
       {% endfor %}
     </tr>
     {% endfor %}
   </tbody>
 </table>
+
+
+
 </div>
   {% endblock %}
 

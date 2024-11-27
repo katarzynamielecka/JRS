@@ -128,5 +128,6 @@ urlpatterns = [
         {"user_role": "employee"},
         name="crs_man_sec_employee",
     ),
+    path('systemadmin/generate-timetable/',  views.generate_timetable, {"user_role": "admin"}, name='generate_timetable'),
     path("logout/", views.logout_view, name="logout"),
 ]

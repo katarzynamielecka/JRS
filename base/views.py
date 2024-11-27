@@ -9,6 +9,8 @@ from datetime import datetime
 from collections import defaultdict
 from django.db.models import Sum
 from datetime import time
+from django.http import JsonResponse
+from .utils import genetic_algorithm_schedule
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseRedirect
 from django.views.decorators.csrf import csrf_protect
@@ -33,6 +35,7 @@ from .models import (
     TimeInterval,
     Classroom,
     Availability,
+    ClassSchedule,
 )
 from .decorators import admin_required, employee_required, admin_or_employee_required
 import pandas as pd
@@ -412,7 +415,6 @@ def courses_management_section(request, user_role):
         return redirect("crs_man_sec")
     if "teachers" in request.POST:
         teacher_ids = request.POST.getlist("teachers")
-        # Pobranie wszystkich lektorów i ustawienie relacji z kursem
         employees = Employee.objects.filter(id__in=teacher_ids)
         for employee in Employee.objects.all():
             if employee in employees:
@@ -464,10 +466,6 @@ def refugees_list_view(request, user_role):
 @login_required
 @admin_required
 def timetable_view(request, user_role):
-    schedule = [
-        ("Mon", time(8, 0), time(9, 0), "English Basics", "John Doe", "Sala 101"),
-        ("Mon", time(11, 0), time(13, 0), "German Basics", "John Nowak", "105"),
-    ]
     hours = range(8, 18)
     days = ["Mon", "Tue", "Wed", "Thu", "Fri"]
     availability = Availability.objects.prefetch_related("classrooms", "employees").all()
@@ -495,6 +493,27 @@ def timetable_view(request, user_role):
         for a in availability
         for employee_id in a.employees.values_list("id", flat=True)
     ]
+    lessons = ClassSchedule.objects.select_related(
+            "time_interval", "classroom", "teacher", "course"
+        )
+
+    timetable = []
+    for interval in intervals:
+        interval_data = {"interval": interval, "days": []}
+        for day in days:
+            day_lessons = lessons.filter(
+                day=day, 
+                time_interval=interval
+            ).values(
+                "course__name", 
+                "teacher__user__last_name", 
+                "classroom__name", 
+                "time_interval__start_time", 
+                "time_interval__end_time",
+            )
+            interval_data["days"].append({"day": day, "lessons": list(day_lessons)})
+        timetable.append(interval_data)
+    print(f'schedule: {timetable}')
     if request.method == "POST":
         if "update_availability" in request.POST:
             print(request.POST)
@@ -547,12 +566,10 @@ def timetable_view(request, user_role):
             for start, end in zip(start_times, end_times):
                 if start and end and start != "--:--" and end != "--:--":
                     TimeInterval.objects.create(start_time=start, end_time=end)
-
-
     context = {
         "days": days,
         "hours": hours,
-        "schedule": schedule,
+        "timetable": timetable,
         "user_role": user_role,
         "intervals": intervals,
         "classrooms": classrooms,
@@ -560,3 +577,19 @@ def timetable_view(request, user_role):
         "employees": employees
     }
     return render(request, "admin_and_employee/a_timetable.html", context)
+
+
+def generate_timetable(request, user_role):
+    ClassSchedule.objects.all().delete()
+    best_schedule = genetic_algorithm_schedule(population_size=50, generations=100)
+    print(f'Rozwiązanie {best_schedule}')
+    for schedule in best_schedule:
+        ClassSchedule.objects.create(
+            course=schedule[0],            # Kurs
+            day=schedule[1],               # Dzień
+            time_interval=schedule[2],     # Interwał czasu
+            classroom=schedule[3],         # Sala
+            teacher=schedule[4],           # Nauczyciel
+        )
+    return redirect("timetable", user_role=user_role)
+
