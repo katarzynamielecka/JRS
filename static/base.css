@@ -4,16 +4,31 @@ body {
 
 
 .button-grey{
-    background-color: grey;
+    background-color: rgb(91, 97, 107);
     color: white;
 }
 
 .button-grey:hover{
     color:white;
-    background-color: rgb(97, 96, 96);
+    background-color: rgb(65, 69, 77);
 }
 
 .button-grey:focus{
+    outline: none;
+    box-shadow: none;
+}
+
+.button-sea-green{
+    background-color: rgb(0, 182, 178);
+    color: white;
+}
+
+.button-sea-green:hover{
+    color:white;
+    background-color:  rgb(5, 216, 212);
+}
+
+.button-sea-green:focus{
     outline: none;
     box-shadow: none;
 }
@@ -31,4 +46,10 @@ body {
 .button-orange:focus{
     outline: none;
     box-shadow: none;
+}
+
+.centered-elems{
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }

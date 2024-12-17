@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.utils.timezone import now
 from django_countries.fields import CountryField
 
 
@@ -52,6 +53,18 @@ class Refugee(models.Model):
     def __str__(self):
         return f"{self.first_name} {self.last_name}"
 
+class Semester(models.Model):
+    name = models.CharField(max_length=255)
+    start_date = models.DateField(blank=True, null=True)
+    end_date = models.DateField(blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.name} ({self.start_date} - {self.end_date})"
+    
+    @classmethod
+    def get_current_semesters(cls):
+        today = now().date()
+        return cls.objects.filter(start_date__lte=today, end_date__gte=today)
 
 class LanguageTest(models.Model):
     title = models.CharField(max_length=255)
@@ -109,6 +122,7 @@ class TimeInterval(models.Model):
     end_time = models.TimeField()
     available_classrooms = models.ManyToManyField(
         "Classroom", blank=True, verbose_name="Dostępne sale"
+        # czy to potrzebne tu? nie dodaje do modelu !!!!!!!!!!!!!!!!!!!!!!!
     )
 
     def __str__(self):
@@ -123,6 +137,8 @@ class TimeInterval(models.Model):
 class LanguageCourse(models.Model):
     name = models.CharField(max_length=255)
     language = models.ForeignKey(Language, on_delete=models.CASCADE)
+    weekly_classes = models.PositiveIntegerField(default=1)
+    semesters = models.ManyToManyField(Semester, related_name="courses")
 
     def __str__(self):
         return f"{self.name} ({self.language})"
@@ -156,6 +172,7 @@ class ClassSchedule(models.Model):
         Employee, on_delete=models.CASCADE, limit_choices_to={"courses__isnull": False}
     )
     course = models.ForeignKey(LanguageCourse, on_delete=models.CASCADE)
+    conflicts = models.IntegerField(default=0)
 
     def __str__(self):
         return f"{self.course} by {self.teacher} in {self.classroom} on {self.day}"

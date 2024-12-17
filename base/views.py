@@ -7,7 +7,7 @@ from django.contrib import messages
 from django.contrib.auth import logout
 from datetime import datetime
 from collections import defaultdict
-from django.db.models import Sum
+from django.db.models import Sum, Q
 from datetime import time
 from django.http import JsonResponse
 from .utils import genetic_algorithm_schedule
@@ -36,6 +36,7 @@ from .models import (
     Classroom,
     Availability,
     ClassSchedule,
+    Semester,
 )
 from .decorators import admin_required, employee_required, admin_or_employee_required
 import pandas as pd
@@ -82,7 +83,10 @@ def language_test_view(request, user_role):
     language_id = refugee_data.get("language_id")
     language = get_object_or_404(Language, id=language_id)
     test = get_object_or_404(LanguageTest, language=language, is_current=True)
-    questions = test.questions.all()
+    questions = test.questions.filter(
+        Q(question_type="open") | Q(question_type="choice", choices__isnull=False)
+    ).distinct()
+
     if request.method == "POST":
         answers = {}
         for question in questions:
@@ -153,10 +157,10 @@ def login_view(request, user_role):
                 else:
                     return redirect("/employee")
             except Employee.DoesNotExist:
-                messages.error(request, "User does not have an associated profile.")
+                messages.error(request, "Nie ma takiego użytkownika.")
                 return redirect("/login")
         else:
-            messages.error(request, "Invalid email or password.")
+            messages.error(request, "Niepoprawny email lub hasło.")
     return render(request, "refugees/login.html", context)
 
 
@@ -346,8 +350,30 @@ def employee(request, user_role):
 @login_required
 @admin_required
 def systemadmin(request, user_role):
+    days = ["Mon", "Tue", "Wed", "Thu", "Fri"]
+    intervals = list(TimeInterval.objects.all())
+    lessons = ClassSchedule.objects.select_related(
+        "time_interval", "classroom", "teacher", "course"
+    )
+    timetable = []
+    for interval in intervals:
+        interval_data = {"interval": interval, "days": []}
+        for day in days:
+            day_lessons = lessons.filter(
+                day=day, 
+                time_interval=interval
+            ).values(
+                "course__name", 
+                "teacher__user__last_name", 
+                "classroom__name", 
+                "time_interval__start_time", 
+                "time_interval__end_time",
+            )
+            interval_data["days"].append({"day": day, "lessons": list(day_lessons)})
+        timetable.append(interval_data)
     context = {
         "user_role": user_role,
+        "timetable": timetable,
     }
     return render(request, "admin_and_employee/a.html", context)
 
@@ -382,38 +408,48 @@ def employee_management_section(request, user_role):
     return render(request, "admin_and_employee/a_emp_man_sec.html", context)
 
 
-@login_required
-@admin_required
-def courses_management_section(request, user_role):
+# courses management
+def handle_course_form(request):
     course_id = request.POST.get("course_id")
     if course_id:
         course = get_object_or_404(LanguageCourse, id=course_id)
         form = LanguageCourseForm(request.POST, instance=course)
     else:
         form = LanguageCourseForm(request.POST or None)
-    language_form = LanguageForm(request.POST or None)
-    if request.method == "POST" and form.is_valid():
+
+    if form.is_valid():
         form.save()
-        return redirect("crs_man_sec")
-    if request.method == "POST" and language_form.is_valid():
+        return form, None
+    else:
+        return form, form.errors
+
+def handle_language_form(request):
+    language_form = LanguageForm(request.POST or None)
+    if language_form.is_valid():
         language_form.save()
-        return redirect("crs_man_sec")
-    if request.GET.get("edit"):
-        course = get_object_or_404(LanguageCourse, id=request.GET.get("edit"))
-        form = LanguageCourseForm(instance=course)
-    if request.GET.get("delete"):
-        course_to_delete = get_object_or_404(
-            LanguageCourse, id=request.GET.get("delete")
-        )
+        return True
+    return language_form
+
+def handle_course_deletion(request):
+    course_id = request.GET.get("delete")
+    if course_id:
+        course_to_delete = get_object_or_404(LanguageCourse, id=course_id)
         course_to_delete.delete()
-        return redirect("crs_man_sec")
-    if request.GET.get("delete_language"):
-        language_to_delete = get_object_or_404(
-            Language, id=request.GET.get("delete_language")
-        )
+        return True
+    return False
+
+def handle_language_deletion(request):
+    language_id = request.GET.get("delete_language")
+    if language_id:
+        language_to_delete = get_object_or_404(Language, id=language_id)
         language_to_delete.delete()
-        return redirect("crs_man_sec")
-    if "teachers" in request.POST:
+        return True
+    return False
+
+def handle_teacher_assignment(request):
+    course_id = request.POST.get("course_id")
+    if "teachers" in request.POST and course_id:
+        course = get_object_or_404(LanguageCourse, id=course_id)
         teacher_ids = request.POST.getlist("teachers")
         employees = Employee.objects.filter(id__in=teacher_ids)
         for employee in Employee.objects.all():
@@ -421,17 +457,98 @@ def courses_management_section(request, user_role):
                 employee.courses.add(course)
             else:
                 employee.courses.remove(course)
-        return redirect("crs_man_sec")
-    courses = LanguageCourse.objects.all()
-    languages = Language.objects.all()
-    employees = Employee.objects.all()
+        return True
+    return False
+
+def handle_weekly_classes_update(request):
+    course_id = request.POST.get("course_id")
+    weekly_classes = request.POST.get("weekly_classes")
+    if course_id and weekly_classes and weekly_classes.isdigit():
+        course = get_object_or_404(LanguageCourse, id=course_id)
+        course.weekly_classes = int(weekly_classes)
+        course.save()
+        return True
+    return False
+
+def handle_semester_deletion(request):
+    semester_id = request.POST.get("semester_id")
+    if request.POST.get("delete_semester") and semester_id:
+        semester = get_object_or_404(Semester, id=semester_id)
+        semester.delete()
+        return True
+    return False
+
+def handle_semester_update(request):
+    semester_id = request.POST.get("semester_id")
+    name = request.POST.get("semester_name")
+    start_date = request.POST.get("start_date")
+    end_date = request.POST.get("end_date")
+    if semester_id and name and start_date and end_date:
+        semester = get_object_or_404(Semester, id=semester_id)
+        semester.name = name
+        semester.start_date = start_date
+        semester.end_date = end_date
+        semester.save()
+        return True
+    return False
+
+def handle_new_semester_creation(request):
+    name = request.POST.get("semester_name")
+    start_date = request.POST.get("start_date")
+    end_date = request.POST.get("end_date")
+    if name and start_date and end_date:
+        Semester.objects.create(
+            name=name,
+            start_date=start_date,
+            end_date=end_date
+        )
+        return True
+    return False
+
+@login_required
+def courses_management_section(request, user_role):
+    if request.method == "POST":
+        if request.POST.get("form_type") == "course_form":
+            form, errors = handle_course_form(request)
+            if not errors:
+                return redirect("crs_man_sec")
+        elif request.POST.get("form_type") == "language_form":
+            language_form, errors = handle_language_form(request)
+            if not errors:
+                return redirect("crs_man_sec")
+        elif handle_teacher_assignment(request):
+            return redirect("crs_man_sec")
+        elif handle_weekly_classes_update(request):
+            return redirect("crs_man_sec")
+        elif handle_semester_deletion(request):
+            return redirect("crs_man_sec")
+        elif handle_semester_update(request):
+            return redirect("crs_man_sec")
+        elif handle_new_semester_creation(request):
+            return redirect("crs_man_sec")
+
+    elif request.method == "GET":
+        if handle_course_deletion(request):
+            return redirect("crs_man_sec")
+        elif handle_language_deletion(request):
+            return redirect("crs_man_sec")
+
+    form = LanguageCourseForm()
+    language_form = LanguageForm()
+    if request.GET.get("edit"):
+        course = get_object_or_404(LanguageCourse, id=request.GET.get("edit"))
+        form = LanguageCourseForm(instance=course)
+
+
     context = {
         "user_role": user_role,
         "form": form,
         "language_form": language_form,
-        "courses": courses,
-        "languages": languages,
-        "employees": employees,
+        "courses": LanguageCourse.objects.all().order_by('name'),
+        "languages": Language.objects.all(),
+        "employees": Employee.objects.all(),
+        "semesters": Semester.objects.all(),
+        "cur_semesters": Semester.get_current_semesters(),
     }
     return render(request, "admin_and_employee/a_crs_man_sec.html", context)
 
@@ -465,8 +582,7 @@ def refugees_list_view(request, user_role):
 
 @login_required
 @admin_required
-def timetable_view(request, user_role):
-    hours = range(8, 18)
+def timetable_view(request, user_role,):
     days = ["Mon", "Tue", "Wed", "Thu", "Fri"]
     availability = Availability.objects.prefetch_related("classrooms", "employees").all()
     intervals = list(TimeInterval.objects.all())
@@ -494,9 +610,9 @@ def timetable_view(request, user_role):
         for employee_id in a.employees.values_list("id", flat=True)
     ]
     lessons = ClassSchedule.objects.select_related(
-            "time_interval", "classroom", "teacher", "course"
-        )
-
+        "time_interval", "classroom", "teacher", "course"
+    )
+    conflicts = lessons.first().conflicts if lessons.exists() else None
     timetable = []
     for interval in intervals:
         interval_data = {"interval": interval, "days": []}
@@ -513,7 +629,6 @@ def timetable_view(request, user_role):
             )
             interval_data["days"].append({"day": day, "lessons": list(day_lessons)})
         timetable.append(interval_data)
-    print(f'schedule: {timetable}')
     if request.method == "POST":
         if "update_availability" in request.POST:
             print(request.POST)
@@ -566,23 +681,25 @@ def timetable_view(request, user_role):
             for start, end in zip(start_times, end_times):
                 if start and end and start != "--:--" and end != "--:--":
                     TimeInterval.objects.create(start_time=start, end_time=end)
+            return redirect("timetable", user_role=user_role)
+    print(conflicts)
     context = {
         "days": days,
-        "hours": hours,
         "timetable": timetable,
         "user_role": user_role,
         "intervals": intervals,
         "classrooms": classrooms,
         "availability_list": availability_list,
-        "employees": employees
+        "employees": employees,
+        "conflicts": conflicts,
+        "cur_semesters": Semester.get_current_semesters(),
     }
     return render(request, "admin_and_employee/a_timetable.html", context)
 
 
 def generate_timetable(request, user_role):
     ClassSchedule.objects.all().delete()
-    best_schedule = genetic_algorithm_schedule(population_size=50, generations=100)
-    print(f'Rozwiązanie {best_schedule}')
+    best_schedule, conflicts = genetic_algorithm_schedule(population_size=50, generations=100)
     for schedule in best_schedule:
         ClassSchedule.objects.create(
             course=schedule[0],            # Kurs
@@ -590,6 +707,7 @@ def generate_timetable(request, user_role):
             time_interval=schedule[2],     # Interwał czasu
             classroom=schedule[3],         # Sala
             teacher=schedule[4],           # Nauczyciel
+            conflicts=conflicts,
         )
     return redirect("timetable", user_role=user_role)
 

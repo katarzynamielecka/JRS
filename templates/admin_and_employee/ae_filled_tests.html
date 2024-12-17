@@ -6,11 +6,14 @@
 {% endblock %}
 {% block content %}
 <div class="container">
+    <button onclick="window.history.back()" class="btn button-grey">
+        <i class="fa-solid fa-arrow-left"></i>
+    </button>
 <h1 class="page-title">WYPEŁNIONE TESTY: {{ test.title }}</h1>
 <form method="post" action="{% url 'save_points' %}">
     {% csrf_token %}
     <input type="hidden" name="test_id" value="{{ test.id }}">
-    <table class="table">
+    <table class="table table-responsive">
         <thead>
             <tr>
                 <th scope="col">Imię i nazwisko</th>
@@ -75,7 +78,7 @@
         </tbody>
     </table>
 
-    <button type="submit" class="btn button-grey">Zapisz punkty</button>
+    <button type="submit" class="btn button-orange">Zapisz punkty</button>
 </form>
 </div>
 <script>

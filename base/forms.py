@@ -6,7 +6,7 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from .models import Employee, Question, Choice, LanguageTest, Language
 from django.contrib.auth.password_validation import validate_password
-from .models import Refugee, LanguageCourse
+from .models import Refugee, LanguageCourse, Semester
 
 
 class EmployeeRegisterForm(UserCreationForm):
@@ -200,19 +200,23 @@ ChoiceFormSet = inlineformset_factory(
 class LanguageCourseForm(forms.ModelForm):
     class Meta:
         model = LanguageCourse
-        fields = ['name', 'language']
+        fields = ['name', 'language', 'semesters']
         labels = {
             'name': 'Nazwa (PO ANGIELSKU)', 
             'language': 'Język',
+            'semesters': 'Semestry',
         }
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control'}),
             'language': forms.Select(attrs={'class': 'form-control'}),
+            'semesters': forms.CheckboxSelectMultiple(attrs={'class': 'form-check-input'}),
+        }
+        error_messages = {
+            'name': {'required': 'To pole jest wymagane.'},
+            'language': {'required': 'Musisz wybrać język.'},
+            'semesters': {'required': 'Musisz zaznaczyć co najmniej jeden semestr.'},
         }
 
-    def __init__(self, *args, **kwargs):
-        super(LanguageCourseForm, self).__init__(*args, **kwargs)
-        self.fields['language'].queryset = Language.objects.all()
 
 class LanguageForm(forms.ModelForm):
     class Meta:

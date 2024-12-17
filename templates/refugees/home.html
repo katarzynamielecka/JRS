@@ -13,13 +13,16 @@
     </p>
     <br>
     <h2>Available Courses</h2>
+    {% if courses %}
     <ul class="two-column-list">
       {% for course in courses %}
         <li>{{ course.name }} ({{ course.language }})</li>
-      {% empty %}
-        <li>No courses available at the moment.</li>
       {% endfor %}
     </ul>
+  {% else %}
+    <p>No courses available at the moment.</p>
+  {% endif %}
+  
     <br>
     <h2>Important information</h2>
     <p>Please note that registration for any of our courses requires the purchase of specific textbooks and materials, 

@@ -6,14 +6,17 @@
 {% endblock %}
 {% block content %}
 <div class="container">
+    <button onclick="window.history.back()" class="btn button-grey">
+        <i class="fa-solid fa-arrow-left"></i>
+    </button>
 <h2 class="page-title">ZARZĄDZANIE PRACOWNIKAMI</h2>
 <a href="{% url 'register' %}" style="text-decoration: none;">
-    <button class="btn button-grey">Zarejestruj pracownika</button>
+    <button class="btn button-orange">Zarejestruj pracownika</button>
 </a> 
 <br>
 <br>
 <h2 class="employee-management-title">Zarejestrowani pracownicy:</h2>
-<table class="table">
+<table class="table table-responsive">
     <thead>
         <tr>
             <th scope="col">Imię</th>

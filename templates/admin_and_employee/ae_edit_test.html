@@ -13,6 +13,9 @@
     {% endfor %}
 {% endif %}
 <div class="container">
+    <button onclick="window.history.back()" class="btn button-grey">
+        <i class="fa-solid fa-arrow-left"></i>
+    </button>
     <h1 class="page-title">EDYCJA TESTU: {{ test.title }}</h1>
     
     <hr>
@@ -67,7 +70,7 @@
     <hr>
 
     <h2 class="test-management-title">Pytania w tym teście</h2>
-    <table class="table">
+    <table class="table table-responsive">
         <thead>
             <tr>
                 <th>Nr</th>
@@ -120,6 +123,5 @@
         </tbody>
     </table>
 </div>
-<script src="https://kit.fontawesome.com/a8f7e99427.js" crossorigin="anonymous"></script>
 <script src="{% static 'js/test_edition.js' %}"></script>
 {% endblock %}

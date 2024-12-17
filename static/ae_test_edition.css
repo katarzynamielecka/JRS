@@ -40,10 +40,11 @@
     margin-bottom: 50px;
 }
 
-@media (max-width: 730px) {
-    .tests-managment-header {
+@media (max-width: 775px) {
+    .tests-management-header {
         flex-direction: column;
         align-items: center;
+        justify-content: center;
         gap: 10px;
     }
 

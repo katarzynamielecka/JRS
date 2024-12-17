@@ -8,6 +8,15 @@
     margin-top: 40px;
 }
 
+@media (max-width: 775px) {
+    .courses-header-container{
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+    }
+}
+
 .elem-left {
     order: 1; 
 }
@@ -21,15 +30,29 @@
     min-height: 20px;
 }
 
-/* .dropdown {
-    position: relative;
+.dropdown-menu-list{
+   width: 170px;
+   padding: 10px;
+   border: solid, 1px, rgb(91, 97, 107);
+
 }
 
-.dropdown-menu {
-    display: none;
-    position: absolute;
-}
-
-.dropdown:: .dropdown-menu {
+.teachers-pick-courses-checkbox{
     display: block;
-} */
+    margin-bottom: 5px;
+}
+
+.weekly-classes-form{
+    max-width: 100px;
+}
+
+input[type="checkbox"] {
+    accent-color: var(--jrs-orange);
+}
+
+.form-check-input {
+    position: relative;
+    /* display: block !important; */
+    margin-left: 10px;
+
+}

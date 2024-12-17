@@ -1,10 +1,14 @@
 {% extends "base.html" %} {% load static %} {% block head %}
 <link rel="stylesheet" href="{% static 'admin_and_employee.css' %}" />
 <link rel="stylesheet" href="{% static 'timetable.css' %}" />
+
+
 {% endblock %} {% block content %}
 <div class="container">
+  <button onclick="window.history.back()" class="btn button-grey">
+    <i class="fa-solid fa-arrow-left"></i>
+  </button>
   <h1 class="page-title">STWÓRZ PLAN ZAJĘĆ</h1>
-    <div class="time-intervals-fieldset">
     <form method="post">
       {% csrf_token %}
       <legend>Przedziały Godzinowe</legend>
@@ -39,6 +43,7 @@
         </div>
         {% endfor %}
       </div>
+      <div class="centered-elems">
       <button
         class="btn button-orange save-button"
         type="submit"
@@ -46,14 +51,17 @@
       >
         Zapisz
       </button>
-    </form>
     </div>
+    </form>
+    <br>
+  </div>
     <legend>Sale</legend>
     <table>
       {% for classroom in classrooms %}
       <tr>
         <td class="classroom-table">
           <div class="classroom-name">{{ classroom.name }}</div>
+          <div class="classrooms-buttons">
           <button
             class="btn btn-outline-primary button-classroom"
             onclick="editClassroom('{{ classroom.id }}', '{{ classroom.name }}')"
@@ -74,11 +82,13 @@
             >
               Usuń
             </button>
+          </div>
           </form>
         </td>
       </tr>
       {% endfor %}
     </table>
+    <br>
     <form method="post">
       {% csrf_token %}
       <input type="hidden" name="classroom_id" id="classroom_id" />
@@ -94,11 +104,11 @@
         document.getElementById("name").value = name;
       }
     </script>
-
+  <br>
     <legend>Dostępność lektorów i sal</legend>
     <form method="post">
       {% csrf_token %}
-      <table class="timetable">
+      <table class="table-responsive timetable">
         <thead>
           <tr>
             <th>Godzina</th>
@@ -119,8 +129,8 @@
               {% for day in days %}
               <td>
                 <div class="dropdown">
-                  <button type="button" class="dropdown-toggle">Dostępne sale</button>
-                  <div class="dropdown-menu">
+                  <button type="button" class="btn btn-outline-secondary dropdown-toggle dropdown-btn">Dostępne sale</button>
+                  <div class="dropdown-menu dropdown-availability">
                     {% for classroom in classrooms %}
                     <label class="classroom-avability-checkbox">
                       <input
@@ -139,8 +149,8 @@
                   </div>
                 </div>
                 <div class="dropdown">
-                  <button type="button" class="dropdown-toggle">Dostępni lektorzy</button>
-                  <div class="dropdown-menu">
+                  <button type="button" class="btn btn-outline-secondary dropdown-toggle dropdown-btn">Dostępni lektorzy</button>
+                  <div class="dropdown-menu dropdown-availability">
                     {% for employee in employees %}
                     <label class="employee-avability-checkbox">
                       <input
@@ -165,16 +175,28 @@
           {% endfor %}
         </tbody>
       </table>
-      <button type="submit" name="update_availability">Zapisz dostępność</button>
+      <button class="btn button-orange" type="submit" name="update_availability">Zapisz dostępność</button>
     </form>
     
-
+    <br>
     <script src="/static/js/clear_time.js"></script>
     <script src="/static/js/avability_table.js"></script>
+  
+  <div class="generate-timetable-button-container">
+    <a class="btn button-generate-timetable" href="{% url 'generate_timetable' %}" id="generate-button" onclick="showLoading()">Wygeneruj plan zajęć</a>
   </div>
-
-<a class="btn button-orange" href="{% url 'generate_timetable' %}">Wygeneruj plan zajęć</a>
-<table class="timetable">
+  <div id="loading-message" class="no-loading-message">
+      Układanie nowego planu lekcji może potrwać kilka minut...
+  </div>
+  {% if cur_semesters %}
+    Semestr: 
+        {% for semester in cur_semesters %}
+                <strong>{{ semester.name }}</strong>
+        {% endfor %}
+  {% else %}
+      <p>Brak aktualnych semestrów.</p>
+  {% endif %}
+<table class="table-responsive timetable">
   <thead>
     <tr>
       <th>Godzina</th>
@@ -186,12 +208,13 @@
     </tr>
   </thead>
   <tbody>
-    {% for entry in timetable %}
+    {% for interval in timetable %}
+    {% if interval.interval %}
     <tr>
       <td>
-        {{ entry.interval.start_time|time:"H:i" }} - {{ entry.interval.end_time|time:"H:i" }}
+        {{ interval.interval.start_time|time:"H:i" }} - {{ interval.interval.end_time|time:"H:i" }}
       </td>
-      {% for day_data in entry.days %}
+      {% for day_data in interval.days %}
       <td>
         {% for lesson in day_data.lessons %}
         <div class="lesson" style="background-color: #add8e6;">
@@ -208,12 +231,17 @@
       </td>
       {% endfor %}
     </tr>
+    {% endif %}
     {% endfor %}
   </tbody>
 </table>
-
-
+{% if conflicts and conflicts > 0 %}
+    <div class="timetable-conflicts">
+        <p class="timetable-conflicts">Uwaga: Wystąpiły konflikty w wygenerowanym planie lekcji.</p>
+    </div>
+{% endif %}
 
 </div>
+<script src="/static/js/timetable_loading.js"></script>
   {% endblock %}
 

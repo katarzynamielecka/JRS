@@ -6,10 +6,21 @@
 {% endblock %}
 {% block content %}
 <div class="container">
+    <button onclick="window.history.back()" class="btn button-grey">
+        <i class="fa-solid fa-arrow-left"></i>
+    </button>
 <h1 class="page-title">ZARZĄDZANIE KURSAMI</h1>
+{% if cur_semesters %}
+    Semestr: 
+        {% for semester in cur_semesters %}
+                <strong>{{ semester.name }}</strong>
+        {% endfor %}
+{% else %}
+    <p>Brak aktualnych semestrów.</p>
+{% endif %}
 <div class="courses-header-container">
     <a class="elem-right" href="{% url 'refugee_list' %}" style="text-decoration: none;">
-        <button class="btn button-grey">Zobacz listę kursantów</button>
+        <button class="btn button-orange">Zobacz listę kursantów</button>
     </a>
     <h2 class="courses-managment-title elem-left">Dostępne kursy:</h2>
 </div>
@@ -20,23 +31,24 @@
             <th>Język</th>
             <th>Akcje</th>
             <th>Lektorzy</th>
+            <th>Liczba lekcji w tygodniu</th>
+            <th>Semestry</th>
         </tr>
     </thead>
     <tbody>
         {% for course in courses %}
-        <tr>
             <td>{{ course.name }}</td>
             <td>{{ course.language }}</td>
             <td>
-                <a href="?edit={{ course.id }}" class="btn btn-outline-primary crs-man-button">Edytuj</a>
+                <a href="?edit={{ course.id }}" class="btn btn-outline-info crs-man-button">Edytuj</a>
                 <a href="?delete={{ course.id }}" class="btn btn-outline-danger crs-man-button" onclick="return confirm('Czy na pewno chcesz usunąć kurs?')">Usuń</a>
             </td>
             <td>
                 <div class="dropdown">
-                    <button type="button" class="dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                    <button type="button" class="btn btn-outline-primary dropdown-toggle-list" data-bs-toggle="dropdown" aria-expanded="false">
                         Wybierz lektorów
                     </button>
-                    <div class="dropdown-menu">
+                    <div class="dropdown-menu dropdown-menu-list">
                         <form method="POST">
                             {% csrf_token %}
                             <input type="hidden" name="course_id" value="{{ course.id }}">
@@ -45,14 +57,34 @@
                                     <input type="checkbox" name="teachers" value="{{ employee.id }}"
                                         {% if course in employee.courses.all %}checked{% endif %}>
                                     {{ employee.user.first_name }} {{ employee.user.last_name }}
-                                </label><br>
+                                </label>
                             {% endfor %}
-                            <button type="submit" class="btn btn-primary mt-2">Zapisz</button>
+                            <button type="submit" class="btn button-orange mt-2">Zapisz</button>
                         </form>
                     </div>
                 </div>
             </td>
-            
+            <td>
+                <form method="post" class="weekly-classes-form" name="weekly_classes_form">
+                    {% csrf_token %}
+                    <input type="hidden" name="course_id" value="{{ course.id }}">
+                    <input type="number" name="weekly_classes" 
+                    step="1" min="0" class="form-control"
+                    value="{{ course.weekly_classes }}"
+                    onblur="document.forms['weekly_classes_form'].submit();" 
+                    onkeydown="if(event.key === 'Enter') { document.forms['weekly_classes_form'].submit(); }">
+                    <div class="error-message" style="color: red; display: none;"></div>
+                </form>
+            </td>
+            <td>
+                {% if course.semesters.exists %}
+                    {% for semester in course.semesters.all %}
+                        {{ semester.name }}{% if not forloop.last %}, {% endif %}
+                    {% endfor %}
+                {% else %}
+                    Brak
+                {% endif %}
+            </td>
         </tr>
         {% empty %}
         <tr>
@@ -64,11 +96,12 @@
 <h2 class="courses-managment-title">Dodaj/Edytuj kurs:</h2>
 <form method="POST">
     {% csrf_token %}
+    <input type="hidden" name="form_type" value="course_form">
     {{ form.as_p }}
     {% if request.GET.edit %}
     <input type="hidden" name="course_id" value="{{ request.GET.edit }}">
     {% endif %}
-    <button type="submit" class="btn button-grey crs-man-button">Zapisz</button>
+    <button type="submit" class="btn button-orange crs-man-button">Zapisz</button>
 </form>
 
 <hr>
@@ -76,9 +109,11 @@
 <h2 class="courses-managment-title">Dodaj nowy język:</h2>
 <form method="POST">
     {% csrf_token %}
+    <input type="hidden" name="form_type" value="language_form">
     {{ language_form.as_p }}
-    <button type="submit" class="btn button-grey crs-man-button">Dodaj język</button>
+    <button type="submit" class="btn button-orange crs-man-button">Dodaj język</button>
 </form>
+
 <br>
 <h2 class="courses-managment-title">Dostępne języki:</h2>
 <table class="table">
@@ -105,6 +140,126 @@
         {% endfor %}
     </tbody>
 </table>
+
+<hr>
+
+<h2 class="courses-managment-title">Semestry:</h2>
+<table class="table" id="semesters-table">
+    <thead>
+        <tr>
+            <th>Nazwa</th>
+            <th>Początek</th>
+            <th>Koniec</th>
+            <th>Akcje</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for semester in semesters %}
+            <tr>
+                <td>{{ semester.name }}</td>
+                <td>{{ semester.start_date }}</td>
+                <td>{{ semester.end_date }}</td>
+                <td>
+                    <button 
+                        class="btn btn-sm btn-outline-info edit-semester-btn" 
+                        data-id="{{ semester.id }}" 
+                        data-name="{{ semester.name }}" 
+                        data-start="{{ semester.start_date }}" 
+                        data-end="{{ semester.end_date }}">
+                        Edytuj
+                    </button>
+                    <form method="POST" style="display:inline;">
+                        {% csrf_token %}
+                        <input type="hidden" name="delete_semester" value="1">
+                        <input type="hidden" name="semester_id" value="{{ semester.id }}">
+                        <button type="submit" class="btn btn-sm btn-outline-danger">Usuń</button>
+                    </form>
+                    
+                </td>
+            </tr>
+        {% empty %}
+            <tr>
+                <td colspan="4">Brak</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+    
+
+</table>
+<button class="btn button-orange crs-man-button" id="add-semester-btn">Dodaj semestr</button>
+<div id="semester-form" style="display:none;">
+    <form method="POST" id="add-semester-form">
+        {% csrf_token %}
+        <input type="text" name="semester_name" placeholder="Nazwa semestru" required>
+        <input type="date" name="start_date" placeholder="Data rozpoczęcia" required>
+        <input type="date" name="end_date" placeholder="Data zakończenia" required>
+        <button type="submit" class="btn btn-success">Zapisz</button>
+    </form>
 </div>
+</div>
+<script>
+const addSemesterBtn = document.getElementById('add-semester-btn');
+const semesterForm = document.getElementById('semester-form');
+const addSemesterForm = document.getElementById('add-semester-form');
+const editButtons = document.querySelectorAll('.edit-semester-btn');
+
+
+function showForm({ semesterId = '', name = '', startDate = '', endDate = '' } = {}) {
+    semesterForm.style.display = 'block'; 
+    addSemesterForm.innerHTML = `
+        {% csrf_token %}
+        ${semesterId ? `<input type="hidden" name="semester_id" value="${semesterId}">` : ''}
+        <input type="text" name="semester_name" value="${name}" placeholder="Nazwa semestru" required>
+        <input type="date" name="start_date" value="${startDate}" placeholder="Data rozpoczęcia" required>
+        <input type="date" name="end_date" value="${endDate}" placeholder="Data zakończenia" required>
+        <button type="submit" class="btn button-grey">${semesterId ? 'Zapisz zmiany' : 'Zapisz'}</button>
+    `;
+}
+
+
+addSemesterBtn.addEventListener('click', () => showForm());
+
+editButtons.forEach(button => {
+    button.addEventListener('click', function () {
+        const semesterId = this.getAttribute('data-id');
+        const name = this.getAttribute('data-name');
+        const startDate = this.getAttribute('data-start');
+        const endDate = this.getAttribute('data-end');
+
+        showForm({ semesterId, name, startDate, endDate });
+    });
+});
+
+
+addSemesterForm.addEventListener('submit', function (e) {
+    e.preventDefault();
+
+    const formData = new FormData(addSemesterForm);
+
+
+    if (!formData.get('semester_name') || !formData.get('start_date') || !formData.get('end_date')) {
+        alert('Proszę wypełnić wszystkie pola.');
+        return;
+    }
+
+    fetch("{% url 'crs_man_sec' %}", {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => {
+        if (response.ok) {
+            location.reload();
+        } else {
+            alert('Błąd podczas zapisywania semestru.');
+        }
+    })
+    .catch(error => {
+        console.error('Błąd:', error);
+        alert('Wystąpił problem podczas zapisu.');
+    });
+});
+
+</script>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 {% endblock %}
