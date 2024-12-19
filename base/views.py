@@ -9,6 +9,8 @@ from datetime import datetime
 from collections import defaultdict
 from django.db.models import Sum, Q
 from datetime import time
+from django.views.decorators.csrf import csrf_exempt
+import json
 from django.http import JsonResponse
 from .utils import genetic_algorithm_schedule
 from django.contrib.auth.decorators import login_required
@@ -621,6 +623,7 @@ def timetable_view(request, user_role,):
                 day=day, 
                 time_interval=interval
             ).values(
+                "id",
                 "course__name", 
                 "teacher__user__last_name", 
                 "classroom__name", 
@@ -630,6 +633,8 @@ def timetable_view(request, user_role,):
             interval_data["days"].append({"day": day, "lessons": list(day_lessons)})
         timetable.append(interval_data)
     if request.method == "POST":
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return handle_schedule_update(request)
         if "update_availability" in request.POST:
             print(request.POST)
             with transaction.atomic():
@@ -711,3 +716,41 @@ def generate_timetable(request, user_role):
         )
     return redirect("timetable", user_role=user_role)
 
+
+def handle_schedule_update(request):
+    """Obsługuje AJAX-owe aktualizacje planu w modelu ClassSchedule."""
+    if request.method != "POST":
+        return JsonResponse({"error": "Metoda żądania musi być POST."}, status=405)
+
+    try:
+        data = json.loads(request.body)  # Wczytaj dane JSON z żądania
+        lesson_id = data.get("lesson_id")
+        new_day = data.get("day")
+        classroom_id = data.get("classroom_id")
+        teacher_id = data.get("teacher_id")
+        new_interval_id = data.get("interval_id")
+
+        # Pobierz rekord ClassSchedule
+        schedule = ClassSchedule.objects.get(id=lesson_id)
+
+        # Aktualizacja dnia i interwału czasu
+        if new_day:
+            schedule.day = new_day
+        if new_interval_id:
+            schedule.time_interval_id = new_interval_id
+
+        # Aktualizacja sali i nauczyciela (jeśli podano)
+        if classroom_id is not None:
+            schedule.classroom_id = classroom_id
+        if teacher_id is not None:
+            schedule.teacher_id = teacher_id
+
+        # Zapisz zmiany
+        schedule.save()
+
+        return JsonResponse({"success": True, "message": "Plan zaktualizowany pomyślnie."})
+
+    except ClassSchedule.DoesNotExist:
+        return JsonResponse({"error": "Lekcja o podanym ID nie istnieje."}, status=404)
+    except Exception as e:
+        return JsonResponse({"error": f"Wystąpił błąd: {str(e)}"}, status=400)

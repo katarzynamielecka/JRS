@@ -128,9 +128,9 @@
               </td>
               {% for day in days %}
               <td>
-                <div class="dropdown">
-                  <button type="button" class="btn btn-outline-secondary dropdown-toggle dropdown-btn">Dostępne sale</button>
-                  <div class="dropdown-menu dropdown-availability">
+                <div>
+                  <strong>Dostępne sale:</strong>
+                  <div class="availability-checkbox-list">
                     {% for classroom in classrooms %}
                     <label class="classroom-avability-checkbox">
                       <input
@@ -148,9 +148,10 @@
                     {% endfor %}
                   </div>
                 </div>
-                <div class="dropdown">
-                  <button type="button" class="btn btn-outline-secondary dropdown-toggle dropdown-btn">Dostępni lektorzy</button>
-                  <div class="dropdown-menu dropdown-availability">
+
+                <div>
+                  <strong>Dostępni lektorzy:</strong>
+                  <div class="availability-checkbox-list">
                     {% for employee in employees %}
                     <label class="employee-avability-checkbox">
                       <input
@@ -179,8 +180,6 @@
     </form>
     
     <br>
-    <script src="/static/js/clear_time.js"></script>
-    <script src="/static/js/avability_table.js"></script>
   
   <div class="generate-timetable-button-container">
     <a class="btn button-generate-timetable" href="{% url 'generate_timetable' %}" id="generate-button" onclick="showLoading()">Wygeneruj plan zajęć</a>
@@ -210,21 +209,26 @@
   <tbody>
     {% for interval in timetable %}
     {% if interval.interval %}
-    <tr>
+    <tr data-interval-id="{{ interval.interval.id }}">
       <td>
         {{ interval.interval.start_time|time:"H:i" }} - {{ interval.interval.end_time|time:"H:i" }}
       </td>
       {% for day_data in interval.days %}
-      <td>
+      <td class="droppable" data-day="{{ day_data.day }}">
         {% for lesson in day_data.lessons %}
-        <div class="lesson" style="background-color: #add8e6;">
-          <strong>{{ lesson.course__name }}</strong><br />
-          {{ lesson.teacher__user__last_name }}<br />
-          Sala: {{ lesson.classroom__name }}<br />
-          <small>{{ day_data.day }}</small><br />
-          <small>Od {{ lesson.time_interval__start_time|time:"H:i" }}</small> -
-          <small>Do {{ lesson.time_interval__end_time|time:"H:i" }}</small>
-        </div>
+        <div
+        class="draggable lesson"
+        draggable="true"
+        data-lesson-id="{{ lesson.id }}"
+        style="background-color: #add8e6;"
+        ondblclick="openEditModal(data-lesson-id)">
+        <strong>{{ lesson.course__name }}</strong><br />
+        {{ lesson.teacher__user__last_name }}<br />
+        Sala: {{ lesson.classroom__name }}<br />
+        <small>{{ day_data.day }}</small><br />
+        <small>Od {{ lesson.time_interval__start_time|time:"H:i" }}</small> -
+        <small>Do {{ lesson.time_interval__end_time|time:"H:i" }}</small>
+      </div>
         {% empty %}
         <div class="empty-slot">---</div>
         {% endfor %}
@@ -241,7 +245,37 @@
     </div>
 {% endif %}
 
+<div id="editLessonModal" class="modal">
+  <div class="modal-content">
+      <div class="timetable-edit-close-btn"><button class="close">&times;</button></div>
+      <h3>Edytuj lekcję</h3>
+      <form id="editLessonForm">
+          <input type="hidden" name="lesson_id" id="lessonIdInput">
+          <div>
+            <label for="classroomSelect">Sala:</label>
+            <select id="classroomSelect" name="classroom_id">
+                {% for classroom in classrooms %}
+                <option value="{{ classroom.id }}">{{ classroom.name }}</option>
+                {% endfor %}
+            </select>
+          </div>
+          <div>
+            <label for="teacherSelect">Lektor:</label>
+            <select id="teacherSelect" name="teacher_id">
+                {% for employee in employees %}
+                <option value="{{ employee.id }}">{{ employee.user.last_name }}</option>
+                {% endfor %}
+            </select>
+          </div>
+          <button class="btn button-orange" type="button" id="saveLessonChanges">Zapisz</button>
+      </form>
+  </div>
 </div>
+</div>
+<script src="/static/js/timetable_edition_classrooms_teachers.js"></script>
+<script src="/static/js/timetable_edition_days_intervals.js"></script>
 <script src="/static/js/timetable_loading.js"></script>
+<script src="/static/js/clear_time.js"></script>
+<script src="/static/js/avability_table.js"></script>
   {% endblock %}
 
