@@ -3,9 +3,13 @@ from . import views
 from django.shortcuts import render
 from django.conf import settings
 from django.conf.urls.static import static
+from django.conf.urls import handler404
+
+handler404 = views.custom_404_view 
 
 urlpatterns = [
     path("", views.home, {"user_role": "refugee"}, name="home"),
+    path("no_registration/", views.no_registration_view, {"user_role": "refugee"}, name="no_registration"),
     path(
         "form/", views.refugee_registration_view, {"user_role": "refugee"}, name="form"
     ),
@@ -51,12 +55,6 @@ urlpatterns = [
         name="delete_refugee",
     ),
     path(
-        "systemadmin/set-current-test/<int:test_id>/",
-        views.set_current_test,
-        {"user_role": "admin"},
-        name="set_current_test",
-    ),
-    path(
         "delete_employee/<str:email>/",
         views.delete_employee,
         {"user_role": "admin"},
@@ -92,6 +90,8 @@ urlpatterns = [
         {"user_role": "admin"},
         name="save_points",
     ),
+    path( "systemadmin/assignment_to_courses/<int:test_id>/<str:recruitment_name>/", views.assignment_to_courses, {"user_role": "admin"}, name="assignment_to_courses"),
+    path( "systemadmin/recruitment_management", views.recruitment_management, {"user_role": "admin"}, name="recruitment_management"),
     path(
         "systemadmin/timetable/",
         views.timetable_view,

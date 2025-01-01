@@ -27,6 +27,7 @@
 <table class="table">
     <thead>
         <tr>
+            <th></th>
             <th>Nazwa kursu</th>
             <th>Język</th>
             <th>Akcje</th>
@@ -37,6 +38,13 @@
     </thead>
     <tbody>
         {% for course in courses %}
+        <td>
+            {% if course.is_slavic %}
+            <div class="rectangle blue-rectangle"></div>
+            {% else %}
+            <div class="rectangle"></div>
+            {% endif %}
+        </td>
             <td>{{ course.name }}</td>
             <td>{{ course.language }}</td>
             <td>
@@ -93,6 +101,9 @@
         {% endfor %}
     </tbody>
 </table>
+<div class="courses-table-desc">
+<div class="rectangle blue-rectangle"></div> Kurs dla osób z krajów słowiańskich
+</div>
 <h2 class="courses-managment-title">Dodaj/Edytuj kurs:</h2>
 <form method="POST">
     {% csrf_token %}

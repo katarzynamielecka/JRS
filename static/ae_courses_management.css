@@ -56,3 +56,19 @@ input[type="checkbox"] {
     margin-left: 10px;
 
 }
+
+.rectangle{
+    width: 3px;
+    height: 35px;
+}
+
+.blue-rectangle{
+    background-color: #89CFF0;
+
+}
+
+.courses-table-desc{
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+}

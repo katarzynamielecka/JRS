@@ -29,7 +29,7 @@ document.querySelectorAll(".droppable").forEach((cell) => {
             headers: {
                 "Content-Type": "application/json",
                 "X-Requested-With": "XMLHttpRequest",
-                "X-CSRFToken": csrfToken,  // Add CSRF token to the request
+                "X-CSRFToken": csrfToken,  
             },
             body: JSON.stringify(payload),
         })
@@ -37,7 +37,6 @@ document.querySelectorAll(".droppable").forEach((cell) => {
             .then((data) => {
                 if (data.success) {
                     alert("Plan zaktualizowany!");
-                    // Możesz dodać logikę odświeżania widoku, np. przeładowanie strony
                     location.reload();
                 } else {
                     alert(data.error || "Wystąpił błąd.");

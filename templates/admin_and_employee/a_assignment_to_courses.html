@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+{% load static %}
+{% block head %}
+<link rel="stylesheet" href="{% static 'admin_and_employee.css' %}">
+<link rel="stylesheet" href="{% static 'base.css' %}">
+
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    {% if messages %}
+        <div class="alert-overlay">
+            <div class="alert-box">
+                <button type="button" class="btn-close" aria-label="Close" onclick="closeAlertBox()">X</button>
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} mb-2">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+
+
+<button onclick="window.history.back()" class="btn button-grey">
+    <i class="fa-solid fa-arrow-left"></i>
+</button>
+<h1 class="page-title">PRZYPISANIE UCZESTNIKÓW DO KURSÓW NA PODSTAWIE WYNIKÓW TESTU</h1>
+    {% for data in course_data %}
+        <h2>Kurs: {{ data.course.name }}</h2>
+        <p>Język: {{ data.course.language.name }}</p>
+        <p>
+            Słowiańskojęzyczny: 
+            {% if data.is_slavic %}
+                Tak
+            {% else %}
+                Nie
+            {% endif %}
+        </p>
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="course_id" value="{{ data.course.id }}">
+            <input type="hidden" name="test_id" value="{{ test.id }}">
+            <label for="min_points">Minimalna liczba punktów:</label>
+            <input type="number" value="{{ data.min_points }}"  id="min_points" name="min_points" min="0" step="0.5" required>
+        
+            <label for="max_points">Maksymalna liczba punktów:</label>
+            <input type="number" id="max_points" value="{{ data.max_points }}" name="max_points" min="0" step="0.5" required>
+        
+            <button type="submit" class="btn button-orange">Zapisz</button>
+        </form>
+        
+        <table class="table table-responsive">
+            <thead>
+                <tr>
+                    <th></th>
+                    <th>Imię</th>
+                    <th>Nazwisko</th>
+                    <th>Wynik testu</th>
+                    <th></th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for refugee_data in data.refugees_with_scores %}
+                    <tr>
+                        <td>
+                            {% if refugee_data.is_slavic %}
+                                <div class="slavic-indicator"></div>
+                            {% endif %}
+                        </td>
+                        <td>{{ refugee_data.refugee.first_name }}</td>
+                        <td>{{ refugee_data.refugee.last_name }}</td>
+                        <td>{{ refugee_data.test_score }}</td>
+                        <td>
+                            <div class="dropdown">
+                                <button class="btn btn-outline-info dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-expanded="false">
+                                    Zmień kurs
+                                </button>
+                                <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                    {% for crs in course_data %}
+                                        <form method="POST" style="margin: 0;">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="change_course" value="1">
+                                            <input type="hidden" name="refugee_id" value="{{ refugee_data.refugee.id }}">
+                                            <input type="hidden" name="new_course_id" value="{{ crs.course.id }}">
+                                            <button type="submit" class="dropdown-item">
+                                                {{ crs.course.name }}
+                                            </button>
+                                        </form>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            
+                        </td>    
+                        <td>
+                            <form method="POST" style="display: inline;">
+                                {% csrf_token %}
+                                <input type="hidden" name="remove_course" value="1">
+                                <input type="hidden" name="refugee_id" value="{{ refugee_data.refugee.id }}">
+                                <input type="hidden" name="course_id" value="{{ data.course.id }}">
+                                <button type="submit" class="btn btn-outline-danger">
+                                    Usuń
+                                </button>
+                            </form>
+                        </td>
+                        
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="7" style="text-align: center;">Brak uchodźców przypisanych do tego kursu.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        <br>
+    {% endfor %}
+
+    <h2>Nieprzypisani uchodźcy</h2>
+    <table class="table table-responsive">
+        <thead>
+            <tr>
+                <th></th>
+                <th>Imię</th>
+                <th>Nazwisko</th>
+                <th>Wynik testu</th>
+                <th>Dodaj do kursu</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for refugee_data in unassigned_refugees_data %}
+                <tr>
+                    <td>
+                        {% if refugee_data.is_slavic %}
+                            <div class="slavic-indicator"></div>
+                        {% endif %}
+                    </td>
+                    <td>{{ refugee_data.refugee.first_name }}</td>
+                    <td>{{ refugee_data.refugee.last_name }}</td>
+                    <td>{{ refugee_data.test_score }}</td>
+                    <td>
+                        <div class="dropdown">
+                            <button class="btn btn-outline-info dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-expanded="false">
+                                Dodaj do kursu
+                            </button>
+                            <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                {% for crs in course_data %}
+                                    <form method="POST" style="margin: 0;">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="change_course" value="1">
+                                        <input type="hidden" name="refugee_id" value="{{ refugee_data.refugee.id }}">
+                                        <input type="hidden" name="new_course_id" value="{{ crs.course.id }}">
+                                        <button type="submit" class="dropdown-item">
+                                            {{ crs.course.name }}
+                                        </button>
+                                    </form>
+                                {% endfor %}
+                            </div>
+                        </div> 
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="4" style="text-align: center;">Brak nieprzypisanych uchodźców.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+</div>
+{% endblock %}

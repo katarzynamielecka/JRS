@@ -4,6 +4,72 @@ from django.utils.timezone import now
 from django_countries.fields import CountryField
 
 
+class Language(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+
+    def __str__(self):
+        return self.name
+
+class LanguageTest(models.Model):
+    title = models.CharField(max_length=255)
+    description = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    language = models.ForeignKey(Language, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.title
+
+
+class Semester(models.Model):
+    name = models.CharField(max_length=255)
+    start_date = models.DateField(blank=True, null=True)
+    end_date = models.DateField(blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.name} ({self.start_date} - {self.end_date})"
+    
+    @classmethod
+    def get_current_semesters(cls):
+        today = now().date()
+        return cls.objects.filter(start_date__lte=today, end_date__gte=today)
+
+class Recruitment(models.Model):
+    name = models.CharField(max_length=255, verbose_name="Nazwa rekrutacji",  unique=True )
+    start_date = models.DateField(verbose_name="Data rozpoczęcia")
+    end_date = models.DateField(verbose_name="Data zakończenia")
+    semester = models.ForeignKey(
+        Semester,
+        on_delete=models.CASCADE,
+        related_name="recruitments",
+        verbose_name="Na semestr",
+        null=True
+    )
+    max_people = models.IntegerField(default=1000000, verbose_name="Maksymalna ilość zarekrutowanych osób")
+    active = models.BooleanField(default=False)
+    activated_at = models.DateTimeField(null=True, blank=True)
+    manually_closed = models.BooleanField(default=False)
+    language_tests = models.ManyToManyField(LanguageTest, related_name="recruitments", verbose_name="Testy językowe", blank=True)
+    
+    def update_active_status(self):
+        if not self.manually_closed and self.start_date <= now().date() <= self.end_date:
+            self.active = True
+            if not self.activated_at: 
+                self.activated_at = now()
+        else:
+            self.active = False
+        self.save()
+
+    @property
+    def is_within_active_dates(self):
+        today = now().date()
+        return self.start_date <= today <= self.end_date
+    
+    def get_courses(self, language=None):
+        courses = LanguageCourse.objects.filter(semesters=self.semester).prefetch_related("refugees")
+        if language:
+            courses = courses.filter(language=language)
+        return courses
+    
 class Employee(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     is_admin = models.BooleanField(default=False)
@@ -16,11 +82,6 @@ class Employee(models.Model):
         return f"{self.user.first_name} {self.user.last_name}"
 
 
-class Language(models.Model):
-    name = models.CharField(max_length=100, unique=True)
-
-    def __str__(self):
-        return self.name
 
 
 class Refugee(models.Model):
@@ -46,6 +107,29 @@ class Refugee(models.Model):
     truth_confirmation = models.BooleanField(default=False)
     comments = models.TextField(blank=True)
     language = models.ForeignKey(Language, on_delete=models.CASCADE)
+    courses = models.ManyToManyField(
+        "LanguageCourse", related_name="refugees", blank=True
+    )
+
+    SLOVIC_COUNTRIES = [
+        "PL",  # Polska
+        "CZ",  # Czechy
+        "SK",  # Słowacja
+        "RU",  # Rosja
+        "BY",  # Białoruś
+        "UA",  # Ukraina
+        "RS",  # Serbia
+        "HR",  # Chorwacja
+        "BA",  # Bośnia i Hercegowina
+        "ME",  # Czarnogóra
+        "SI",  # Słowenia
+        "MK",  # Macedonia Północna
+        "BG",  # Bułgaria
+    ]
+
+    def is_slavic_speaker(self):
+        return self.nationality.code in self.SLOVIC_COUNTRIES
+
 
     def get_nationality_name(self):
         return self.nationality.name
@@ -53,28 +137,6 @@ class Refugee(models.Model):
     def __str__(self):
         return f"{self.first_name} {self.last_name}"
 
-class Semester(models.Model):
-    name = models.CharField(max_length=255)
-    start_date = models.DateField(blank=True, null=True)
-    end_date = models.DateField(blank=True, null=True)
-
-    def __str__(self):
-        return f"{self.name} ({self.start_date} - {self.end_date})"
-    
-    @classmethod
-    def get_current_semesters(cls):
-        today = now().date()
-        return cls.objects.filter(start_date__lte=today, end_date__gte=today)
-
-class LanguageTest(models.Model):
-    title = models.CharField(max_length=255)
-    description = models.TextField(blank=True, null=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    language = models.ForeignKey(Language, on_delete=models.CASCADE)
-    is_current = models.BooleanField(default=False)
-
-    def __str__(self):
-        return self.title
 
 
 class Question(models.Model):
@@ -106,15 +168,67 @@ class Choice(models.Model):
         return self.text
 
 
-class UserAnswer(models.Model):
-    refugee = models.ForeignKey(Refugee, on_delete=models.CASCADE)
-    question = models.ForeignKey(Question, on_delete=models.CASCADE)
-    choice = models.ForeignKey(Choice, null=True, blank=True, on_delete=models.CASCADE)
-    text_answer = models.TextField(null=True, blank=True)
-    awarded_points = models.FloatField(null=True, blank=True)
+class FilledTest(models.Model):
+    refugee = models.ForeignKey(
+        Refugee, on_delete=models.CASCADE, related_name="completed_tests"
+    )
+    test = models.ForeignKey(
+        LanguageTest, on_delete=models.CASCADE, related_name="completed_tests"
+    )
+    recruitment = models.ForeignKey(
+        Recruitment, on_delete=models.CASCADE, related_name="completed_tests"
+    )
+    total_points = models.FloatField(default=0.0)
+    completed_at = models.DateTimeField(auto_now_add=True)
+    test_snapshot = models.JSONField(default=dict) 
 
     def __str__(self):
-        return f"Answer by {self.refugee} to {self.question}"
+        return f"{self.refugee} - {self.test} ({self.recruitment.name})"
+
+    def calculate_total_points(self):
+        """
+        Recalculate total points based on related UserAnswer objects.
+        """
+        total_points = UserAnswer.objects.filter(filled_test=self).aggregate(
+            models.Sum("awarded_points")
+        )["awarded_points__sum"] or 0.0
+        self.total_points = total_points
+        self.save()
+
+    
+
+class UserAnswer(models.Model):
+    filled_test = models.ForeignKey(
+        FilledTest,
+        on_delete=models.CASCADE,
+        related_name="user_answers",
+        verbose_name="Completed Test",
+        null=True, blank=True
+    )
+    question = models.ForeignKey(Question, on_delete=models.CASCADE)
+    choice = models.ForeignKey(Choice, null=True, blank=True, on_delete=models.CASCADE)
+    choice_text = models.TextField(null=True, blank=True) 
+    text_answer = models.TextField(null=True, blank=True)
+    awarded_points = models.FloatField(null=True, blank=True)
+    question_text = models.TextField() 
+    max_points = models.FloatField(default=1.0)
+
+    def __str__(self):
+        return f"Answer to {self.question} in {self.completed_test}"
+
+    def copy_question_data(self):
+        if self.question:
+            self.question_text = self.question.text
+            self.question_type = self.question.question_type
+            self.max_points = self.question.max_points
+        if self.choice:
+            self.choice_text = self.choice.text
+
+    def save(self, *args, **kwargs):
+        if not self.pk:
+            self.copy_question_data()
+        super().save(*args, **kwargs)
+
 
 
 class TimeInterval(models.Model):
@@ -139,10 +253,20 @@ class LanguageCourse(models.Model):
     language = models.ForeignKey(Language, on_delete=models.CASCADE)
     weekly_classes = models.PositiveIntegerField(default=1)
     semesters = models.ManyToManyField(Semester, related_name="courses")
+    is_slavic = models.BooleanField(default=False)
 
     def __str__(self):
         return f"{self.name} ({self.language})"
 
+class CourseTestThreshold(models.Model):
+    course = models.ForeignKey(LanguageCourse, on_delete=models.CASCADE, related_name="test_thresholds")
+    test = models.ForeignKey(LanguageTest, on_delete=models.CASCADE)
+    min_points = models.PositiveIntegerField(null=True, blank=True)
+    max_points = models.PositiveIntegerField(null=True, blank=True)
+    recruitment = models.ForeignKey(Recruitment, on_delete=models.CASCADE, related_name="course_test_thresholds", null=True, blank=True)
+    
+    def __str__(self):
+        return f"{self.course.name} - {self.test.title} ({self.min_points}-{self.max_points} pkt)"
 
 class Classroom(models.Model):
     name = models.CharField(max_length=50)

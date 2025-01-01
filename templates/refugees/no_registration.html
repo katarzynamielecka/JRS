@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container centered-content">
+<h1>No Active Registration</h1>
+<p>Currently, there is no active registration available.</p>
+
+{% if upcoming_recruitments %}
+    <h2>Upcoming Recruitments</h2>
+    <ul>
+        {% for recruitment in upcoming_recruitments %}
+            <li>
+                <strong>{{ recruitment.name }}</strong><br>
+                Start Date: {{ recruitment.start_date }}<br>
+                End Date: {{ recruitment.end_date }}<br>
+                Semester: {{ recruitment.semester }}
+            </li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <p>There are no upcoming recruitments scheduled at this time.</p>
+{% endif %}
+</div>
+{% endblock %}

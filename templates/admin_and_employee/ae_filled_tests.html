@@ -9,35 +9,34 @@
     <button onclick="window.history.back()" class="btn button-grey">
         <i class="fa-solid fa-arrow-left"></i>
     </button>
-<h1 class="page-title">WYPEŁNIONE TESTY: {{ test.title }}</h1>
-<form method="post" action="{% url 'save_points' %}">
-    {% csrf_token %}
-    <input type="hidden" name="test_id" value="{{ test.id }}">
-    <table class="table table-responsive">
-        <thead>
-            <tr>
-                <th scope="col">Imię i nazwisko</th>
-                <th scope="col">Sprawdzone zadania</th>
-                <th scope="col">Punkty</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for data in refugee_data %}
-                <tr>
-                    <td>
-                        {{ data.refugee.first_name }} {{ data.refugee.last_name }}
-                    </td>
-                    <td>
-                        {{ data.checked_tasks }}/{{ data.total_tasks }}
-                    </td>
-                    <td>{{ data.total_points }} / {{ total_max_points }}</td>
+    <h1 class="page-title">WYPEŁNIONE TESTY: {{ test.title }}</h1>
+    <form method="post" action="{% url 'save_points' %}">
+        {% csrf_token %}
+        <input type="hidden" name="test_id" value="{{ test.id }}">
 
+        {% for recruitment_name, refugee_data in grouped_data.items %}
+        <h2 class="recruitment-title">Rekrutacja: {{ recruitment_name }}</h2>
+        <a href="{% url 'assignment_to_courses' test.id  recruitment_name %}" class="btn button-orange">Przydzielanie kursantów do kursów językowych</a>
+        <table class="table table-responsive">
+            <thead>
+                <tr>
+                    <th scope="col">Imię i nazwisko</th>
+                    <th scope="col">Sprawdzone zadania</th>
+                    <th scope="col">Punkty</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for data in refugee_data %}
+                <tr>
+                    <td>{{ data.refugee.first_name }} {{ data.refugee.last_name }} {{ data.filled_test }}</td>
+                    <td>{{ data.checked_tasks }}/{{ data.total_tasks }}</td>
+                    <td>{{ data.total_points }} / {{ data.max_points }}</td>
                     <td>
                         <a href="#" class="text-dark-blue" onclick="toggleDetails('{{ data.refugee.id }}'); return false;">Zobacz test</a>
                     </td>
                 </tr>
-      
+
                 <tr id="details-{{ data.refugee.id }}" class="details-row" style="display: none;">
                     <td colspan="4">
                         <table class="table">
@@ -51,35 +50,34 @@
                             </thead>
                             <tbody>
                                 {% for answer in data.answers %}
-                                    <tr>
-                                        <td>{{ answer.question.text }}</td>
-                                        <td>
-                                            {% if answer.text_answer %}
-                                                {{ answer.text_answer }}
-                                            {% elif answer.choice %}
-                                                {{ answer.choice.text }}
-                                            {% else %}
-                                                Brak odpowiedzi
-                                            {% endif %}
-                                        </td>
-                                        <td>
-                                            <input type="number" name="points_{{ answer.id }}" value="{{ answer.awarded_points }}" min="0" max="{{ answer.question.max_points }}"  step="0.5" class="form-control">
-                                        </td>
-                                        <td>
-                                            {{ answer.question.max_points }}
-                                        </td>
-                                    </tr>
+                                <tr>
+                                    <td>{{ answer.question.text }}</td>
+                                    <td>
+                                        {% if answer.text_answer %}
+                                        {{ answer.text_answer }}
+                                        {% elif answer.choice %}
+                                        {{ answer.choice.text }}
+                                        {% else %}
+                                        Brak odpowiedzi
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <input type="number" name="points_{{ answer.id }}" value="{{ answer.awarded_points }}" min="0" max="{{ answer.question.max_points }}" step="0.5" class="form-control">
+                                    </td>
+                                    <td>{{ answer.question.max_points }}</td>
+                                </tr>
                                 {% endfor %}
                             </tbody>
                         </table>
+                        <input type="hidden" name="filled_test_id" value="{{ data.filled_test }}">
                     </td>
                 </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-
-    <button type="submit" class="btn button-orange">Zapisz punkty</button>
-</form>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endfor %}
+        <button type="submit" class="btn button-orange">Zapisz punkty</button>
+    </form>
 </div>
 <script>
 function toggleDetails(refugeeId) {

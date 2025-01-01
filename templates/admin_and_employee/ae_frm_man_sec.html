@@ -16,6 +16,20 @@
             <button class="btn  button-orange new-test-button">Utwórz nowy test</button>
         </a> 
     </div>
+    <h4>Ostatnia aktywna rekrutacja:</h4>
+        {% if last_recruitment %}
+            <p>{{ last_recruitment.name }} - {{ last_recruitment.activated_at|date:"d.m.Y" }}</p>
+            <ul>
+                {% for test in last_recruitment_tests %}
+                    <li>{{ test.language.name }} - {{ test.title }}</li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>Brak rekrutacji, które były aktywne.</p>
+        {% endif %}
+
+
+        <br>
     {% for language in languages %}
         <h5>Lista testów językowych: {{ language.name }}</h5>
         <div class="table-container">
@@ -25,7 +39,6 @@
                     <th scope="col">Nazwa testu</th>
                     <th scope="col">Data utworzenia</th>
                     <th scope="col">Akcje</th>
-                    <th scope="col">Aktualny test</th>
                     <th></th>
                 </tr>
             </thead>
@@ -42,19 +55,6 @@
                                onclick="return confirm('Czy na pewno chcesz usunąć ten test?');">
                                 <button class="btn btn-outline-danger table-button">Usuń</button>
                             </a>
-                        </td>
-                        <td>
-                            {% if not test.is_current %}
-                                <form method="post">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="current_test" value="{{ test.id }}">
-                                    <button type="submit" class="btn table-button btn-outline-success">
-                                        Wybierz
-                                    </button>
-                                </form>
-                            {% else %}
-                                <button class="btn table-button btn-success" disabled>Aktualny</button>
-                            {% endif %}
                         </td>
                         <td>
                             <a href="{% url 'test_check' test.id %}" style="text-decoration: none;">

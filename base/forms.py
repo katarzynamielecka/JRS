@@ -6,7 +6,7 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from .models import Employee, Question, Choice, LanguageTest, Language
 from django.contrib.auth.password_validation import validate_password
-from .models import Refugee, LanguageCourse, Semester
+from .models import Refugee, LanguageCourse, Semester, Recruitment
 
 
 class EmployeeRegisterForm(UserCreationForm):
@@ -159,7 +159,16 @@ class RefugeeRegistrationForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        available_languages = Language.objects.filter(languagecourse__isnull=False).distinct()
+        active_recruitment = Recruitment.objects.filter(
+            active=True
+        ).first()
+        
+        if active_recruitment:
+            available_languages = Language.objects.filter(
+                languagetest__in=active_recruitment.language_tests.all()
+            ).distinct()
+        else:
+            available_languages = Language.objects.none()
         self.fields['language'].queryset = available_languages
         self.fields['language'].label = "Select language (available courses)"
 
@@ -200,16 +209,18 @@ ChoiceFormSet = inlineformset_factory(
 class LanguageCourseForm(forms.ModelForm):
     class Meta:
         model = LanguageCourse
-        fields = ['name', 'language', 'semesters']
+        fields = ['name', 'language', 'semesters', 'is_slavic']
         labels = {
             'name': 'Nazwa (PO ANGIELSKU)', 
             'language': 'Język',
             'semesters': 'Semestry',
+            'is_slavic': 'Kurs dla osób z krajów słowiańskich',
         }
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control'}),
             'language': forms.Select(attrs={'class': 'form-control'}),
             'semesters': forms.CheckboxSelectMultiple(attrs={'class': 'form-check-input'}),
+            'is_slavic': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
         error_messages = {
             'name': {'required': 'To pole jest wymagane.'},
@@ -228,3 +239,59 @@ class LanguageForm(forms.ModelForm):
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Dodaj nowy język'}),
         }
+
+class RecruitmentForm(forms.ModelForm):
+    language_tests_by_language = {}
+
+    class Meta:
+        model = Recruitment
+        fields = ['name', 'start_date', 'end_date', 'semester', 'max_people']  # Usuń 'language_tests' z pól
+        widgets = {
+            'start_date': forms.DateInput(attrs={'type': 'date'}),
+            'end_date': forms.DateInput(attrs={'type': 'date'}),
+            'max_people': forms.NumberInput(),
+            'semester': forms.Select(attrs={'class': 'form-select'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        grouped_tests = {}
+        for test in LanguageTest.objects.select_related('language'):
+            if test.language.name not in grouped_tests:
+                grouped_tests[test.language.name] = []
+            grouped_tests[test.language.name].append(test)
+
+        self.language_tests_by_language = grouped_tests
+
+        for language, tests in self.language_tests_by_language.items():
+            choices = [(test.id, test.title) for test in tests]
+            self.fields[f'language_tests_{language}'] = forms.ChoiceField(
+                choices=[('', 'Wybierz test')] + choices,
+                widget=forms.RadioSelect,
+                required=False,
+                label=f"Testy dla języka {language}"
+            )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        start_date = cleaned_data.get('start_date')
+        end_date = cleaned_data.get('end_date')
+
+        if start_date and end_date and end_date <= start_date:
+            raise forms.ValidationError("Data zakończenia rekrutacji musi być późniejsza niż data rozpoczęcia.")
+
+        return cleaned_data
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        selected_tests = []
+        for language, tests in self.language_tests_by_language.items():
+            test_field_name = f'language_tests_{language}'
+            test_id = self.cleaned_data.get(test_field_name)
+            if test_id: 
+                selected_tests.append(int(test_id))
+        if commit:
+            instance.save()
+            instance.language_tests.set(selected_tests) 
+        return instance

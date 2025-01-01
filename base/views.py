@@ -1,12 +1,17 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.forms import formset_factory
 import random
 from django.contrib.auth import authenticate, login
 from django.utils import formats
 from django.db import transaction
+from django.utils.timezone import now
 from django.contrib import messages
 from django.contrib.auth import logout
+from django.db.models import Subquery, OuterRef, Min
 from datetime import datetime
 from collections import defaultdict
+from itertools import groupby
+from operator import itemgetter
 from django.db.models import Sum, Q
 from datetime import time
 from django.views.decorators.csrf import csrf_exempt
@@ -23,6 +28,7 @@ from .forms import (
     RefugeeRegistrationForm,
     LanguageTestForm,
     LanguageForm,
+    RecruitmentForm
 )
 from .models import (
     Employee,
@@ -39,23 +45,62 @@ from .models import (
     Availability,
     ClassSchedule,
     Semester,
+    CourseTestThreshold,
+    FilledTest,
+    Recruitment
 )
 from .decorators import admin_required, employee_required, admin_or_employee_required
 import pandas as pd
 from django.shortcuts import get_object_or_404, redirect
 from .models import LanguageTest, Refugee, Question, Choice, UserAnswer
 from datetime import datetime
+from django.http import HttpResponseNotFound
+
+
+def custom_404_view(request, exception=None):
+    return render(request, '404.html', status=404)
 
 
 # REFUGEES
+
+
 def home(request, user_role):
-    courses = LanguageCourse.objects.all()
+    active_recruitment = Recruitment.objects.filter(
+        active=True
+    ).first()
+    if not active_recruitment:
+        return redirect("no_registration")
+    if active_recruitment and active_recruitment.semester:
+        active_semester = active_recruitment.semester
+        earliest_semesters = LanguageCourse.objects.filter(
+            id=OuterRef('id')
+        ).values('semesters__start_date').order_by('semesters__start_date')[:1]
+        courses = LanguageCourse.objects.annotate(
+            earliest_semester=Subquery(earliest_semesters)
+        ).filter(
+            earliest_semester=active_semester.start_date
+        )
+    else:
+        courses = LanguageCourse.objects.none()
     context = {
         "user_role": user_role,
         "courses": courses,
     }
     return render(request, "refugees/home.html", context)
 
+
+def no_registration_view(request, user_role):
+    active_recruitment = Recruitment.objects.filter(active=True).exists()
+    if active_recruitment:
+        return redirect("home", user_role=user_role)
+    upcoming_recruitments = Recruitment.objects.filter(
+        start_date__gt=now().date()
+    ).order_by("start_date")[:3]
+    context = {
+        "user_role": user_role,
+        "upcoming_recruitments": upcoming_recruitments,
+    }
+    return render(request, "refugees/no_registration.html", context)
 
 def refugee_registration_view(request, user_role):
     if request.method == "POST":
@@ -82,15 +127,26 @@ def language_test_view(request, user_role):
     refugee_data = request.session.get("refugee_data")
     if not refugee_data:
         return redirect("refugee_registration")
+    
+    recruitment = Recruitment.objects.filter(active=True).first()
+    if not recruitment:
+        return redirect("no_recruitment")
+
     language_id = refugee_data.get("language_id")
     language = get_object_or_404(Language, id=language_id)
-    test = get_object_or_404(LanguageTest, language=language, is_current=True)
+    test = recruitment.language_tests.filter(language=language).first()
+    if not test:
+        return redirect("no_recruitment")  
+
     questions = test.questions.filter(
         Q(question_type="open") | Q(question_type="choice", choices__isnull=False)
     ).distinct()
 
     if request.method == "POST":
         answers = {}
+        total_points = 0
+        refugee = None
+
         for question in questions:
             if question.question_type == "choice":
                 selected_choice_id = request.POST.get(f"question_{question.id}")
@@ -98,12 +154,18 @@ def language_test_view(request, user_role):
             elif question.question_type == "open":
                 open_answer = request.POST.get(f"question_{question.id}")
                 answers[question.id] = open_answer
-        request.session["test_answers"] = answers
+        
         if refugee_data:
             refugee_data["dob"] = datetime.strptime(
                 refugee_data["dob"], "%Y-%m-%d"
             ).date()
             refugee = Refugee.objects.create(**refugee_data)
+            filled_test = FilledTest.objects.create(
+                refugee=refugee,
+                test=test,
+                recruitment=recruitment
+            )
+
             for question_id, answer in answers.items():
                 question = Question.objects.get(id=question_id)
                 if question.question_type == "choice":
@@ -111,27 +173,30 @@ def language_test_view(request, user_role):
                     awarded_points = (
                         question.max_points if selected_choice.is_correct else 0
                     )
+                    total_points += awarded_points
                     UserAnswer.objects.create(
-                        refugee=refugee,
                         question=question,
                         choice=selected_choice,
                         awarded_points=awarded_points,
+                        filled_test=filled_test
                     )
                 else:
                     UserAnswer.objects.create(
-                        refugee=refugee, question=question, text_answer=answer
+                        question=question,
+                        text_answer=answer,
+                        filled_test=filled_test
                     )
-
+            filled_test.total_points = total_points
+            filled_test.save()
             request.session.pop("refugee_data", None)
             request.session.pop("test_answers", None)
-
             return redirect("success_view")
-
     context = {
         "questions": questions,
         "user_role": user_role,
     }
     return render(request, "refugees/language_test.html", context)
+
 
 
 def success_view(request, user_role):
@@ -175,77 +240,60 @@ def logout_view(request):
 @login_required
 @admin_or_employee_required
 def form_management_section(request, user_role):
-    if request.method == "POST":
-        selected_test_id = request.POST.get("current_test")
-        if selected_test_id:
-            test = LanguageTest.objects.get(pk=selected_test_id)
-            LanguageTest.objects.filter(language=test.language).update(is_current=False)
-            test.is_current = True
-            test.save()
     languages = Language.objects.prefetch_related("languagetest_set").all()
+    last_active_recruitment = Recruitment.objects.filter(
+        activated_at__isnull=False
+    ).order_by('-activated_at').first()
+    last_recruitment_tests = []
+    if last_active_recruitment:
+        last_recruitment_tests = (
+            LanguageTest.objects
+            .filter(recruitments=last_active_recruitment)
+            .select_related('language')
+        )
     context = {
         "user_role": user_role,
         "languages": languages,
+        "last_recruitment": last_active_recruitment,
+        "last_recruitment_tests": last_recruitment_tests,
     }
     return render(request, "admin_and_employee/ae_frm_man_sec.html", context)
-
-
-@login_required
-@admin_required
-def set_current_test(request, test_id, user_role):
-    try:
-        LanguageTest.objects.update(is_current=False)
-        test = LanguageTest.objects.get(pk=test_id)
-        test.is_current = True
-        test.save()
-        messages.success(
-            request, f"Test '{test.title}' został ustawiony jako aktualny."
-        )
-    except LanguageTest.DoesNotExist:
-        messages.error(request, "Wybrany test nie istnieje.")
-    return redirect("frm_man_sec")
 
 
 @login_required
 @admin_or_employee_required
 def test_check_view(request, test_id, user_role):
     test = LanguageTest.objects.get(pk=test_id)
-    refugees = Refugee.objects.filter(useranswer__question__test=test).distinct()
+    filled_tests = FilledTest.objects.filter(test=test).select_related("refugee", "recruitment")
     refugee_data = []
-    total_max_points = (
-        Question.objects.filter(test=test).aggregate(total_max=Sum("max_points"))[
-            "total_max"
-        ]
-        or 0
-    )
-    total_questions = test.questions.count()
-    for refugee in refugees:
-        total_points = (
-            UserAnswer.objects.filter(refugee=refugee, question__test=test).aggregate(
-                total_awarded_points=Sum("awarded_points")
-            )["total_awarded_points"]
-            or 0
+    for filled_test in filled_tests:
+        refugee = filled_test.refugee
+        filled_test_id = filled_test.id
+        total_points = filled_test.total_points
+        answers = filled_test.user_answers.select_related("question", "choice")
+        max_points = (
+            answers.aggregate(total_max=Sum("question__max_points"))["total_max"] or 0
         )
-        checked_tasks = UserAnswer.objects.filter(
-            refugee=refugee, question__test=test, awarded_points__isnull=False
-        ).count()
-        answers = UserAnswer.objects.filter(
-            refugee=refugee, question__test=test
-        ).select_related("question")
+        checked_tasks = answers.filter(awarded_points__isnull=False).count()
         refugee_data.append(
             {
+                "filled_test": filled_test_id,
+                "recruitment_name": filled_test.recruitment.name,
                 "refugee": refugee,
                 "total_points": total_points,
                 "checked_tasks": checked_tasks,
-                "total_tasks": total_questions,
+                "total_tasks": answers.count(),
                 "answers": answers,
+                "max_points": max_points,
             }
         )
+    grouped_data = {}
+    for key, group in groupby(sorted(refugee_data, key=itemgetter("recruitment_name")), key=itemgetter("recruitment_name")):
+        grouped_data[key] = list(group)
     context = {
         "user_role": user_role,
         "test": test,
-        "refugee_data": refugee_data,
-        "total_max_points": total_max_points,
+        "grouped_data": grouped_data,
     }
     return render(request, "admin_and_employee/ae_filled_tests.html", context)
 
@@ -255,6 +303,11 @@ def test_check_view(request, test_id, user_role):
 def save_points(request, user_role):
     if request.method == "POST":
         test_id = request.POST.get("test_id")
+        filled_test_id = request.POST.get("filled_test_id")
+        try:
+            filled_test = FilledTest.objects.get(id=filled_test_id)
+        except FilledTest.DoesNotExist:
+            return HttpResponseNotFound("Filled Test not found")
         for key, value in request.POST.items():
             if key.startswith("points_"):
                 try:
@@ -265,7 +318,209 @@ def save_points(request, user_role):
                     user_answer.save()
                 except (ValueError, UserAnswer.DoesNotExist):
                     pass
+            filled_test.calculate_total_points()
         return redirect("test_check", test_id=test_id, user_role=user_role)
+    
+def assignment_to_courses(request, test_id, recruitment_name, user_role):
+    test = LanguageTest.objects.get(pk=test_id)
+    recruitment = Recruitment.objects.get(name = recruitment_name)
+    filled_tests = FilledTest.objects.filter(test=test, recruitment=recruitment).select_related("refugee", "recruitment")
+    courses = recruitment.get_courses().filter(language=test.language)
+    course_data = []
+    for course in courses:
+        threshold = CourseTestThreshold.objects.filter(course=course, test=test).first()
+        refugees_with_scores = []
+        filled_tests_in_course = FilledTest.objects.filter(
+            test=test, refugee__in=course.refugees.all(), recruitment=recruitment
+        ).select_related("refugee")
+        for filled_test in filled_tests_in_course:
+            filled_test.calculate_total_points()
+            refugees_with_scores.append({
+                "refugee": filled_test.refugee,
+                "test_score": filled_test.total_points,
+                "is_slavic": filled_test.refugee.is_slavic_speaker() 
+            })
+        course_data.append({
+            "course": course,
+            "min_points": threshold.min_points if threshold else None,
+            "max_points": threshold.max_points if threshold else None,
+            "refugees_with_scores": refugees_with_scores,
+            "is_slavic": course.is_slavic,
+        })
+        unassigned_refugees = Refugee.objects.filter(
+        courses=None, language=test.language,
+        completed_tests__recruitment=recruitment
+        ).distinct()
+
+        unassigned_refugees_data = []
+        for refugee in unassigned_refugees:
+            filled_test = FilledTest.objects.filter(
+                test=test, refugee=refugee, recruitment=recruitment
+            ).first()
+
+            if filled_test:
+                filled_test.calculate_total_points()
+                unassigned_refugees_data.append({
+                    "refugee": refugee,
+                    "test_score": filled_test.total_points,
+                    "is_slavic": refugee.is_slavic_speaker(),
+                })
+    if request.method == "POST":
+        if request.POST.get("remove_course"):
+            refugee_id = request.POST.get("refugee_id")
+            course_id = request.POST.get("course_id")
+
+            refugee = get_object_or_404(Refugee, id=refugee_id)
+            course = get_object_or_404(LanguageCourse, id=course_id)
+            refugee.courses.remove(course)
+            return redirect(request.path)
+
+        if request.POST.get("change_course"):
+            refugee_id = request.POST.get("refugee_id")
+            new_course_id = request.POST.get("new_course_id")
+            refugee = get_object_or_404(Refugee, id=refugee_id)
+            new_course = get_object_or_404(LanguageCourse, id=new_course_id)
+            refugee.courses.clear()
+            refugee.courses.add(new_course)
+            return redirect(request.path)
+        else:
+            course_id = request.POST.get("course_id")
+            test_id = request.POST.get("test_id")
+            min_points = request.POST.get("min_points")
+            max_points = request.POST.get("max_points")
+            course = get_object_or_404(LanguageCourse, id=course_id)
+            test = get_object_or_404(LanguageTest, id=test_id)
+            try:
+                min_points = int(min_points) if min_points else None
+                max_points = int(max_points) if max_points else None
+                if min_points is not None and max_points is not None and min_points > max_points:
+                    messages.error(request, "Minimalna liczba punktów nie może być większa niż maksymalna.")
+                    return redirect(request.path)
+
+                overlapping_thresholds = CourseTestThreshold.objects.filter(test=test, recruitment=recruitment).exclude(course=course)
+
+                for threshold in overlapping_thresholds:
+                    if not (
+                        (max_points is not None and threshold.min_points is not None and max_points < threshold.min_points) or
+                        (min_points is not None and threshold.max_points is not None and min_points > threshold.max_points)
+                    ):
+                        messages.error(
+                            request,
+                            f"Przedziały punktowe nakładają się z kursem: {threshold.course.name} ({threshold.min_points}-{threshold.max_points} pkt)."
+                        )
+                        return redirect(request.path)
+
+                threshold, created = CourseTestThreshold.objects.get_or_create(course=course, recruitment=recruitment, test=test)
+                threshold.min_points = min_points
+                threshold.max_points = max_points
+                threshold.save()
+                refugees = Refugee.objects.filter(
+                    completed_tests__test=test,
+                    completed_tests__recruitment=recruitment 
+                ).distinct()
+
+                for refugee in refugees:
+                    assignment_function(refugee, test, recruitment)
+            except ValueError:
+                messages.error(request, "Wprowadź poprawne wartości liczby punktów.")
+
+    context = {
+    "user_role": user_role,
+    "courses": courses,
+    "course_data": course_data,
+    "test": test,
+    "unassigned_refugees_data": unassigned_refugees_data,
+    }
+    return render(request, "admin_and_employee/a_assignment_to_courses.html", context)
+
+def assignment_function(refugee, test, recruitment):
+    filled_test = FilledTest.objects.filter(refugee=refugee, test=test, recruitment=recruitment).first()
+    if not filled_test:
+        return None
+    filled_test.calculate_total_points()
+    total_ref_points = filled_test.total_points
+    thresholds = CourseTestThreshold.objects.filter(test=test, recruitment=recruitment)
+    print(thresholds.query)
+    print(list(thresholds))
+    refugee.courses.clear()
+    assigned = False
+    print(thresholds)
+    for threshold in thresholds:
+        course = threshold.course
+        if course.is_slavic:
+            if refugee.is_slavic_speaker() and threshold.min_points <= total_ref_points <= threshold.max_points:
+                refugee.courses.add(course)
+                assigned = True
+        else:
+            if not refugee.is_slavic_speaker() and threshold.min_points <= total_ref_points <= threshold.max_points:
+                refugee.courses.add(course)
+                assigned = True
+
+    return assigned
+
+
+@login_required
+@admin_required
+def recruitment_management(request, user_role):
+    for recruitment in Recruitment.objects.all():
+        recruitment.update_active_status()
+    form = RecruitmentForm()
+    if request.method == "POST":
+        if "finish_recruitment" in request.POST:
+            recruitment_id = request.POST.get("recruitment_id")
+            recruitment = get_object_or_404(Recruitment, id=recruitment_id)
+            recruitment.active = False
+            recruitment.manually_closed = True
+            recruitment.save()
+        elif "resume_recruitment" in request.POST:
+            recruitment_id = request.POST.get("recruitment_id")
+            recruitment = get_object_or_404(Recruitment, id=recruitment_id)
+            if recruitment.start_date <= now().date() <= recruitment.end_date:
+                overlapping_recruitments = Recruitment.objects.filter(
+                    active=True,
+                    start_date__lte=recruitment.end_date,
+                    end_date__gte=recruitment.start_date
+                ).exclude(id=recruitment.id)  
+
+                if overlapping_recruitments.exists():
+                    messages.error(request, "Nie możesz wznowić rekrutacji, ponieważ istnieje już aktywna rekrutacja w tym okresie.")
+                else:
+                    recruitment.active = True
+                    recruitment.manually_closed = False
+                    recruitment.save()
+        elif "delete" in request.POST:
+            recruitment_id = request.POST.get("recruitment_id")
+            recruitment = get_object_or_404(Recruitment, id=recruitment_id)
+            recruitment.delete()
+        else:
+            form = RecruitmentForm(request.POST)
+            if form.is_valid():
+                start_date = form.cleaned_data['start_date']
+                end_date = form.cleaned_data['end_date']
+                active = form.cleaned_data.get('active', False)
+                overlapping_recruitments = Recruitment.objects.filter(
+                    active=True,
+                    start_date__lte=end_date,
+                    end_date__gte=start_date
+                )
+
+                if overlapping_recruitments.exists():
+                    form.add_error(None, "Istnieje już aktywna rekrutacja w tym okresie.")
+                else:
+                    recruitment = form.save(commit=False)
+                    recruitment.save()
+                    form.save_m2m()  
+                    form = RecruitmentForm()  
+            else:
+                messages.error(request, "Wystąpił błąd w formularzu.")
+
+    recruitments = Recruitment.objects.all().order_by('-start_date')
+    context = {
+        "user_role": user_role,
+        "form": form,
+        "recruitments": recruitments,
+    }
+    return render(request, "admin_and_employee/a_recruitment_management.html", context)
 
 
 @login_required
@@ -582,6 +837,7 @@ def refugees_list_view(request, user_role):
     return render(request, "admin_and_employee/a_refugees_list.html", context)
 
 
+
 @login_required
 @admin_required
 def timetable_view(request, user_role,):
@@ -723,29 +979,25 @@ def handle_schedule_update(request):
         return JsonResponse({"error": "Metoda żądania musi być POST."}, status=405)
 
     try:
-        data = json.loads(request.body)  # Wczytaj dane JSON z żądania
+        data = json.loads(request.body)  
         lesson_id = data.get("lesson_id")
         new_day = data.get("day")
         classroom_id = data.get("classroom_id")
         teacher_id = data.get("teacher_id")
         new_interval_id = data.get("interval_id")
-
-        # Pobierz rekord ClassSchedule
         schedule = ClassSchedule.objects.get(id=lesson_id)
 
-        # Aktualizacja dnia i interwału czasu
         if new_day:
             schedule.day = new_day
         if new_interval_id:
             schedule.time_interval_id = new_interval_id
 
-        # Aktualizacja sali i nauczyciela (jeśli podano)
+        
         if classroom_id is not None:
             schedule.classroom_id = classroom_id
         if teacher_id is not None:
             schedule.teacher_id = teacher_id
 
-        # Zapisz zmiany
         schedule.save()
 
         return JsonResponse({"success": True, "message": "Plan zaktualizowany pomyślnie."})
