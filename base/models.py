@@ -11,7 +11,7 @@ class Language(models.Model):
         return self.name
 
 class LanguageTest(models.Model):
-    title = models.CharField(max_length=255)
+    title = models.CharField(max_length=255, unique=True)
     description = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     language = models.ForeignKey(Language, on_delete=models.CASCADE)
@@ -21,7 +21,7 @@ class LanguageTest(models.Model):
 
 
 class Semester(models.Model):
-    name = models.CharField(max_length=255)
+    name = models.CharField(max_length=255, unique=True)
     start_date = models.DateField(blank=True, null=True)
     end_date = models.DateField(blank=True, null=True)
 
@@ -180,7 +180,6 @@ class FilledTest(models.Model):
     )
     total_points = models.FloatField(default=0.0)
     completed_at = models.DateTimeField(auto_now_add=True)
-    test_snapshot = models.JSONField(default=dict) 
 
     def __str__(self):
         return f"{self.refugee} - {self.test} ({self.recruitment.name})"
@@ -205,12 +204,12 @@ class UserAnswer(models.Model):
         verbose_name="Completed Test",
         null=True, blank=True
     )
-    question = models.ForeignKey(Question, on_delete=models.CASCADE)
-    choice = models.ForeignKey(Choice, null=True, blank=True, on_delete=models.CASCADE)
+    question = models.ForeignKey(Question, null=True, blank=True, on_delete=models.SET_NULL)
+    choice = models.ForeignKey(Choice, null=True, blank=True, on_delete=models.SET_NULL)
     choice_text = models.TextField(null=True, blank=True) 
     text_answer = models.TextField(null=True, blank=True)
     awarded_points = models.FloatField(null=True, blank=True)
-    question_text = models.TextField() 
+    question_text = models.TextField(null=True, blank=True) 
     max_points = models.FloatField(default=1.0)
 
     def __str__(self):
@@ -330,3 +329,24 @@ class Availability(models.Model):
         unique_together = ("day", "time_interval")
         verbose_name = "Dostępność"
         verbose_name_plural = "Dostępności"
+
+# class Attendance(models.Model):
+#     schedule = models.ForeignKey(
+#         ClassSchedule, on_delete=models.CASCADE, related_name="attendances"
+#     )
+#     refugee = models.ForeignKey(
+#         Refugee, on_delete=models.CASCADE, related_name="attendances"
+#     )
+#     date = models.DateField()
+#     status = models.CharField(
+#         max_length=10,
+#         choices=[("present", "Obecny"), ("absent", "Nieobecny"), ("late", "Spóźniony"), ("excused absence", "Nieobecny usprawiedliwiony")],
+#         default="absent"
+#     )
+#     notes = models.TextField(blank=True, null=True)
+
+#     def __str__(self):
+#         return f"{self.refugee} - {self.schedule} on {self.date}: {self.get_status_display()}"
+
+#     class Meta:
+#         unique_together = ("schedule", "refugee", "date")

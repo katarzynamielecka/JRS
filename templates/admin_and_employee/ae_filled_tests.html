@@ -29,7 +29,7 @@
             <tbody>
                 {% for data in refugee_data %}
                 <tr>
-                    <td>{{ data.refugee.first_name }} {{ data.refugee.last_name }} {{ data.filled_test }}</td>
+                    <td>{{ data.refugee.first_name }} {{ data.refugee.last_name }}</td>
                     <td>{{ data.checked_tasks }}/{{ data.total_tasks }}</td>
                     <td>{{ data.total_points }} / {{ data.max_points }}</td>
                     <td>
@@ -51,12 +51,12 @@
                             <tbody>
                                 {% for answer in data.answers %}
                                 <tr>
-                                    <td>{{ answer.question.text }}</td>
+                                    <td>{{ answer.question_text }}</td>
                                     <td>
                                         {% if answer.text_answer %}
                                         {{ answer.text_answer }}
-                                        {% elif answer.choice %}
-                                        {{ answer.choice.text }}
+                                        {% elif answer.choice_text %}
+                                        {{ answer.choice_text }}
                                         {% else %}
                                         Brak odpowiedzi
                                         {% endif %}
@@ -64,7 +64,7 @@
                                     <td>
                                         <input type="number" name="points_{{ answer.id }}" value="{{ answer.awarded_points }}" min="0" max="{{ answer.question.max_points }}" step="0.5" class="form-control">
                                     </td>
-                                    <td>{{ answer.question.max_points }}</td>
+                                    <td>{{ answer.max_points }}</td>
                                 </tr>
                                 {% endfor %}
                             </tbody>

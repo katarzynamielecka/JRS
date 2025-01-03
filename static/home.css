@@ -71,8 +71,8 @@ form{
 }
 
 .centered-content{
-    display: flex;
+    display: flex; 
     justify-content: center !important;
-    align-items: center;
+    align-items: center !important;
     text-align: center;
 }

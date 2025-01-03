@@ -5,9 +5,12 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.conf.urls import handler404
 
+
+
 handler404 = views.custom_404_view 
 
 urlpatterns = [
+    path('test-404/', views.test_404), 
     path("", views.home, {"user_role": "refugee"}, name="home"),
     path("no_registration/", views.no_registration_view, {"user_role": "refugee"}, name="no_registration"),
     path(

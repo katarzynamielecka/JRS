@@ -61,6 +61,9 @@ def custom_404_view(request, exception=None):
     return render(request, '404.html', status=404)
 
 
+def test_404(request):
+    return render(request, '404.html')
+
 # REFUGEES
 
 
@@ -270,9 +273,9 @@ def test_check_view(request, test_id, user_role):
         refugee = filled_test.refugee
         filled_test_id = filled_test.id
         total_points = filled_test.total_points
-        answers = filled_test.user_answers.select_related("question", "choice")
+        answers = filled_test.user_answers.all()
         max_points = (
-            answers.aggregate(total_max=Sum("question__max_points"))["total_max"] or 0
+            answers.aggregate(total_max=Sum("max_points"))["total_max"] or 0
         )
         checked_tasks = answers.filter(awarded_points__isnull=False).count()
         refugee_data.append(
@@ -334,10 +337,15 @@ def assignment_to_courses(request, test_id, recruitment_name, user_role):
             test=test, refugee__in=course.refugees.all(), recruitment=recruitment
         ).select_related("refugee")
         for filled_test in filled_tests_in_course:
+            answers = filled_test.user_answers.all()
+            max_points = (
+                answers.aggregate(total_max=Sum("max_points"))["total_max"] or 0
+            )
             filled_test.calculate_total_points()
             refugees_with_scores.append({
                 "refugee": filled_test.refugee,
                 "test_score": filled_test.total_points,
+                "max_points": max_points,
                 "is_slavic": filled_test.refugee.is_slavic_speaker() 
             })
         course_data.append({
@@ -423,7 +431,7 @@ def assignment_to_courses(request, test_id, recruitment_name, user_role):
                     assignment_function(refugee, test, recruitment)
             except ValueError:
                 messages.error(request, "Wprowadź poprawne wartości liczby punktów.")
-
+            return redirect(request.path)
     context = {
     "user_role": user_role,
     "courses": courses,
@@ -440,11 +448,8 @@ def assignment_function(refugee, test, recruitment):
     filled_test.calculate_total_points()
     total_ref_points = filled_test.total_points
     thresholds = CourseTestThreshold.objects.filter(test=test, recruitment=recruitment)
-    print(thresholds.query)
-    print(list(thresholds))
     refugee.courses.clear()
     assigned = False
-    print(thresholds)
     for threshold in thresholds:
         course = threshold.course
         if course.is_slavic:
@@ -472,6 +477,7 @@ def recruitment_management(request, user_role):
             recruitment.active = False
             recruitment.manually_closed = True
             recruitment.save()
+            return redirect('recruitment_management', user_role=user_role)
         elif "resume_recruitment" in request.POST:
             recruitment_id = request.POST.get("recruitment_id")
             recruitment = get_object_or_404(Recruitment, id=recruitment_id)
@@ -488,11 +494,13 @@ def recruitment_management(request, user_role):
                     recruitment.active = True
                     recruitment.manually_closed = False
                     recruitment.save()
+            return redirect('recruitment_management', user_role=user_role)
         elif "delete" in request.POST:
             recruitment_id = request.POST.get("recruitment_id")
             recruitment = get_object_or_404(Recruitment, id=recruitment_id)
             recruitment.delete()
-        else:
+            return redirect('recruitment_management', user_role=user_role)
+        elif "add_recruitment" in request.POST:
             form = RecruitmentForm(request.POST)
             if form.is_valid():
                 start_date = form.cleaned_data['start_date']
@@ -507,14 +515,16 @@ def recruitment_management(request, user_role):
                 if overlapping_recruitments.exists():
                     form.add_error(None, "Istnieje już aktywna rekrutacja w tym okresie.")
                 else:
-                    recruitment = form.save(commit=False)
-                    recruitment.save()
-                    form.save_m2m()  
-                    form = RecruitmentForm()  
+                    form.save()  
+                    form = RecruitmentForm() 
             else:
                 messages.error(request, "Wystąpił błąd w formularzu.")
-
+            return redirect('recruitment_management', user_role=user_role)
+    
     recruitments = Recruitment.objects.all().order_by('-start_date')
+    for r in recruitments:
+        print(f"Rekrutacja: {r.name}, Testy: {[t.id for t in r.language_tests.all()]}")
+
     context = {
         "user_role": user_role,
         "form": form,
@@ -549,6 +559,19 @@ def delete_test(request, user_role, id):
 @admin_or_employee_required
 def edit_test(request, user_role, id):
     test = get_object_or_404(LanguageTest, id=id)
+    overlapping_recruitments = Recruitment.objects.filter(
+        active=True,
+        language_tests=test,
+        start_date__lte=now().date(),
+        end_date__gte=now().date()
+    )
+
+    if overlapping_recruitments.exists():
+        messages.error(
+            request, 
+            "Nie możesz edytować tego testu, ponieważ jest używany w aktywnej rekrutacji."
+        )
+        return redirect("frm_man_sec") 
     if request.method == "POST":
         if "add_open_question" in request.POST:
             text = request.POST.get("open_question_text")

@@ -64,7 +64,11 @@
             </fieldset>
         {% endfor %}
     </div>
-    
+    {% if form.instance.pk %}
+        <input type="hidden" name="edit_recruitment" value="true">
+    {% else %}
+        <input type="hidden" name="add_recruitment" value="true">
+    {% endif %}
     <button type="submit" class="btn button-orange">Zapisz</button>
 
     {% if form.non_field_errors %}

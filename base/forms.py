@@ -4,9 +4,10 @@ from django import forms
 from datetime import datetime
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
-from .models import Employee, Question, Choice, LanguageTest, Language
+from .models import Employee, Question, Choice, LanguageTest, Language, Attendance
 from django.contrib.auth.password_validation import validate_password
 from .models import Refugee, LanguageCourse, Semester, Recruitment
+from django.db import transaction
 
 
 class EmployeeRegisterForm(UserCreationForm):
@@ -245,7 +246,7 @@ class RecruitmentForm(forms.ModelForm):
 
     class Meta:
         model = Recruitment
-        fields = ['name', 'start_date', 'end_date', 'semester', 'max_people']  # Usuń 'language_tests' z pól
+        fields = ['name', 'start_date', 'end_date', 'semester', 'max_people'] 
         widgets = {
             'start_date': forms.DateInput(attrs={'type': 'date'}),
             'end_date': forms.DateInput(attrs={'type': 'date'}),
@@ -283,6 +284,7 @@ class RecruitmentForm(forms.ModelForm):
 
         return cleaned_data
 
+
     def save(self, commit=True):
         instance = super().save(commit=False)
         selected_tests = []
@@ -292,6 +294,14 @@ class RecruitmentForm(forms.ModelForm):
             if test_id: 
                 selected_tests.append(int(test_id))
         if commit:
-            instance.save()
-            instance.language_tests.set(selected_tests) 
+            with transaction.atomic(): 
+                instance.save()
+                instance.language_tests.set([]) 
+                instance.language_tests.set(selected_tests) 
+                instance.refresh_from_db()
         return instance
+
+# class AttendanceForm(forms.ModelForm):
+#     class Meta:
+#         model = Attendance
+#         fields = ["status", "notes"]
