@@ -1,148 +1,25 @@
 {% extends "base.html" %}
-
-{% block title %}
-JRS zapisy na języki
-{% endblock %}
-
 {% block content %}
 <div class="container mt-5">
-    <h2 class="mb-4">Registration Form</h2>
+    <h2 class="mb-4">{{ translated_texts.registration_title }}</h2>
     <form method="post" novalidate>
         {% csrf_token %}
         
+        {% for field in form %}
         <div class="form-group">
-            {{ form.first_name.label_tag }}
-            {{ form.first_name }}
-            {% if form.first_name.errors %}
+            {{ field.label_tag }}
+            {{ field }}
+            {% if field.errors %}
                 <div class="text-danger">
-                    {% for error in form.first_name.errors %}
+                    {% for error in field.errors %}
                         <small>{{ error }}</small>
                     {% endfor %}
                 </div>
             {% endif %}
         </div>
-
-        <div class="form-group">
-            {{ form.last_name.label_tag }}
-            {{ form.last_name }}
-            {% if form.last_name.errors %}
-                <div class="text-danger">
-                    {% for error in form.last_name.errors %}
-                        <small>{{ error }}</small>
-                    {% endfor %}
-                </div>
-            {% endif %}
-        </div>
-
-        <div class="form-group">
-            {{ form.gender.label_tag }}
-            {{ form.gender }}
-            {% if form.gender.errors %}
-                <div class="text-danger">
-                    {% for error in form.gender.errors %}
-                        <small>{{ error }}</small>
-                    {% endfor %}
-                </div>
-            {% endif %}
-        </div>
-
-        <div class="form-group">
-            {{ form.dob.label_tag }}
-            {{ form.dob }}
-            {% if form.dob.errors %}
-                <div class="text-danger">
-                    {% for error in form.dob.errors %}
-                        <small>{{ error }}</small>
-                    {% endfor %}
-                </div>
-            {% endif %}
-        </div>
-
-        <div class="form-group">
-            {{ form.phone_number.label_tag }}
-            {{ form.phone_number }}
-            {% if form.phone_number.errors %}
-                <div class="text-danger">
-                    {% for error in form.phone_number.errors %}
-                        <small>{{ error }}</small>
-                    {% endfor %}
-                </div>
-            {% endif %}
-        </div>
-
-        <div class="form-group">
-            {{ form.nationality.label_tag }}
-            {{ form.nationality }}
-            {% if form.nationality.errors %}
-                <div class="text-danger">
-                    {% for error in form.nationality.errors %}
-                        <small>{{ error }}</small>
-                    {% endfor %}
-                </div>
-            {% endif %}
-        </div>
-
-        <div class="form-group">
-            {{ form.language.label_tag }}
-            {{ form.language }}
-            {% if form.language.errors %}
-                <div class="text-danger">
-                    {% for error in form.language.errors %}
-                        <small>{{ error }}</small>
-                    {% endfor %}
-                </div>
-            {% endif %}
-        </div>
+        {% endfor %}
         
-
-        <div class="form-group">
-            {{ form.residency.label_tag }}
-            {{ form.residency }}
-            {% if form.residency.errors %}
-                <div class="text-danger">
-                    {% for error in form.residency.errors %}
-                        <small>{{ error }}</small>
-                    {% endfor %}
-                </div>
-            {% endif %}
-        </div>
-
-        <div class="form-check">
-            {{ form.rodo_consent }}
-            {{ form.rodo_consent.label_tag }}
-            {% if form.rodo_consent.errors %}
-                <div class="text-danger">
-                    {% for error in form.rodo_consent.errors %}
-                        <small>{{ error }}</small>
-                    {% endfor %}
-                </div>
-            {% endif %}
-        </div>
-
-        <div class="form-check">
-            {{ form.truth_confirmation }}
-            {{ form.truth_confirmation.label_tag }}
-            {% if form.truth_confirmation.errors %}
-                <div class="text-danger">
-                    {% for error in form.truth_confirmation.errors %}
-                        <small>{{ error }}</small>
-                    {% endfor %}
-                </div>
-            {% endif %}
-        </div>
-
-        <div class="form-group">
-            {{ form.comments.label_tag }}
-            {{ form.comments }}
-            {% if form.comments.errors %}
-                <div class="text-danger">
-                    {% for error in form.comments.errors %}
-                        <small>{{ error }}</small>
-                    {% endfor %}
-                </div>
-            {% endif %}
-        </div>
-        <button type="submit" name="next" class="btn button-orange">Next</button>
+        <button type="submit" name="next" class="btn button-orange">{{ translated_texts.next_button }}</button>
     </form>
 </div>
 {% endblock %}

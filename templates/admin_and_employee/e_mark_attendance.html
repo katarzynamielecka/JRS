@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% load static %}
+{% block head %}
+<link rel="stylesheet" href="{% static 'admin_and_employee.css' %}">
+{% endblock %}
+{% block content %}
+<div class="container">
+<button onclick="window.history.back()" class="btn button-grey">
+    <i class="fa-solid fa-arrow-left"></i>
+</button>
+<h1 class="page-title">REJESTRACJA OBECNOŚCI NA ZAJĘCIACH</h1>
+<form method="post">
+    {% csrf_token %}
+    {{ formset.management_form }}
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Uczestnik</th>
+                <th>Status</th>
+                <th>Uwagi</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for form in formset %}
+            <tr>
+                <td>{{ form.instance.refugee }}</td>
+                <td>
+                    {{ form.status }}
+                    {% if form.status.errors %}
+                    <div class="invalid-feedback">
+                        {% for error in form.status.errors %}
+                            <p>{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </td>
+                <td>
+                    {{ form.notes }} 
+                    {% if form.notes.errors %}
+                    <div class="invalid-feedback">
+                        {% for error in form.notes.errors %}
+                            <p>{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </td>
+                <td>{{ form.id }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="3" style="text-align: center;">Brak uchodźców przypisanych do tego kursu.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <button type="submit" class="btn button-orange">Zapisz obecności</button>
+</form>
+
+</div>
+{% endblock %}

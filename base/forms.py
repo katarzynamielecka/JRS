@@ -2,7 +2,9 @@ from django.core.exceptions import ValidationError
 from django.forms import inlineformset_factory
 from django import forms
 from datetime import datetime
+from googletrans import Translator
 from django.contrib.auth.forms import UserCreationForm
+from django.forms import modelformset_factory
 from django.contrib.auth.models import User
 from .models import Employee, Question, Choice, LanguageTest, Language, Attendance
 from django.contrib.auth.password_validation import validate_password
@@ -120,13 +122,14 @@ class EmployeeRegisterForm(UserCreationForm):
 
 class RefugeeRegistrationForm(forms.ModelForm):
     rodo_consent = forms.BooleanField(
-    required=True,
-    label="I consent to the processing of my personal data in accordance with GDPR."
+        required=True,
+        label="I consent to the processing of my personal data in accordance with GDPR."
     )
     truth_confirmation = forms.BooleanField(
         required=True,
         label="I confirm that the information provided is true and accurate."
     )
+
     class Meta:
         model = Refugee
         fields = ['first_name', 'last_name', 'gender', 'dob', 'phone_number', 'nationality', 'residency', 'language', 'comments']
@@ -159,11 +162,9 @@ class RefugeeRegistrationForm(forms.ModelForm):
         return dob
 
     def __init__(self, *args, **kwargs):
+        lang = kwargs.pop('lang', 'en')
         super().__init__(*args, **kwargs)
-        active_recruitment = Recruitment.objects.filter(
-            active=True
-        ).first()
-        
+        active_recruitment = Recruitment.objects.filter(active=True).first()
         if active_recruitment:
             available_languages = Language.objects.filter(
                 languagetest__in=active_recruitment.language_tests.all()
@@ -172,6 +173,18 @@ class RefugeeRegistrationForm(forms.ModelForm):
             available_languages = Language.objects.none()
         self.fields['language'].queryset = available_languages
         self.fields['language'].label = "Select language (available courses)"
+        translator = Translator()
+        for field_name, field in self.fields.items():
+            if field.label:
+                field.label = translator.translate(field.label, dest=lang).text
+
+        self.fields['rodo_consent'].label = translator.translate(
+            self.fields['rodo_consent'].label, dest=lang
+        ).text
+        self.fields['truth_confirmation'].label = translator.translate(
+            self.fields['truth_confirmation'].label, dest=lang
+        ).text
+
 
 class LanguageTestForm(forms.ModelForm):
     class Meta:
@@ -301,7 +314,12 @@ class RecruitmentForm(forms.ModelForm):
                 instance.refresh_from_db()
         return instance
 
-# class AttendanceForm(forms.ModelForm):
-#     class Meta:
-#         model = Attendance
-#         fields = ["status", "notes"]
+AttendanceFormSet = modelformset_factory(
+    Attendance,
+    fields=["status", "notes"],
+    extra=0,
+    widgets={
+        "status": forms.Select(attrs={"class": "form-control"}),
+        "notes": forms.Textarea(attrs={"class": "form-control", "rows": 2}),
+    },
+)

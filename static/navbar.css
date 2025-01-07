@@ -80,7 +80,33 @@ a.second-nav-item:hover {
     color: var(--jrs-orange) !important;
 }
 
+.jrs-refugee-nav-menu{
+  width: 60%;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 30px;
+}
 
+/* Domyślne ustawienia dla dużych ekranów */
+.lang-select {
+  width: 150px;
+  padding: 5px;
+}
+
+/* Dostosowanie dla małych ekranów */
+@media (max-width: 560px) {
+  .lang-select {
+    width: 80px;
+    text-align: center;
+  }
+  .lang-placeholder {
+    display: block; /* Pokazuj "LANG" na mniejszych ekranach */
+  }
+  .jrs-refugee-nav-menu{
+    gap: 1%;
+  }
+}
 
 
 .burger-menu {
@@ -172,7 +198,7 @@ a.second-nav-item:hover {
   }
   
 
-  @media (max-width: 330px) {
+  @media (max-width: 350px) {
     .jrs-logo img{
         width: 120px;
         height: auto;

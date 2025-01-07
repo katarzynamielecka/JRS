@@ -108,8 +108,8 @@
                         Brak semestru
                     {% endif %}
                 </td>
-                <td>{{ recruitment.start_date }}</td>
-                <td>{{ recruitment.end_date }}</td>
+                <td>{{ recruitment.start_date|date:"d.m.Y"}}</td>
+                <td>{{ recruitment.end_date|date:"d.m.Y"}}</td>
                 <td>{{recruitment.max_people}}</td>
                 <td>
                     <ul>

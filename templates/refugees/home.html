@@ -5,33 +5,26 @@
 {% endblock %}
 {% block content %}
   <div class="home">
-    <h2>Welcome to Our Language Register Platform</h2>
-    <p>
-      Our goal is to provide language courses for refugees to help them integrate, 
-      communicate and build a better future. Our courses are designed to suit a variety of skill levels, 
-      from beginner to advanced, and are tailored to the unique needs of our students.
-    </p>
+    <h2>{{ translated_texts.welcome_message }}</h2>
+    <p>{{ translated_texts.goal }}</p>
     <br>
-    <h2>Available Courses</h2>
+    <h2>{{ translated_texts.available_courses }}</h2>
     {% if courses %}
     <ul class="two-column-list">
       {% for course in courses %}
         <li>{{ course.name }} ({{ course.language }})</li>
       {% endfor %}
     </ul>
-  {% else %}
-    <p>No courses available at the moment.</p>
-  {% endif %}
+    {% else %}
+    <p>{{ translated_texts.no_courses }}</p>
+    {% endif %}
   
     <br>
-    <h2>Important information</h2>
-    <p>Please note that registration for any of our courses requires the purchase of specific textbooks and materials, 
-      which are necessary to fully participate and succeed in the program. By enrolling, you commit to attending all classes 
-      and completing assignments. We strive to make these resources as affordable as possible and are here to support you every step of the way.
-    </p>
+    <h2>{{ translated_texts.important_info }}</h2>
+    <p>{{ translated_texts.info_details }}</p>
     <br>
-    <h2>How to Register?</h2>
-    <p>Click on the "Register Now" button to start your journey with us.</p>
-    <a href="/form" class="btn button-orange">Register Now</a>
+    <h2>{{ translated_texts.how_to_register }}</h2>
+    <p>{{ translated_texts.register_instructions }}</p>
+    <a href="/form" class="btn button-orange">{{ translated_texts.register_now }}</a>
   </div>
 {% endblock %}

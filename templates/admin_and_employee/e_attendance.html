@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% load static %}
+{% block head %}
+<link rel="stylesheet" href="{% static 'admin_and_employee.css' %}">
+<link rel="stylesheet" href="{% static 'ae_mark_attendance.css' %}">
+{% endblock %}
+{% block content %}
+<div class="container">
+<button onclick="window.history.back()" class="btn button-grey">
+    <i class="fa-solid fa-arrow-left"></i>
+</button>
+<h1 class="page-title">OBECNOŚCI</h1>
+<h1>Lista zajęć</h1>
+<table class="table table-responsive">
+    <thead>
+        <tr>
+            <th>Kurs</th>
+            <th>Dzień</th>
+            <th>Godzina</th>
+            <th>Klasa</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for schedule in schedules %}
+        <tr>
+            <td>{{ schedule.course.name }}</td>
+            <td>{{ schedule.get_day_display }}</td>
+            <td>{{ schedule.time_interval }}</td>
+            <td>{{ schedule.classroom.name }}</td>
+            <td>
+                <button onclick="toggleDates({{ forloop.counter }})" class="btn btn-link"><i class="fas fa-chevron-down" style="color: #D97014;"></i></button>
+            </td>
+        </tr>
+        <tr id="dates-{{ forloop.counter }}" style="display: none;">
+            <td colspan="5">
+                <table class="table table-responsive">
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for date in schedule.dates %}
+                            <tr>
+                                <td>{{ date }}</td>
+                                <td><a href="{% url 'mark_attendance' schedule.id date %}" style="color: #D97014;">Sprawdź obecność</a></td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+
+<script>
+function toggleDates(counter) {
+    const row = document.getElementById(`dates-${counter}`);
+    row.style.display = row.style.display === "none" ? "table-row" : "none";
+}
+</script>
+</div>
+{% endblock %}

@@ -6,7 +6,7 @@
 
 {% block content %}
 <div class="container mt-5">
-    <h2 class="mb-4">Language Test</h2>
+    <h2 class="mb-4">{{ translated_texts.language_test }}</h2>
     <form method="post">
         {% csrf_token %}
         

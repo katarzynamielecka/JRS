@@ -58,7 +58,7 @@
                 {% for test in language.languagetest_set.all %}
                     <tr>
                         <td>{{ test.title }}</td>
-                        <td>{{ test.created_at|date:"d/m/Y" }}</td>
+                        <td>{{ test.created_at|date:"d.m.Y" }}</td>
                         <td>
                             <a href="{% url 'edit_test' test.id %}" style="text-decoration: none;">
                                 <button class="btn btn-outline-primary table-button">Edytuj</button>

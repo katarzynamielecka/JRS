@@ -26,7 +26,9 @@ class Semester(models.Model):
     end_date = models.DateField(blank=True, null=True)
 
     def __str__(self):
-        return f"{self.name} ({self.start_date} - {self.end_date})"
+        start = self.start_date.strftime('%d.%m.%Y') if self.start_date else "brak"
+        end = self.end_date.strftime('%d.%m.%Y') if self.end_date else "brak"
+        return f"{self.name} ({start} - {end})"
     
     @classmethod
     def get_current_semesters(cls):
@@ -330,23 +332,23 @@ class Availability(models.Model):
         verbose_name = "Dostępność"
         verbose_name_plural = "Dostępności"
 
-# class Attendance(models.Model):
-#     schedule = models.ForeignKey(
-#         ClassSchedule, on_delete=models.CASCADE, related_name="attendances"
-#     )
-#     refugee = models.ForeignKey(
-#         Refugee, on_delete=models.CASCADE, related_name="attendances"
-#     )
-#     date = models.DateField()
-#     status = models.CharField(
-#         max_length=10,
-#         choices=[("present", "Obecny"), ("absent", "Nieobecny"), ("late", "Spóźniony"), ("excused absence", "Nieobecny usprawiedliwiony")],
-#         default="absent"
-#     )
-#     notes = models.TextField(blank=True, null=True)
+class Attendance(models.Model):
+    schedule = models.ForeignKey(
+        ClassSchedule, on_delete=models.CASCADE, related_name="attendances"
+    )
+    refugee = models.ForeignKey(
+        Refugee, on_delete=models.CASCADE, related_name="attendances"
+    )
+    date = models.DateField()
+    status = models.CharField(
+        max_length=20,
+        choices=[("present", "Obecny"), ("absent", "Nieobecny"), ("late", "Spóźniony"), ("excused absence", "Nieobecny usprawiedliwiony")],
+        default="absent"
+    )
+    notes = models.TextField(blank=True, null=True)
 
-#     def __str__(self):
-#         return f"{self.refugee} - {self.schedule} on {self.date}: {self.get_status_display()}"
+    def __str__(self):
+        return f"{self.refugee} - {self.schedule} on {self.date}: {self.get_status_display()}"
 
-#     class Meta:
-#         unique_together = ("schedule", "refugee", "date")
+    class Meta:
+        unique_together = ("schedule", "refugee", "date")

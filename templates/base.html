@@ -16,9 +16,9 @@
   </head>
   <nav class="jrs-navbar">
     <div class="nav-container">
-    <div class="jrs-logo">
-     <img src="/static/logo-09.2024.png" width="auto" height="50" class="d-inline-block align-top" alt="LOGO">
-    </div>
+      <div class="jrs-logo">
+      <img src="/static/logo-09.2024.png" width="auto" height="50" class="d-inline-block align-top" alt="LOGO">
+      </div>
 
         {% if user_role == 'admin' %}
         <div class="burger-menu">
@@ -54,22 +54,60 @@
           </div>
           <div class="mobile-menu-content">
           <a href="/employee" class="mobile-menu-item">Start</a>
+          <a href="/employee/attendance-check" class="mobile-menu-item">Obecności</a>
           <a href="/employee/form-management" class="mobile-menu-item">Edycja - Testy</a>
           <a href="/employee/courses-management" class="mobile-menu-item">Zarządzanie kursami</a>
           <a class="mobile-menu-item logout-btn" href="{% url 'logout' %}">Wyloguj się</a>
+          {% elif user_role == 'refugee' %}
+            <div class="jrs-refugee-nav-menu">
+              <div class="language-select">
+                <form method="GET" action="" onsubmit="return false;">
+                  <select name="lang" id="lang-select" class="lang-select" onchange="this.form.submit()">
+                    <option value="en">English</option>
+                    <option value="pl">Polski</option>
+                    <option value="es">Español</option>
+                    <option value="de">Deutsch</option>
+                    <option value="fr">Français</option>
+                    <option value="uk">Українська (Ukrainian)</option> <!-- Ukraina -->
+                    <option value="ru">Русский (Russian)</option> <!-- Rosja, byłe ZSRR -->
+                    <option value="ar">العربية (Arabic)</option> <!-- Kraje arabskie -->
+                    <option value="fa">فارسی (Persian)</option> <!-- Iran, Afganistan -->
+                    <option value="hi">हिन्दी (Hindi)</option> <!-- Indie -->
+                    <option value="ur">اردو (Urdu)</option> <!-- Pakistan, Indie -->
+                    <option value="be">Беларуская (Belarusian)</option> <!-- Białoruś -->
+                    <option value="tr">Türkçe (Turkish)</option> <!-- Turcja -->
+                    <option value="ku">Kurdî (Kurdish)</option> <!-- Kurdystan (Turcja, Syria, Irak, Iran) -->
+                    <option value="so">Soomaali (Somali)</option> <!-- Somalia, Etiopia, Kenia -->
+                    <option value="ti">ትግርኛ (Tigrinya)</option> <!-- Etiopia, Erytrea -->
+                    <option value="ce">Нохчийн (Chechen)</option> <!-- Czeczenia (Federacja Rosyjska) -->
+                    <option value="bn">বাংলা (Bengali)</option> <!-- Bangladesz, Indie -->
+                    <option value="am">አማርኛ (Amharic)</option> <!-- Etiopia -->
+                    <option value="vi">Tiếng Việt (Vietnamese)</option> <!-- Wietnam -->
+                    <option value="ka">ქართული (Georgian)</option> <!-- Gruzja -->
+                    <option value="ro">Română (Romanian)</option> <!-- Mołdawia -->
+                    <option value="ko">한국어 (Korean)</option> <!-- Korea Południowa -->
+                    <option value="zh">中文 (Chinese)</option> <!-- Chiny -->
+                    <option value="dz">دری (Dari)</option> <!-- Afganistan -->
+                    <option value="ps">پښتو (Pashto)</option> <!-- Afganistan -->
+                    <option value="tg">Тоҷикӣ (Tajik)</option> <!-- Tadżykistan -->
+                    <option value="uz">O‘zbekcha (Uzbek)</option> <!-- Uzbekistan -->
+                  </select>
+                </form>      
+              </div>
+
+              <div class="navbar-login">
+                <a class="nav-list-trigger dropdown-toggle nav-menu" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  <div class="dropdown-menu dropdown-menu-right">
+                    <a class="dropdown-item" href="/login">Pracownik JRS</a>
+                  </div>
+                </a>
+              </div>
+            </div>
+
         {% endif %}
       </div>
     </div>
    
-    {% if user_role == 'refugee' %}
-    <div class="navbar-login">
-      <a class="nav-list-trigger dropdown-toggle nav-menu" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-        <div class="dropdown-menu dropdown-menu-right">
-          <a class="dropdown-item" href="/login">Pracownik JRS</a>
-        </div>
-      </a>
-    </div>
-    {% endif %}
 
   {% if user_role == 'admin' %}
     <div class="jrs-admin-nav-menu">
@@ -82,12 +120,14 @@
   {% elif user_role == 'employee' %}
   <div class="jrs-admin-nav-menu">
     <a href="/employee" class="second-nav-item">Start</a>
+    <a href="/employee/attendance/" class="second-nav-item">Obecności</a>
     <a href="/employee/form-management" class="second-nav-item">Edycja - Testy</a>
     <a href="/employee/courses-management" class="second-nav-item">Zarządzanie kursami</a>
     <a class="second-nav-item logout-btn" href="{% url 'logout' %}">Wyloguj się</a>
   </div>
   {% endif %}
 </nav>
+
 </div>
   <div class="container">{% block content %}{% endblock %}</div>
 
@@ -96,4 +136,7 @@
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
   <script src="/static/js/navbar-menu.js"></script>
   <script src="/static/js/close_alert.js"></script>
+  <script src="/static/js/translation_options.js"></script>
+
+
   </html>

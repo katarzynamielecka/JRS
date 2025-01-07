@@ -3,16 +3,21 @@ from django.forms import formset_factory
 import random
 from django.contrib.auth import authenticate, login
 from django.utils import formats
+from googletrans import Translator
 from django.db import transaction
 from django.utils.timezone import now
 from django.contrib import messages
 from django.contrib.auth import logout
+
 from django.db.models import Subquery, OuterRef, Min
 from datetime import datetime
 from collections import defaultdict
 from itertools import groupby
 from operator import itemgetter
 from django.db.models import Sum, Q
+from datetime import timedelta
+import datetime
+from django.http import HttpResponse
 from datetime import time
 from django.views.decorators.csrf import csrf_exempt
 import json
@@ -28,7 +33,8 @@ from .forms import (
     RefugeeRegistrationForm,
     LanguageTestForm,
     LanguageForm,
-    RecruitmentForm
+    RecruitmentForm,
+    AttendanceFormSet
 )
 from .models import (
     Employee,
@@ -47,7 +53,9 @@ from .models import (
     Semester,
     CourseTestThreshold,
     FilledTest,
-    Recruitment
+    Recruitment,
+    Attendance,
+
 )
 from .decorators import admin_required, employee_required, admin_or_employee_required
 import pandas as pd
@@ -65,6 +73,17 @@ def test_404(request):
     return render(request, '404.html')
 
 # REFUGEES
+
+def get_user_language(request):
+    # Sprawdź, czy język został przekazany jako parametr GET
+    lang = request.GET.get('lang')
+    if lang:
+        # Zapisz nowy język w sesji
+        request.session['lang'] = lang
+    else:
+        # Pobierz język z sesji lub domyślny
+        lang = request.session.get('lang', 'en')
+    return lang
 
 
 def home(request, user_role):
@@ -85,29 +104,84 @@ def home(request, user_role):
         )
     else:
         courses = LanguageCourse.objects.none()
+    lang = get_user_language(request)
+    original_texts = {
+        'welcome_message': "Welcome to Our Language Register Platform",
+        'goal': (
+            "Our goal is to provide language courses for refugees to help them integrate, "
+            "communicate and build a better future. Our courses are designed to suit a variety "
+            "of skill levels, from beginner to advanced, and are tailored to the unique needs of our students."
+        ),
+        'available_courses': "Available Courses",
+        'no_courses': "No courses available at the moment.",
+        'important_info': "Important information",
+        'info_details': (
+            "Please note that registration for any of our courses requires the purchase of specific textbooks "
+            "and materials, which are necessary to fully participate and succeed in the program. By enrolling, "
+            "you commit to attending all classes and completing assignments. We strive to make these resources "
+            "as affordable as possible and are here to support you every step of the way."
+        ),
+        'how_to_register': "How to Register?",
+        'register_instructions': "Click on the 'Register Now' button to start your journey with us.",
+        'register_now': "Register Now",
+    }
+    translator = Translator()
+    try:
+        translated_texts = {
+            key: translator.translate(text, dest=lang).text
+            for key, text in original_texts.items()
+        }
+    except Exception:
+        translated_texts = original_texts
     context = {
         "user_role": user_role,
         "courses": courses,
+        "translated_texts": translated_texts,
+        "lang": lang,
     }
     return render(request, "refugees/home.html", context)
 
 
+
 def no_registration_view(request, user_role):
+    translator = Translator()
+    lang = get_user_language(request)
     active_recruitment = Recruitment.objects.filter(active=True).exists()
     if active_recruitment:
         return redirect("home", user_role=user_role)
     upcoming_recruitments = Recruitment.objects.filter(
         start_date__gt=now().date()
     ).order_by("start_date")[:3]
+    original_texts = {
+        'no_active_registration': "No Active Registration",
+        'no_active_registration_message': "Currently, there is no active registration available.",
+        'upcoming_recruitments': "Upcoming Recruitments",
+        'no_upcoming_recruitments': "There are no upcoming recruitments scheduled at this time.",
+        'start_date': "Start Date",
+        'end_date': "End Date",
+        'semester': "Semester",
+    }
+    translated_texts = {}
+    for key, text in original_texts.items():
+        if text:
+            try:
+                translated_texts[key] = translator.translate(text, dest=lang).text
+            except Exception as e:
+                print(f"Błąd tłumaczenia dla '{key}': {e}")
+                translated_texts[key] = text 
     context = {
         "user_role": user_role,
         "upcoming_recruitments": upcoming_recruitments,
+        "translated_texts": translated_texts, 
+        "lang": lang,
     }
     return render(request, "refugees/no_registration.html", context)
 
 def refugee_registration_view(request, user_role):
+    translator = Translator()
+    lang = get_user_language(request)
     if request.method == "POST":
-        form = RefugeeRegistrationForm(request.POST)
+        form = RefugeeRegistrationForm(request.POST, lang=lang)
         if form.is_valid():
             refugee_data = form.cleaned_data
             refugee_data["dob"] = refugee_data["dob"].strftime("%Y-%m-%d")
@@ -117,16 +191,31 @@ def refugee_registration_view(request, user_role):
             request.session["refugee_data"] = refugee_data
             return redirect("language_test")
     else:
-        form = RefugeeRegistrationForm()
-
+        form = RefugeeRegistrationForm(lang=lang)
+    original_texts = {
+        'registration_title': "Registration Form",
+        'next_button': "Next",
+    }
+    translated_texts = {}
+    for key, text in original_texts.items():
+        if text: 
+            try:
+                translated_texts[key] = translator.translate(text, dest=lang).text 
+            except Exception as e:
+                translated_texts[key] = original_texts[key]
     context = {
         "form": form,
         "user_role": user_role,
+        "translated_texts": translated_texts,
+        "lang": lang,
     }
     return render(request, "refugees/form.html", context)
 
 
+
 def language_test_view(request, user_role):
+    translator = Translator()
+    lang = get_user_language(request)
     refugee_data = request.session.get("refugee_data")
     if not refugee_data:
         return redirect("refugee_registration")
@@ -144,7 +233,16 @@ def language_test_view(request, user_role):
     questions = test.questions.filter(
         Q(question_type="open") | Q(question_type="choice", choices__isnull=False)
     ).distinct()
-
+    original_texts = {
+        'language_test': "Language Test",
+    }
+    translated_texts = {}
+    for key, text in original_texts.items():
+        if text: 
+            try:
+                translated_texts[key] = translator.translate(text, dest=lang).text 
+            except Exception as e:
+                translated_texts[key] = original_texts[key]
     if request.method == "POST":
         answers = {}
         total_points = 0
@@ -197,6 +295,7 @@ def language_test_view(request, user_role):
     context = {
         "questions": questions,
         "user_role": user_role,
+        "translated_texts": translated_texts,
     }
     return render(request, "refugees/language_test.html", context)
 
@@ -409,8 +508,8 @@ def assignment_to_courses(request, test_id, recruitment_name, user_role):
 
                 for threshold in overlapping_thresholds:
                     if not (
-                        (max_points is not None and threshold.min_points is not None and max_points < threshold.min_points) or
-                        (min_points is not None and threshold.max_points is not None and min_points > threshold.max_points)
+                        (max_points is not None and threshold.min_points is not None and max_points <= threshold.min_points) or
+                        (min_points is not None and threshold.max_points is not None and min_points >= threshold.max_points)
                     ):
                         messages.error(
                             request,
@@ -453,11 +552,17 @@ def assignment_function(refugee, test, recruitment):
     for threshold in thresholds:
         course = threshold.course
         if course.is_slavic:
-            if refugee.is_slavic_speaker() and threshold.min_points <= total_ref_points <= threshold.max_points:
+            if refugee.is_slavic_speaker() and threshold.min_points <= total_ref_points < threshold.max_points:
+                refugee.courses.add(course)
+                assigned = True
+            elif refugee.is_slavic_speaker() and threshold.min_points == total_ref_points == threshold.max_points:
                 refugee.courses.add(course)
                 assigned = True
         else:
-            if not refugee.is_slavic_speaker() and threshold.min_points <= total_ref_points <= threshold.max_points:
+            if not refugee.is_slavic_speaker() and threshold.min_points <= total_ref_points < threshold.max_points:
+                refugee.courses.add(course)
+                assigned = True
+            elif not refugee.is_slavic_speaker() and threshold.min_points == total_ref_points == threshold.max_points:
                 refugee.courses.add(course)
                 assigned = True
 
@@ -1029,3 +1134,75 @@ def handle_schedule_update(request):
         return JsonResponse({"error": "Lekcja o podanym ID nie istnieje."}, status=404)
     except Exception as e:
         return JsonResponse({"error": f"Wystąpił błąd: {str(e)}"}, status=400)
+
+
+DAY_MAPPING = {
+    "Mon": 0,
+    "Tue": 1,
+    "Wed": 2,
+    "Thu": 3,
+    "Fri": 4,
+}
+
+def generate_course_dates(start_date, end_date, weekday):
+    dates = []
+    current_date = start_date
+    while current_date <= end_date:
+        if current_date.weekday() == weekday:
+            dates.append(current_date)
+        current_date += timedelta(days=1)
+    return dates
+
+
+@login_required
+def attendance_view(request, user_role):
+    user = request.user
+    try:
+        employee = Employee.objects.get(user=user)
+    except Employee.DoesNotExist:
+        employee = None
+    current_semesters = Semester.get_current_semesters()
+    schedules = ClassSchedule.objects.filter(
+        teacher=employee, 
+        course__semesters__in=current_semesters
+    ).distinct()
+    for schedule in schedules:
+        semester = schedule.course.semesters.first()
+        weekday = DAY_MAPPING[schedule.day]
+        schedule.dates = generate_course_dates(
+            semester.start_date, semester.end_date, weekday
+        )
+    context = {
+        "user_role": user_role, 
+        "schedules": schedules,
+    }
+    return render(request, "admin_and_employee/e_attendance.html", context)
+
+@login_required
+def mark_attendance(request, user_role, schedule_id, date):
+    schedule = get_object_or_404(ClassSchedule, id=schedule_id)
+    refugees = schedule.course.refugees.all()
+    try:
+        selected_date = datetime.strptime(date, "%Y-%m-%d").date()
+    except ValueError:
+        return HttpResponse("Nieprawidłowy format daty!", status=400)
+    for refugee in refugees:
+        Attendance.objects.get_or_create(schedule=schedule, date=selected_date, refugee=refugee)
+    attendance_queryset = Attendance.objects.filter(schedule=schedule, date=selected_date)
+    if request.method == "POST":
+        formset = AttendanceFormSet(request.POST, queryset=attendance_queryset)
+        if formset.is_valid():
+            formset.save()
+            print('pau')
+            messages.success(request, "Obecności zostały zapisane.")
+            return redirect("mark_attendance", schedule_id=schedule_id, date=selected_date)
+    else:
+        formset = AttendanceFormSet(queryset=attendance_queryset)
+    context = {
+        "user_role": user_role,
+        "schedule": schedule,
+        "refugees": refugees,
+        "formset": formset,
+    }
+    return render(request, "admin_and_employee/e_mark_attendance.html", context)
+
