@@ -24,9 +24,15 @@
     <h1 class="page-title">TESTY JĘZYKOWE</h1>
     <div class="tests-management-header">
         <h2 class="tests-managment-title">Zarządzaj testami językowymi</h2>
-        <a href="{% url 'create_test' %}" style="text-decoration: none;">
-            <button class="btn  button-orange new-test-button">Utwórz nowy test</button>
-        </a> 
+        {% if user_role == "admin" %}
+            <a href="{% url 'create_test' %}" style="text-decoration: none;">
+                <button class="btn  button-orange new-test-button">Utwórz nowy test</button>
+            </a> 
+        {% elif user_role == "employee" %}
+            <a href="{% url 'create_test_employee' %}" style="text-decoration: none;">
+                <button class="btn  button-orange new-test-button">Utwórz nowy test</button>
+            </a>
+        {% endif %} 
     </div>
     <h4>Ostatnia aktywna rekrutacja:</h4>
         {% if last_recruitment %}
@@ -60,18 +66,30 @@
                         <td>{{ test.title }}</td>
                         <td>{{ test.created_at|date:"d.m.Y" }}</td>
                         <td>
-                            <a href="{% url 'edit_test' test.id %}" style="text-decoration: none;">
-                                <button class="btn btn-outline-primary table-button">Edytuj</button>
-                            </a>
-                            <a href="{% url 'delete_test' test.id %}" style="text-decoration: none; color: red;" 
-                               onclick="return confirm('Czy na pewno chcesz usunąć ten test?');">
-                                <button class="btn btn-outline-danger table-button">Usuń</button>
-                            </a>
+                            {% if user_role == "admin" %}
+                                <a href="{% url 'edit_test' test.id %}" style="text-decoration: none;">
+                                    <button class="btn btn-outline-primary table-button">Edytuj</button>
+                                </a>
+                                <a href="{% url 'delete_test' test.id %}" style="text-decoration: none; color: red;" 
+                                onclick="return confirm('Czy na pewno chcesz usunąć ten test?');">
+                                    <button class="btn btn-outline-danger table-button">Usuń</button>
+                                </a>
+                            {% elif user_role == "employee" %}
+                                <a href="{% url 'edit_test_employee' test.id %}" style="text-decoration: none;">
+                                    <button class="btn btn-outline-primary table-button">Edytuj</button>
+                                </a>
+                            {% endif %} 
                         </td>
                         <td>
-                            <a href="{% url 'test_check' test.id %}" style="text-decoration: none;">
-                                <button class="btn btn-outline-info" table-button">Wypełnione testy</button>
-                            </a>
+                            {% if user_role == "admin" %}
+                                <a href="{% url 'test_check' test.id %}" style="text-decoration: none;">
+                                    <button class="btn btn-outline-info" >Wypełnione testy</button>
+                                </a>
+                            {% elif user_role == "employee" %}
+                                <a href="{% url 'test_check_employee' test.id %}" style="text-decoration: none;">
+                                    <button class="btn btn-outline-info" >Wypełnione testy</button>
+                                </a>
+                            {% endif %} 
                         </td>
                     </tr>
                 {% endfor %}

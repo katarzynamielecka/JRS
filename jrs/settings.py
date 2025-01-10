@@ -30,6 +30,10 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['localhost']
 
+RECAPTCHA_PUBLIC_KEY = '6L6LeQqrMqAAAAAAi5Ntj32FG5mNKO16vc4fzBcAuC'
+RECAPTCHA_SECRET_KEY = '6LeQqrMqAAAAAJwqSxbTUewq_AtaZwWq1LuLihy-'
+
+
 LOGIN_URL = '/login/'
 # Application definition
 

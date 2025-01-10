@@ -16,7 +16,9 @@
 
         {% for recruitment_name, refugee_data in grouped_data.items %}
         <h2 class="recruitment-title">Rekrutacja: {{ recruitment_name }}</h2>
-        <a href="{% url 'assignment_to_courses' test.id  recruitment_name %}" class="btn button-orange">Przydzielanie kursantów do kursów językowych</a>
+        {% if user_role == "admin" %}
+            <a href="{% url 'assignment_to_courses' test.id  recruitment_name %}" class="btn button-orange">Przydzielanie kursantów do kursów językowych</a>
+        {% endif %}
         <table class="table table-responsive">
             <thead>
                 <tr>

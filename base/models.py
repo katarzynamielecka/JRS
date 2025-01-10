@@ -89,11 +89,12 @@ class Employee(models.Model):
 class Refugee(models.Model):
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
+    email = models.EmailField(unique=True, blank=False)
     gender = models.CharField(
         max_length=10,
-        choices=[("female", "Female"), ("male", "Male"), ("other", "Other")],
+        choices=[("female", "Female"), ("male", "Male")],
     )
-    dob = models.DateField()
+    is_adult = models.BooleanField(default=True)
     phone_number = models.CharField(max_length=15)
     nationality = CountryField(blank_label="Select country")
     residency = models.CharField(
@@ -251,10 +252,13 @@ class TimeInterval(models.Model):
 
 class LanguageCourse(models.Model):
     name = models.CharField(max_length=255)
+    description = models.TextField(blank=True, null=True)
     language = models.ForeignKey(Language, on_delete=models.CASCADE)
     weekly_classes = models.PositiveIntegerField(default=1)
     semesters = models.ManyToManyField(Semester, related_name="courses")
     is_slavic = models.BooleanField(default=False)
+    teacher = models.ForeignKey(Employee, related_name="teaching_courses", on_delete=models.CASCADE, blank=True, null=True)
+
 
     def __str__(self):
         return f"{self.name} ({self.language})"

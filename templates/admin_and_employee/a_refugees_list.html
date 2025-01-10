@@ -16,6 +16,7 @@
             <th>Imię</th>
             <th>Nazwisko</th>
             <th>Płeć</th>
+            <th>Email</th>
             <th>Data urodzenia</th>
             <th>Numer telefonu</th>
             <th>Narodowość</th>
@@ -38,7 +39,8 @@
                         Inna
                     {% endif %}
                 </td>
-                <td>{{ refugee.dob|date:"d-m-Y" }}</td>
+                <td>{{ refugee.email }}</td>
+                <td>{{ refugee.dob|date:"d.m.Y" }}</td>
                 <td>{{ refugee.phone_number }}</td>
                 <td>{{ refugee.get_nationality_name }}</td>
                 <td>{{ refugee.residency }}</td>

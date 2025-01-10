@@ -3,6 +3,7 @@ from django.forms import inlineformset_factory
 from django import forms
 from datetime import datetime
 from googletrans import Translator
+from django_countries.fields import Country
 from django.contrib.auth.forms import UserCreationForm
 from django.forms import modelformset_factory
 from django.contrib.auth.models import User
@@ -10,8 +11,10 @@ from .models import Employee, Question, Choice, LanguageTest, Language, Attendan
 from django.contrib.auth.password_validation import validate_password
 from .models import Refugee, LanguageCourse, Semester, Recruitment
 from django.db import transaction
-
-
+from django.core.exceptions import ObjectDoesNotExist
+from django.conf import settings
+from django_recaptcha.fields import ReCaptchaField
+from django_recaptcha.widgets import ReCaptchaV3
 class EmployeeRegisterForm(UserCreationForm):
     email = forms.EmailField(
         label="Adres e-mail",
@@ -129,24 +132,52 @@ class RefugeeRegistrationForm(forms.ModelForm):
         required=True,
         label="I confirm that the information provided is true and accurate."
     )
-
+    IS_ADULT_CHOICES = [
+        (True, 'Yes'),
+        (False, 'No'),
+    ]
+    
+    is_adult = forms.ChoiceField(
+        choices=IS_ADULT_CHOICES,
+        widget=forms.RadioSelect(),
+        label="Are you an adult?"
+    )
+    
     class Meta:
         model = Refugee
-        fields = ['first_name', 'last_name', 'gender', 'dob', 'phone_number', 'nationality', 'residency', 'language', 'comments']
+        fields = ['first_name', 'last_name', 'email', 'gender', 'is_adult', 'phone_number', 'nationality', 'residency', 'language', 'comments']
         labels = {
-            'dob': 'Date of Birth',
+           
         }
         widgets = {
             'first_name': forms.TextInput(attrs={'class': 'form-control'}),
             'last_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control'}), 
             'gender': forms.Select(attrs={'class': 'form-control'}),
-            'dob': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'phone_number': forms.TextInput(attrs={'class': 'form-control', 'inputmode': 'numeric', 'pattern': '\d*', 'oninput': 'this.value = this.value.replace(/[^0-9]/g, "")'}),
             'nationality': forms.Select(attrs={'class': 'form-control'}),
             'residency': forms.Select(attrs={'class': 'form-control'}),
             'language': forms.Select(attrs={'class': 'form-control'}),
             'comments': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
         }
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        language = self.cleaned_data.get('language')
+        try:
+            active_recruitment = Recruitment.objects.get(active=True)
+        except ObjectDoesNotExist:
+            raise forms.ValidationError("Brak aktywnej rekrutacji. Skontaktuj się z administratorem.")
+        if Refugee.objects.filter(
+            email=email,
+            language=language,
+            courses__semesters__recruitments=active_recruitment
+        ).exists():
+            raise forms.ValidationError(
+                "Ten adres e-mail jest już zarejestrowany w aktywnej rekrutacji dla wybranego języka."
+            )
+        return email
+
 
     def clean_dob(self):
         dob = self.cleaned_data.get('dob')
@@ -171,19 +202,49 @@ class RefugeeRegistrationForm(forms.ModelForm):
             ).distinct()
         else:
             available_languages = Language.objects.none()
-        self.fields['language'].queryset = available_languages
-        self.fields['language'].label = "Select language (available courses)"
         translator = Translator()
         for field_name, field in self.fields.items():
             if field.label:
                 field.label = translator.translate(field.label, dest=lang).text
-
         self.fields['rodo_consent'].label = translator.translate(
             self.fields['rodo_consent'].label, dest=lang
         ).text
         self.fields['truth_confirmation'].label = translator.translate(
             self.fields['truth_confirmation'].label, dest=lang
         ).text
+        translated_choices = [
+            (choice[0], translator.translate(choice[1], dest=lang).text)
+            for choice in self.IS_ADULT_CHOICES
+        ]
+        self.fields['is_adult'].choices = translated_choices
+        if hasattr(self.fields['gender'], 'choices'):
+            gender_choices = self.fields['gender'].choices
+            translated_gender_choices = [
+                (choice[0], translator.translate(choice[1], dest=lang).text)
+                for choice in gender_choices
+            ]
+            self.fields['gender'].choices = translated_gender_choices
+        translated_languages = [
+            (language.id, translator.translate(language.name, dest=lang).text)
+            for language in available_languages
+        ]
+        self.fields['language'].choices = translated_languages
+        self.fields['language'].label = translator.translate(
+            "Select language (available courses)", dest=lang
+        ).text
+        if hasattr(self.fields['nationality'], 'queryset'):
+            translated_nationalities = [
+                (country.code, translator.translate(Country(country.code).name, dest=lang).text)
+                for country in self.fields['nationality'].queryset
+            ]
+            self.fields['nationality'].choices = translated_nationalities
+        if hasattr(self.fields['residency'], 'choices'):
+            translated_residencies = [
+                (choice[0], translator.translate(choice[1], dest=lang).text)
+                for choice in self.fields['residency'].choices
+            ]
+            self.fields['residency'].choices = translated_residencies
+
 
 
 class LanguageTestForm(forms.ModelForm):
@@ -223,15 +284,17 @@ ChoiceFormSet = inlineformset_factory(
 class LanguageCourseForm(forms.ModelForm):
     class Meta:
         model = LanguageCourse
-        fields = ['name', 'language', 'semesters', 'is_slavic']
+        fields = ['name', 'description', 'language', 'semesters', 'is_slavic']
         labels = {
-            'name': 'Nazwa (PO ANGIELSKU)', 
+            'name': 'Nazwa (PO ANGIELSKU)',
+            'description': 'Opis', 
             'language': 'Język',
             'semesters': 'Semestry',
             'is_slavic': 'Kurs dla osób z krajów słowiańskich',
         }
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'description': forms.TextInput(attrs={'class': 'form-control'}),
             'language': forms.Select(attrs={'class': 'form-control'}),
             'semesters': forms.CheckboxSelectMultiple(attrs={'class': 'form-check-input'}),
             'is_slavic': forms.CheckboxInput(attrs={'class': 'form-check-input'}),

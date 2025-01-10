@@ -19,7 +19,13 @@
         </div>
         {% endfor %}
         
+        <div class="g-recaptcha" data-sitekey="6LeQqrMqAAAAAAi5Ntj32FG5mNKO16vc4fzBcAuC"></div>
+        
         <button type="submit" name="next" class="btn button-orange">{{ translated_texts.next_button }}</button>
     </form>
 </div>
+
+<script src="https://www.google.com/recaptcha/api.js?hl={{ recaptcha_lang }}" async defer></script>
+
+
 {% endblock %}

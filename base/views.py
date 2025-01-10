@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.forms import formset_factory
 import random
+import requests
 from django.contrib.auth import authenticate, login
 from django.utils import formats
 from googletrans import Translator
@@ -8,7 +9,7 @@ from django.db import transaction
 from django.utils.timezone import now
 from django.contrib import messages
 from django.contrib.auth import logout
-
+import csv
 from django.db.models import Subquery, OuterRef, Min
 from datetime import datetime
 from collections import defaultdict
@@ -26,7 +27,7 @@ from .utils import genetic_algorithm_schedule
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseRedirect
 from django.views.decorators.csrf import csrf_protect
-from .forms import QuestionForm, ChoiceFormSet
+from django.conf import settings
 from .forms import (
     EmployeeRegisterForm,
     LanguageCourseForm,
@@ -58,7 +59,6 @@ from .models import (
 
 )
 from .decorators import admin_required, employee_required, admin_or_employee_required
-import pandas as pd
 from django.shortcuts import get_object_or_404, redirect
 from .models import LanguageTest, Refugee, Question, Choice, UserAnswer
 from datetime import datetime
@@ -75,13 +75,10 @@ def test_404(request):
 # REFUGEES
 
 def get_user_language(request):
-    # Sprawdź, czy język został przekazany jako parametr GET
     lang = request.GET.get('lang')
     if lang:
-        # Zapisz nowy język w sesji
         request.session['lang'] = lang
     else:
-        # Pobierz język z sesji lub domyślny
         lang = request.session.get('lang', 'en')
     return lang
 
@@ -180,11 +177,19 @@ def no_registration_view(request, user_role):
 def refugee_registration_view(request, user_role):
     translator = Translator()
     lang = get_user_language(request)
+    recaptcha_lang = get_recaptcha_lang(lang)
     if request.method == "POST":
         form = RefugeeRegistrationForm(request.POST, lang=lang)
         if form.is_valid():
+            # Pobranie odpowiedzi z reCAPTCHA
+            recaptcha_response = request.POST.get('g-recaptcha-response')
+            if not validate_recaptcha(recaptcha_response):
+                print('nie przeszło')
+                form.add_error(None, 'Invalid reCAPTCHA. Please try again.')
+                return render(request, "refugees/form.html", {'form': form, 'user_role': user_role, 'lang': lang})
+            
+            # Jeżeli wszystko jest poprawne, zapisujemy dane i przechodzimy do następnego kroku
             refugee_data = form.cleaned_data
-            refugee_data["dob"] = refugee_data["dob"].strftime("%Y-%m-%d")
             refugee_data["language_id"] = refugee_data["language"].id
             del refugee_data["language"]
 
@@ -208,9 +213,30 @@ def refugee_registration_view(request, user_role):
         "user_role": user_role,
         "translated_texts": translated_texts,
         "lang": lang,
+        "recaptcha_lang": recaptcha_lang 
     }
     return render(request, "refugees/form.html", context)
 
+def get_recaptcha_lang(lang):
+    supported_languages = ['en', 'pl', 'de', 'fr', 'es', 'it', 'pt', 'ru', 'ja'] 
+    return lang if lang in supported_languages else 'en' 
+
+
+def validate_recaptcha(recaptcha_response):
+    recaptcha_url = "https://www.google.com/recaptcha/api/siteverify"
+    secret_key = settings.RECAPTCHA_SECRET_KEY
+    payload = {
+        'secret': secret_key,
+        'response': recaptcha_response,
+    }
+    response = requests.post(recaptcha_url, data=payload)
+    result = response.json()
+
+    print("ReCAPTCHA Response:", recaptcha_response)
+    print("Google API Payload:", payload)
+    print("Google API Result:", result)
+
+    return result.get('success', False)
 
 
 def language_test_view(request, user_role):
@@ -218,18 +244,15 @@ def language_test_view(request, user_role):
     lang = get_user_language(request)
     refugee_data = request.session.get("refugee_data")
     if not refugee_data:
-        return redirect("refugee_registration")
-    
+        return redirect("home")
     recruitment = Recruitment.objects.filter(active=True).first()
     if not recruitment:
         return redirect("no_recruitment")
-
     language_id = refugee_data.get("language_id")
     language = get_object_or_404(Language, id=language_id)
     test = recruitment.language_tests.filter(language=language).first()
     if not test:
         return redirect("no_recruitment")  
-
     questions = test.questions.filter(
         Q(question_type="open") | Q(question_type="choice", choices__isnull=False)
     ).distinct()
@@ -247,7 +270,6 @@ def language_test_view(request, user_role):
         answers = {}
         total_points = 0
         refugee = None
-
         for question in questions:
             if question.question_type == "choice":
                 selected_choice_id = request.POST.get(f"question_{question.id}")
@@ -255,18 +277,13 @@ def language_test_view(request, user_role):
             elif question.question_type == "open":
                 open_answer = request.POST.get(f"question_{question.id}")
                 answers[question.id] = open_answer
-        
         if refugee_data:
-            refugee_data["dob"] = datetime.strptime(
-                refugee_data["dob"], "%Y-%m-%d"
-            ).date()
             refugee = Refugee.objects.create(**refugee_data)
             filled_test = FilledTest.objects.create(
                 refugee=refugee,
                 test=test,
                 recruitment=recruitment
             )
-
             for question_id, answer in answers.items():
                 question = Question.objects.get(id=question_id)
                 if question.question_type == "choice":
@@ -302,8 +319,24 @@ def language_test_view(request, user_role):
 
 
 def success_view(request, user_role):
+    translator = Translator()
+    lang = get_user_language(request)
+    try:
+        success_message = translator.translate("Your registration was successful. We have sent a confirmation email to your address.", dest=lang).text
+        instructions_message = translator.translate("Check your inbox for further instructions.", dest=lang).text
+        contact_message = translator.translate("If you have any questions, ", dest=lang).text
+        contact_link = translator.translate("contact us.", dest=lang).text
+    except Exception as e:
+        success_message = "Your registration was successful. We have sent a confirmation email to your address."
+        instructions_message = "Check your inbox for further instructions."
+        contact_message = "If you have any questions, "
+        contact_link = "contact us."
     context = {
         "user_role": user_role,
+        "success_message": success_message,
+        "instructions_message": instructions_message,
+        "contact_message": contact_message,
+        "contact_link": contact_link,
     }
     return render(request, "refugees/success.html", context)
 
@@ -421,8 +454,15 @@ def save_points(request, user_role):
                 except (ValueError, UserAnswer.DoesNotExist):
                     pass
             filled_test.calculate_total_points()
-        return redirect("test_check", test_id=test_id, user_role=user_role)
-    
+        if user_role == "admin":
+            return redirect("test_check", test_id=test_id, user_role=user_role)
+        else:
+            return redirect("test_check_employee", test_id=test_id, user_role=user_role)
+
+        
+
+@login_required
+@admin_required
 def assignment_to_courses(request, test_id, recruitment_name, user_role):
     test = LanguageTest.objects.get(pk=test_id)
     recruitment = Recruitment.objects.get(name = recruitment_name)
@@ -504,7 +544,7 @@ def assignment_to_courses(request, test_id, recruitment_name, user_role):
                     messages.error(request, "Minimalna liczba punktów nie może być większa niż maksymalna.")
                     return redirect(request.path)
 
-                overlapping_thresholds = CourseTestThreshold.objects.filter(test=test, recruitment=recruitment).exclude(course=course)
+                overlapping_thresholds = CourseTestThreshold.objects.filter(test=test, recruitment=recruitment, course__is_slavic=course.is_slavic).exclude(course=course)
 
                 for threshold in overlapping_thresholds:
                     if not (
@@ -539,6 +579,7 @@ def assignment_to_courses(request, test_id, recruitment_name, user_role):
     "unassigned_refugees_data": unassigned_refugees_data,
     }
     return render(request, "admin_and_employee/a_assignment_to_courses.html", context)
+
 
 def assignment_function(refugee, test, recruitment):
     filled_test = FilledTest.objects.filter(refugee=refugee, test=test, recruitment=recruitment).first()
@@ -682,7 +723,10 @@ def edit_test(request, user_role, id):
             text = request.POST.get("open_question_text")
             if text:
                 Question.objects.create(test=test, text=text, question_type="open")
-                return redirect("edit_test", id=id)
+                if user_role == "admin":
+                    return redirect("edit_test", id=id)
+                else:
+                    return redirect("edit_test_employee", id=id)
         if "add_choice_question" in request.POST:
             text = request.POST.get("choice_question_text")
             answers = request.POST.getlist("answer_text")
@@ -696,26 +740,38 @@ def edit_test(request, user_role, id):
                     Choice.objects.create(
                         question=question, text=answer_text, is_correct=is_correct
                     )
-                return redirect("edit_test", id=id)
+                if user_role == "admin":
+                    return redirect("edit_test", id=id)
+                else:
+                    return redirect("edit_test_employee", id=id)
 
         elif "update_question" in request.POST:
             question_id = request.POST.get("question_id")
             question = get_object_or_404(Question, id=question_id)
             question.text = request.POST.get("updated_question_text")
             question.save()
-            return redirect("edit_test", id=id)
+            if user_role == "admin":
+                return redirect("edit_test", id=id)
+            else:
+                return redirect("edit_test_employee", id=id)
         elif "delete_question" in request.POST:
             question_id = request.POST.get("question_id")
             question = get_object_or_404(Question, id=question_id)
             question.delete()
-            return redirect("edit_test", id=id)
+            if user_role == "admin":
+                return redirect("edit_test", id=id)
+            else:
+                return redirect("edit_test_employee", id=id)
         elif "question_id" in request.POST and "max_points" in request.POST:
             question_id = request.POST.get("question_id")
             max_points = request.POST.get("max_points")
             question = get_object_or_404(Question, id=question_id)
             question.max_points = max_points
             question.save()
-            return redirect("edit_test", id=id)
+            if user_role == "admin":
+                return redirect("edit_test", id=id)
+            else:
+                return redirect("edit_test_employee", id=id)
     questions = test.questions.prefetch_related("choices").all()
     context = {"user_role": user_role, "test": test, "questions": questions}
     return render(request, "admin_and_employee/ae_edit_test.html", context)
@@ -794,6 +850,8 @@ def employee_management_section(request, user_role):
 
 
 # courses management
+@login_required
+@admin_required
 def handle_course_form(request):
     course_id = request.POST.get("course_id")
     if course_id:
@@ -807,7 +865,9 @@ def handle_course_form(request):
         return form, None
     else:
         return form, form.errors
-
+    
+@login_required
+@admin_required
 def handle_language_form(request):
     language_form = LanguageForm(request.POST or None)
     if language_form.is_valid():
@@ -815,6 +875,8 @@ def handle_language_form(request):
         return True
     return language_form
 
+@login_required
+@admin_required
 def handle_course_deletion(request):
     course_id = request.GET.get("delete")
     if course_id:
@@ -823,6 +885,8 @@ def handle_course_deletion(request):
         return True
     return False
 
+@login_required
+@admin_required
 def handle_language_deletion(request):
     language_id = request.GET.get("delete_language")
     if language_id:
@@ -831,6 +895,8 @@ def handle_language_deletion(request):
         return True
     return False
 
+@login_required
+@admin_required
 def handle_teacher_assignment(request):
     course_id = request.POST.get("course_id")
     if "teachers" in request.POST and course_id:
@@ -845,6 +911,8 @@ def handle_teacher_assignment(request):
         return True
     return False
 
+@login_required
+@admin_required
 def handle_weekly_classes_update(request):
     course_id = request.POST.get("course_id")
     weekly_classes = request.POST.get("weekly_classes")
@@ -855,6 +923,8 @@ def handle_weekly_classes_update(request):
         return True
     return False
 
+@login_required
+@admin_required
 def handle_semester_deletion(request):
     semester_id = request.POST.get("semester_id")
     if request.POST.get("delete_semester") and semester_id:
@@ -863,6 +933,8 @@ def handle_semester_deletion(request):
         return True
     return False
 
+@login_required
+@admin_required
 def handle_semester_update(request):
     semester_id = request.POST.get("semester_id")
     name = request.POST.get("semester_name")
@@ -877,6 +949,8 @@ def handle_semester_update(request):
         return True
     return False
 
+@login_required
+@admin_required
 def handle_new_semester_creation(request):
     name = request.POST.get("semester_name")
     start_date = request.POST.get("start_date")
@@ -891,6 +965,7 @@ def handle_new_semester_creation(request):
     return False
 
 @login_required
+@admin_required
 def courses_management_section(request, user_role):
     if request.method == "POST":
         if request.POST.get("form_type") == "course_form":
@@ -940,7 +1015,7 @@ def courses_management_section(request, user_role):
 
 @login_required
 @admin_required
-def delete_employee(request, email):
+def delete_employee(request, user_role, email):
     user = get_object_or_404(User, email=email)
     employee = get_object_or_404(Employee, user=user)
     employee.delete()
@@ -1085,11 +1160,16 @@ def timetable_view(request, user_role,):
     }
     return render(request, "admin_and_employee/a_timetable.html", context)
 
-
+@login_required
+@admin_required
 def generate_timetable(request, user_role):
     ClassSchedule.objects.all().delete()
     best_schedule, conflicts = genetic_algorithm_schedule(population_size=50, generations=100)
     for schedule in best_schedule:
+        course = schedule[0] 
+        teacher = schedule[4] 
+        course.teacher = teacher
+        course.save() 
         ClassSchedule.objects.create(
             course=schedule[0],            # Kurs
             day=schedule[1],               # Dzień
@@ -1100,7 +1180,8 @@ def generate_timetable(request, user_role):
         )
     return redirect("timetable", user_role=user_role)
 
-
+@login_required
+@admin_required
 def handle_schedule_update(request):
     """Obsługuje AJAX-owe aktualizacje planu w modelu ClassSchedule."""
     if request.method != "POST":
@@ -1125,7 +1206,9 @@ def handle_schedule_update(request):
             schedule.classroom_id = classroom_id
         if teacher_id is not None:
             schedule.teacher_id = teacher_id
-
+            course = schedule.course
+            course.teacher = schedule.teacher
+            course.save()
         schedule.save()
 
         return JsonResponse({"success": True, "message": "Plan zaktualizowany pomyślnie."})
@@ -1153,11 +1236,11 @@ def generate_course_dates(start_date, end_date, weekday):
         current_date += timedelta(days=1)
     return dates
 
-
 @login_required
+@admin_or_employee_required
 def attendance_view(request, user_role):
     user = request.user
-    try:
+    try: 
         employee = Employee.objects.get(user=user)
     except Employee.DoesNotExist:
         employee = None
@@ -1179,6 +1262,7 @@ def attendance_view(request, user_role):
     return render(request, "admin_and_employee/e_attendance.html", context)
 
 @login_required
+@admin_or_employee_required
 def mark_attendance(request, user_role, schedule_id, date):
     schedule = get_object_or_404(ClassSchedule, id=schedule_id)
     refugees = schedule.course.refugees.all()
@@ -1193,7 +1277,6 @@ def mark_attendance(request, user_role, schedule_id, date):
         formset = AttendanceFormSet(request.POST, queryset=attendance_queryset)
         if formset.is_valid():
             formset.save()
-            print('pau')
             messages.success(request, "Obecności zostały zapisane.")
             return redirect("mark_attendance", schedule_id=schedule_id, date=selected_date)
     else:
@@ -1205,4 +1288,85 @@ def mark_attendance(request, user_role, schedule_id, date):
         "formset": formset,
     }
     return render(request, "admin_and_employee/e_mark_attendance.html", context)
+
+@login_required
+@admin_required
+def export_courses_csv(request, user_role):
+    courses = LanguageCourse.objects.prefetch_related('semesters').all()
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="courses.csv"'
+    writer = csv.writer(response, delimiter=';')
+    writer.writerow(['Nazwa', 'Opis', 'Semestr', 'Email_nauczyciela'])
+    for course in courses:
+        semesters = course.semesters.all() 
+        for semester in semesters:
+            teacher = course.teacher.user.email if course.teacher else ""
+            writer.writerow([course.name, course.description, semester.name, teacher])
+    return response
+
+@login_required
+@admin_required
+def export_refugees_csv(request, user_role):
+    refugees = Refugee.objects.prefetch_related('courses')
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="refugees.csv"'
+    writer = csv.writer(response, delimiter=';')
+    writer.writerow(['nazwa kursu', 'nazwa semestru', 'imie', 'nazwisko', 'telefon', 'mail', 'czy_pelnoletni', 'plec', 'kraj', 'cecha charakterystyczna', 'opis'])
+    for refugee in refugees:
+        for course in refugee.courses.all():
+            first_semester = course.semesters.order_by('start_date').first()
+            semester_name = first_semester.name if first_semester else "brak"
+            gender = refugee.gender
+            if gender == 'female':
+                gender = 'kobieta'
+            elif gender == 'male':
+                gender = 'mężczyzna'
+            age=''
+            if refugee.is_adult == True:
+                age='pełnoletni'
+            else:
+                age='niepełnoletni'
+            writer.writerow([
+                course.name,
+                semester_name,
+                refugee.first_name,
+                refugee.last_name,
+                refugee.phone_number,
+                refugee.email,
+                age,
+                gender,
+                refugee.get_nationality_name(),
+                '',
+                ''
+            ])
+    return response
+
+@login_required
+@admin_required
+def export_employees_csv(request, user_role):
+    employees = Employee.objects.select_related('user').all()
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="employees.csv"'
+    
+    writer = csv.writer(response, delimiter=';')
+    writer.writerow(['lp', 'imie', 'nazwisko', 'telefon', 'mail', 'plec', 'kraj', 'cecha charakterystyczna', 'opis'])
+    
+    for employee in employees:
+        writer.writerow([
+            '',
+            employee.user.first_name,
+            employee.user.last_name,
+            '',  # Telefon (brak w modelu Employee)
+            employee.user.email,
+            '',  # Płeć (brak w modelu Employee)
+            '',  # Kraj (brak w modelu Employee)
+            '',  # Cecha charakterystyczna (brak w modelu Employee)
+            ''  # Opis (brak w modelu Employee)
+        ])
+    context = {
+        "user_role": user_role,
+    }
+    return response
+
+
 

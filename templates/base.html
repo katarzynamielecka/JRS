@@ -16,10 +16,23 @@
   </head>
   <nav class="jrs-navbar">
     <div class="nav-container">
-      <div class="jrs-logo">
-      <img src="/static/logo-09.2024.png" width="auto" height="50" class="d-inline-block align-top" alt="LOGO">
-      </div>
-
+      {% if user_role == "admin" %}
+        <a href="/systemadmin/">
+          <div class="jrs-logo">
+            <img src="/static/logo-09.2024.png" width="auto" height="50" class="d-inline-block align-top" alt="LOGO">
+          </div>
+        </a>
+      {% elif user_role == "employee" %}
+        <a href="/employee/">
+          <div class="jrs-logo">
+            <img src="/static/logo-09.2024.png" width="auto" height="50" class="d-inline-block align-top" alt="LOGO">
+          </div>
+        </a>
+      {% else %}
+        <div class="jrs-logo">
+          <img src="/static/logo-09.2024.png" width="auto" height="50" class="d-inline-block align-top" alt="LOGO">
+        </div>
+      {% endif %} 
         {% if user_role == 'admin' %}
         <div class="burger-menu">
           <i class="fas fa-bars"></i>
@@ -34,10 +47,10 @@
             </div>
           </div>
           <div class="mobile-menu-content">
-          <a href="/systemadmin" class="mobile-menu-item">Start</a>
-          <a href="/systemadmin/form-management" class="mobile-menu-item">Edycja - Testy</a>
-          <a href="/systemadmin/courses-management" class="mobile-menu-item">Zarządzanie kursami</a>
-          <a href="/systemadmin/employee-management" class="mobile-menu-item">Zarządzanie pracownikami</a>
+          <a href="/systemadmin/attendance/" class="second-nav-item">Obecności</a>
+          <a href="/systemadmin/form-management" class="mobile-menu-item">Testy</a>
+          <a href="/systemadmin/courses-management" class="mobile-menu-item">Kursy</a>
+          <a href="/systemadmin/employee-management" class="mobile-menu-item">Pracownicy</a>
           <a class="mobile-menu-item logout-btn" href="{% url 'logout' %}">Wyloguj się</a>
         {% elif user_role == 'employee' %}
         <div class="burger-menu">
@@ -54,9 +67,8 @@
           </div>
           <div class="mobile-menu-content">
           <a href="/employee" class="mobile-menu-item">Start</a>
-          <a href="/employee/attendance-check" class="mobile-menu-item">Obecności</a>
-          <a href="/employee/form-management" class="mobile-menu-item">Edycja - Testy</a>
-          <a href="/employee/courses-management" class="mobile-menu-item">Zarządzanie kursami</a>
+          <a href="/employee/attendance" class="mobile-menu-item">Obecności</a>
+          <a href="/employee/form-management" class="mobile-menu-item">Testy</a>
           <a class="mobile-menu-item logout-btn" href="{% url 'logout' %}">Wyloguj się</a>
           {% elif user_role == 'refugee' %}
             <div class="jrs-refugee-nav-menu">
@@ -111,18 +123,17 @@
 
   {% if user_role == 'admin' %}
     <div class="jrs-admin-nav-menu">
-      <a href="/systemadmin" class="second-nav-item">Start</a>
-      <a href="/systemadmin/form-management" class="second-nav-item">Edycja - Testy</a>
-      <a href="/systemadmin/courses-management" class="second-nav-item">Zarządzanie kursami</a>
-      <a href="/systemadmin/employee-management" class="second-nav-item">Zarządzanie pracownikami</a>
+      <a href="/systemadmin/attendance/" class="second-nav-item">Obecności</a>
+      <a href="/systemadmin/form-management" class="second-nav-item">Testy</a>
+      <a href="/systemadmin/courses-management" class="second-nav-item">Kursy</a>
+      <a href="/systemadmin/employee-management" class="second-nav-item">Pracownicy</a>
       <a class="second-nav-item logout-btn" href="{% url 'logout' %}">Wyloguj się</a>
     </div>
   {% elif user_role == 'employee' %}
   <div class="jrs-admin-nav-menu">
     <a href="/employee" class="second-nav-item">Start</a>
     <a href="/employee/attendance/" class="second-nav-item">Obecności</a>
-    <a href="/employee/form-management" class="second-nav-item">Edycja - Testy</a>
-    <a href="/employee/courses-management" class="second-nav-item">Zarządzanie kursami</a>
+    <a href="/employee/form-management" class="second-nav-item">Testy</a>
     <a class="second-nav-item logout-btn" href="{% url 'logout' %}">Wyloguj się</a>
   </div>
   {% endif %}
