@@ -39,9 +39,9 @@
         </div>
         
         <button type="button" id="add-answer-btn" class="button-new-answer" onclick="addAnswer()">
-            <i class="fa-solid fa-plus" style="color: #26528c"></i>
+            <i class="fa-solid fa-plus" style="color: grey"></i>
         </button>
-
+<!-- style="color: #26528c -->
         <script>
             let answerCount = 1;
         
@@ -70,58 +70,61 @@
     <hr>
 
     <h2 class="test-management-title">Pytania w tym teście</h2>
-    <table class="table table-responsive">
-        <thead>
-            <tr>
-                <th>Nr</th>
-                <th>Treść pytania</th>
-                <th>Typ pytania</th>
-                <th>Odpowiedzi</th>
-                <th>Punktacja</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for question in questions %}
-            <tr>
-                <td>{{ forloop.counter }}</td>
-                <td>{{ question.text }}</td>
-                <td>{{ question.get_question_type_display }}</td>
-                <td>
-                    {% if question.question_type == 'choice' %}
-                        <ul>
-                            {% for answer in question.choices.all %}
-                                <li>
-                                    {{ answer.text }} {% if answer.is_correct %} <strong>(Poprawna)</strong> {% endif %}
-                                </li>
-                            {% endfor %}
-                        </ul>
-                    {% else %}
-                        Brak odpowiedzi (pytanie otwarte)
-                    {% endif %}
-                </td>
-                <td>
-                    <form method="post" class="max-points-form">
-                        {% csrf_token %}
+    <form method="post">
+        {% csrf_token %}
+        <table class="table table-responsive">
+            <thead>
+                <tr>
+                    <th>Nr</th>
+                    <th>Treść pytania</th>
+                    <th>Typ pytania</th>
+                    <th>Odpowiedzi</th>
+                    <th>Punktacja</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for question in questions %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ question.text }}</td>
+                    <td>{{ question.get_question_type_display }}</td>
+                    <td>
+                        {% if question.question_type == 'choice' %}
+                            <ul>
+                                {% for answer in question.choices.all %}
+                                    <li>
+                                        {{ answer.text }} {% if answer.is_correct %} <strong>(Poprawna)</strong> {% endif %}
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            Brak odpowiedzi (pytanie otwarte)
+                        {% endif %}
+                    </td>
+                    <td>
                         <input type="hidden" name="question_id" value="{{ question.id }}">
                         <input type="number" name="max_points" placeholder="Maks. punkty" 
-                        step="0.5" min="0" class="form-control"
-                        value="{{ question.max_points }}"
-                        onblur="this.form.submit();" onkeydown="if(event.key === 'Enter') { this.form.submit(); }">
-                        <div class="error-message" style="color: red; display: none;"></div>
-                    </form>
-                </td>
-                <td>
-                    <form method="post" onsubmit="return confirm('Czy na pewno chcesz usunąć to pytanie?');">
-                        {% csrf_token %}
-                        <input type="hidden" name="question_id" value="{{ question.id }}">
-                        <button type="submit" name="delete_question" class="btn btn-danger">Usuń</button>
-                    </form>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+                               step="0.5" min="0" class="form-control"
+                               value="{{ question.max_points }}">
+                    </td>
+                    <td>
+                        <form method="post" onsubmit="return confirm('Czy na pewno chcesz usunąć to pytanie?');">
+                            {% csrf_token %}
+                            <input type="hidden" name="question_id" value="{{ question.id }}">
+                            <button type="submit" name="delete_question" class="btn btn-danger">Usuń</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    
+        <div class="text-end mt-3">
+            <button type="submit" name="save_all_points" class="btn button-orange">Zapisz punktację</button>
+        </div>
+    </form>
+    
 </div>
 <script src="{% static 'js/test_edition.js' %}"></script>
 {% endblock %}

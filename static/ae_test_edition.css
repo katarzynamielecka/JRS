@@ -90,6 +90,12 @@
     margin-top: 10vh;
 }
 
+@media (max-width: 245px) {
+    .new-test{
+        height: 450px;
+    }
+}
+
 .new-test-input{
     margin-bottom: 10px;
 }
@@ -108,7 +114,31 @@
     height: 30px;
     border-radius: 50px;
     border: solid;
-    border-color: var(--jrs-blue);
+    border-color: grey;
     border-width: 2px;
     background-color: white;
+}
+
+.minmax_points_input{
+    width: 50px;
+}
+
+.minmax_points_input_container{
+    display: flex;
+    gap: 20px;
+}
+
+@media (max-width: 755px) {
+    .minmax_points_input_container{
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+    }
+}
+
+.save-points-btn{
+    width: 90px;
+    margin:0;
+    height: 33px;
+    margin-bottom: 20px;
 }

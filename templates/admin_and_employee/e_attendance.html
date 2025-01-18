@@ -10,8 +10,10 @@
     <i class="fa-solid fa-arrow-left"></i>
 </button>
 <h1 class="page-title">OBECNOŚCI</h1>
+<div class="attendance-container">
 <h1>Lista zajęć</h1>
-<table class="table table-responsive">
+<div class="table-centered">
+<table class="table table-responsive responsive-table">
     <thead>
         <tr>
             <th>Kurs</th>
@@ -23,13 +25,26 @@
     </thead>
     <tbody>
         {% for schedule in schedules %}
-        <tr>
+        <tr class="desktop-row">
             <td>{{ schedule.course.name }}</td>
             <td>{{ schedule.get_day_display }}</td>
             <td>{{ schedule.time_interval }}</td>
             <td>{{ schedule.classroom.name }}</td>
             <td>
-                <button onclick="toggleDates({{ forloop.counter }})" class="btn btn-link"><i class="fas fa-chevron-down" style="color: #D97014;"></i></button>
+                <button onclick="toggleDates({{ forloop.counter }})" class="btn btn-link">
+                    <i class="fas fa-chevron-down" style="color: #D97014;"></i>
+                </button>
+            </td>
+        </tr>
+        <tr class="mobile-row">
+            <td colspan="5" class="mobile-info">
+                <strong>Kurs:</strong> {{ schedule.course.name }}<br>
+                <strong>Dzień:</strong> {{ schedule.get_day_display }}<br>
+                <strong>Godzina:</strong> {{ schedule.time_interval }}<br>
+                <strong>Klasa:</strong> {{ schedule.classroom.name }}
+                <button onclick="toggleDates({{ forloop.counter }})" class="btn btn-link">
+                    <i class="fas fa-chevron-down" style="color: #D97014;"></i>
+                </button>
             </td>
         </tr>
         <tr id="dates-{{ forloop.counter }}" style="display: none;">
@@ -43,20 +58,30 @@
                     </thead>
                     <tbody>
                         {% for date in schedule.dates %}
-                            <tr>
-                                <td>{{ date }}</td>
-                                <td><a href="{% url 'mark_attendance' schedule.id date %}" style="color: #D97014;">Sprawdź obecność</a></td>
-                            </tr>
+                        <tr>
+                            <td>{{ date|date:'d.m.Y' }}</td>
+                            <td>
+                                {% if user_role == 'admin' %}
+                                    <a href="{% url 'mark_attendance_admin' schedule.id date %}" style="color: #D97014;">Sprawdź obecność</a>
+                                {% elif user_role == 'employee' %}
+                                    <a href="{% url 'mark_attendance' schedule.id date %}" style="color: #D97014;">Sprawdź obecność</a>
+                                {% endif %}
+                            </td>
+                        </tr>
                         {% endfor %}
                     </tbody>
                 </table>
             </td>
         </tr>
+        {% empty %}
+        <tr>
+            <td colspan="5">Brak zajęć do wyświetlenia.</td>
+        </tr>
         {% endfor %}
     </tbody>
 </table>
-
-
+</div>
+</div>
 <script>
 function toggleDates(counter) {
     const row = document.getElementById(`dates-${counter}`);

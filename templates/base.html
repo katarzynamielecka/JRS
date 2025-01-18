@@ -39,9 +39,11 @@
         </div>
         <div class=" mobile-menu-overlay hidden">
           <div class="nav-container mobile-menu-header">
-            <div class="jrs-logo">
-              <img src="/static/logo-09.2024.png" width="auto" height="50" class="d-inline-block align-top" alt="LOGO">
-            </div>
+            <a href="/systemadmin/">
+              <div class="jrs-logo">
+                <img src="/static/logo-09.2024.png" width="auto" height="50" class="d-inline-block align-top" alt="LOGO">
+              </div>
+            </a>
             <div class="close-menu">
               <i class="fas fa-times"></i>
             </div>
@@ -50,6 +52,8 @@
           <a href="/systemadmin/attendance/" class="second-nav-item">Obecności</a>
           <a href="/systemadmin/form-management" class="mobile-menu-item">Testy</a>
           <a href="/systemadmin/courses-management" class="mobile-menu-item">Kursy</a>
+          <a href="/systemadmin/recruitment_management" class="mobile-menu-item">Rekrutacja</a>
+          <a href="/systemadmin/timetable/" class="mobile-menu-item">Układanie planu lekcji</a>
           <a href="/systemadmin/employee-management" class="mobile-menu-item">Pracownicy</a>
           <a class="mobile-menu-item logout-btn" href="{% url 'logout' %}">Wyloguj się</a>
         {% elif user_role == 'employee' %}
@@ -58,15 +62,16 @@
         </div>
         <div class="mobile-menu-overlay hidden">
           <div class="nav-container mobile-menu-header">
-            <div class="jrs-logo">
-              <img src="/static/logo-09.2024.png" class="d-inline-block align-top" alt="LOGO">
-            </div>
+            <a href="/employee/">
+              <div class="jrs-logo">
+                <img src="/static/logo-09.2024.png" width="auto" height="50" class="d-inline-block align-top" alt="LOGO">
+              </div>
+            </a>
             <div class="close-menu">
               <i class="fas fa-times"></i>
             </div>
           </div>
           <div class="mobile-menu-content">
-          <a href="/employee" class="mobile-menu-item">Start</a>
           <a href="/employee/attendance" class="mobile-menu-item">Obecności</a>
           <a href="/employee/form-management" class="mobile-menu-item">Testy</a>
           <a class="mobile-menu-item logout-btn" href="{% url 'logout' %}">Wyloguj się</a>
@@ -126,12 +131,13 @@
       <a href="/systemadmin/attendance/" class="second-nav-item">Obecności</a>
       <a href="/systemadmin/form-management" class="second-nav-item">Testy</a>
       <a href="/systemadmin/courses-management" class="second-nav-item">Kursy</a>
+      <a href="/systemadmin/recruitment_management" class="second-nav-item">Rekrutacja</a>
+      <a href="/systemadmin/timetable/" class="second-nav-item">Układanie planu lekcji</a>
       <a href="/systemadmin/employee-management" class="second-nav-item">Pracownicy</a>
       <a class="second-nav-item logout-btn" href="{% url 'logout' %}">Wyloguj się</a>
     </div>
   {% elif user_role == 'employee' %}
-  <div class="jrs-admin-nav-menu">
-    <a href="/employee" class="second-nav-item">Start</a>
+  <div class="jrs-employee-nav-menu">
     <a href="/employee/attendance/" class="second-nav-item">Obecności</a>
     <a href="/employee/form-management" class="second-nav-item">Testy</a>
     <a class="second-nav-item logout-btn" href="{% url 'logout' %}">Wyloguj się</a>

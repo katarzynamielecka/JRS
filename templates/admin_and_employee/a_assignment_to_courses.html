@@ -2,6 +2,7 @@
 {% load static %}
 {% block head %}
 <link rel="stylesheet" href="{% static 'admin_and_employee.css' %}">
+<link rel="stylesheet" href="{% static 'ae_test_edition.css' %}">
 <link rel="stylesheet" href="{% static 'base.css' %}">
 
 {% endblock %}
@@ -27,7 +28,7 @@
 </button>
 <h1 class="page-title">PRZYPISANIE UCZESTNIKÓW DO KURSÓW NA PODSTAWIE WYNIKÓW TESTU</h1>
     {% for data in course_data %}
-        <h2>Kurs: {{ data.course.name }}</h2>
+        <h2 class="part-title">Kurs: {{ data.course.name }}</h2>
         <p>Język: {{ data.course.language.name }}</p>
         <p>
             Słowiańskojęzyczny: 
@@ -38,16 +39,23 @@
             {% endif %}
         </p>
         <form method="post">
-            {% csrf_token %}
-            <input type="hidden" name="course_id" value="{{ data.course.id }}">
-            <input type="hidden" name="test_id" value="{{ test.id }}">
-            <label for="min_points">Minimalna liczba punktów:</label>
-            <input type="number" value="{{ data.min_points }}"  id="min_points" name="min_points" min="0" step="0.5" required>
-        
-            <label for="max_points">Maksymalna liczba punktów:</label>
-            <input type="number" id="max_points" value="{{ data.max_points }}" name="max_points" min="0" step="0.5" required>
-        
-            <button type="submit" class="btn button-orange">Zapisz</button>
+            <div class="minmax_points_input_container">
+                {% csrf_token %}
+                <input type="hidden" name="course_id" value="{{ data.course.id }}">
+                <input type="hidden" name="test_id" value="{{ test.id }}">
+                
+                <div class="form-group">
+                    <label for="min_points">Minimalna liczba punktów:</label>
+                    <input class="minmax_points_input" type="number" value="{{ data.min_points }}" id="min_points" name="min_points" min="0" step="0.5" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="max_points">Maksymalna liczba punktów:</label>
+                    <input class="minmax_points_input" type="number" id="max_points" value="{{ data.max_points }}" name="max_points" min="0" step="0.5" required>
+                </div>
+                
+                <button type="submit" class="btn button-orange save-points-btn">Zapisz</button>
+            </div>            
         </form>
         
         <table class="table table-responsive">
@@ -79,7 +87,7 @@
                                 </button>
                                 <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
                                     {% for crs in course_data %}
-                                        <form method="POST" style="margin: 0;">
+                                        <form method="POST" style="margin: 0px;">
                                             {% csrf_token %}
                                             <input type="hidden" name="change_course" value="1">
                                             <input type="hidden" name="refugee_id" value="{{ refugee_data.refugee.id }}">
@@ -117,7 +125,7 @@
         <br>
     {% endfor %}
 
-    <h2>Nieprzypisani uchodźcy</h2>
+    <h2 class="part-title">Nieprzypisani uchodźcy</h2>
     <table class="table table-responsive">
         <thead>
             <tr>
@@ -138,7 +146,7 @@
                     </td>
                     <td>{{ refugee_data.refugee.first_name }}</td>
                     <td>{{ refugee_data.refugee.last_name }}</td>
-                    <td>{{ refugee_data.test_score }}</td>
+                    <td>{{ refugee_data.test_score }} / {{ refugee_data.max_points }}</td>
                     <td>
                         <div class="dropdown">
                             <button class="btn btn-outline-info dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-expanded="false">

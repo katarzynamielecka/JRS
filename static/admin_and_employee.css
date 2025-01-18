@@ -6,14 +6,6 @@
     overflow: hidden;
 }
 
-.page-title {
-    color: rgb(77, 85, 91);
-    font-weight: 600;
-    font-size: 20px;
-    line-height: 24px;
-    text-align: center;
-    margin-bottom: 20px;
-}
 
 hr{
     margin: 50px 0;
@@ -51,3 +43,82 @@ hr{
     background-color: #48a7f5; 
     border-radius: 1px; 
 }
+
+
+.centered-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+
+.centered-container h2 {
+    margin-bottom: 20px;
+}
+
+
+
+.main-page-buttons-container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); 
+    gap: 15px;
+    margin: 20px 0;
+}
+
+.main-page-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 15px;
+    font-size: 16px;
+    color: #D97014; 
+    border: 2px solid #D97014;
+    border-radius: 5px;
+    background-color: transparent; 
+    text-align: center;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    gap: 10px; 
+}
+.main-page-button:focus,
+.main-page-button:active {
+  outline: none; 
+  text-decoration: none;
+}
+.main-page-button i {
+    font-size: 18px;
+}
+
+.main-page-button:hover {
+    background-color: #D97014; 
+    color: white; 
+    border-color: #D97014;
+}
+
+@media (max-width: 768px) {
+    .main-page-buttons-container {
+      grid-template-columns: repeat(2, 1fr); /* 2 kolumny */
+    }
+  }
+  
+  /* Media Query dla małych ekranów (np. smartfony) */
+  @media (max-width: 480px) {
+    .main-page-buttons-container {
+      grid-template-columns: 1fr; /* 1 kolumna */
+    }
+  }
+
+
+  .main-page-employee-buttons-container {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* Domyślnie 2 kolumny */
+    gap: 20px; /* Odstępy między przyciskami */
+    padding: 20px;
+  }
+
+  @media (max-width: 768px) {
+    .main-page-employee-buttons-container {
+      grid-template-columns: 1fr; /* 1 kolumna */
+    }
+  }

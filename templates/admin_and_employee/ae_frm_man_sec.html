@@ -36,7 +36,8 @@
     </div>
     <h4>Ostatnia aktywna rekrutacja:</h4>
         {% if last_recruitment %}
-            <p>{{ last_recruitment.name }} - {{ last_recruitment.activated_at|date:"d.m.Y" }}</p>
+            <p style="font-weight: bold;">{{ last_recruitment.name }} - {{ last_recruitment.activated_at|date:"d.m.Y" }}</p>
+            <p>Testy w rekrutacji:</p>
             <ul>
                 {% for test in last_recruitment_tests %}
                     <li>{{ test.language.name }} - {{ test.title }}</li>

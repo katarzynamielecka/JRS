@@ -62,11 +62,19 @@ nav img {
 }
 
 .jrs-admin-nav-menu{
-    width: 60%;
+    width: 70%;
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
+
+.jrs-employee-nav-menu{
+  width: 40%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
 .second-nav-item {
     color: var(--jrs-blue);
     font-weight: 600;
@@ -88,23 +96,32 @@ a.second-nav-item:hover {
   gap: 30px;
 }
 
-/* Domyślne ustawienia dla dużych ekranów */
 .lang-select {
   width: 150px;
   padding: 5px;
 }
 
-/* Dostosowanie dla małych ekranów */
 @media (max-width: 560px) {
   .lang-select {
     width: 80px;
     text-align: center;
   }
-  .lang-placeholder {
-    display: block; /* Pokazuj "LANG" na mniejszych ekranach */
-  }
+
   .jrs-refugee-nav-menu{
     gap: 1%;
+    margin-left: 0;
+    padding-left: 0;
+  }
+}
+
+@media (max-width: 300px) {
+  .lang-select {
+    width: 55px;
+    text-align: center;
+  }
+  
+  .jrs-refugee-nav-menu{
+    gap: 0;
   }
 }
 
@@ -179,6 +196,11 @@ a.second-nav-item:hover {
     .jrs-admin-nav-menu{
       display: none;
     }
+
+    .jrs-employee-nav-menu{
+      display: none;
+    }
+  
   
     .mobile-menu-overlay {
       display: none;
@@ -206,5 +228,17 @@ a.second-nav-item:hover {
     .jrs-logo{
         width: 140px;
         padding: 10px;
+    }
+  }
+
+  
+  @media (max-width: 230px) {
+    .jrs-logo img{
+        width: 96px;
+        height: auto;
+    }
+    .jrs-logo{
+        width: 102px;
+        padding: 10px 3px;
     }
   }

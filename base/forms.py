@@ -126,11 +126,13 @@ class EmployeeRegisterForm(UserCreationForm):
 class RefugeeRegistrationForm(forms.ModelForm):
     rodo_consent = forms.BooleanField(
         required=True,
-        label="I consent to the processing of my personal data in accordance with GDPR."
+        label="I consent to the processing of my personal data in accordance with GDPR.",
+        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'})
     )
     truth_confirmation = forms.BooleanField(
         required=True,
-        label="I confirm that the information provided is true and accurate."
+        label="I confirm that the information provided is true and accurate.",
+        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'})
     )
     IS_ADULT_CHOICES = [
         (True, 'Yes'),
@@ -382,7 +384,12 @@ AttendanceFormSet = modelformset_factory(
     fields=["status", "notes"],
     extra=0,
     widgets={
-        "status": forms.Select(attrs={"class": "form-control"}),
+        "status": forms.RadioSelect(choices=[
+            ("present", "Obecny"),
+            ("absent", "Nieobecny"),
+            ("late", "Spóźniony"),
+            ("excused absence", "Nieobecny usprawiedliwiony"),
+        ]),
         "notes": forms.Textarea(attrs={"class": "form-control", "rows": 2}),
     },
 )

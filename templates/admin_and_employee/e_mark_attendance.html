@@ -2,60 +2,82 @@
 {% load static %}
 {% block head %}
 <link rel="stylesheet" href="{% static 'admin_and_employee.css' %}">
+<link rel="stylesheet" href="{% static 'ae_mark_attendance.css' %}">
 {% endblock %}
 {% block content %}
 <div class="container">
-<button onclick="window.history.back()" class="btn button-grey">
-    <i class="fa-solid fa-arrow-left"></i>
-</button>
-<h1 class="page-title">REJESTRACJA OBECNOŚCI NA ZAJĘCIACH</h1>
-<form method="post">
-    {% csrf_token %}
-    {{ formset.management_form }}
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Uczestnik</th>
-                <th>Status</th>
-                <th>Uwagi</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for form in formset %}
-            <tr>
-                <td>{{ form.instance.refugee }}</td>
-                <td>
-                    {{ form.status }}
-                    {% if form.status.errors %}
-                    <div class="invalid-feedback">
-                        {% for error in form.status.errors %}
-                            <p>{{ error }}</p>
-                        {% endfor %}
-                    </div>
-                    {% endif %}
-                </td>
-                <td>
-                    {{ form.notes }} 
-                    {% if form.notes.errors %}
-                    <div class="invalid-feedback">
-                        {% for error in form.notes.errors %}
-                            <p>{{ error }}</p>
-                        {% endfor %}
-                    </div>
-                    {% endif %}
-                </td>
-                <td>{{ form.id }}</td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="3" style="text-align: center;">Brak uchodźców przypisanych do tego kursu.</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <button onclick="window.history.back()" class="btn button-grey">
+        <i class="fa-solid fa-arrow-left"></i>
+    </button>
+    <h1 class="page-title">Rejestracja Obecności na Zajęciach - {{ date|date:'d.m.Y' }}</h1>
+    <div class="table-centered">
+        <form method="post">
+            {% csrf_token %}
+            {{ formset.management_form }}
+            <table class="table table-responsive">
+                <thead>
+                    <tr>
+                        <th>Uczestnik</th>
+                        <th>Status</th>
+                        <th class="hidden-on-small">Uwagi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for form in formset %}
+                    <tr>
+                        <td class="mark_attendance-title">
+                            {{ form.instance.refugee }}
+                            {{ form.id }} <!-- Ukryte pole ID -->
+                        </td>
+                        <td>
+                            {% for choice in form.fields.status.choices %}
+                            <div class="form-check">
+                                <input 
+                                    type="radio" 
+                                    class="form-check-input" 
+                                    id="status-{{ forloop.parentloop.counter }}-{{ forloop.counter }}" 
+                                    name="form-{{ forloop.parentloop.counter0 }}-status" 
+                                    value="{{ choice.0 }}"
+                                    {% if form.initial.status == choice.0 %}checked{% endif %}
+                                >
+                                <label 
+                                    class="form-check-label attendance_status" 
+                                    for="status-{{ forloop.parentloop.counter }}-{{ forloop.counter }}"
+                                >
+                                    {{ choice.1 }}
+                                </label>
+                            </div>
+                            {% endfor %}
+                            {% if form.status.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in form.status.errors %}
+                                <p>{{ error }}</p>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </td>
+                        <td class="hidden-on-small">
+                            {{ form.notes }}
+                            {% if form.notes.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in form.notes.errors %}
+                                <p>{{ error }}</p>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="3" style="text-align: center;">Brak uchodźców przypisanych do tego kursu.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>                
+            </table>
 
-    <button type="submit" class="btn button-orange">Zapisz obecności</button>
-</form>
-
+            <button type="submit" class="btn button-orange mt-3">Zapisz obecności</button>
+        </form>
+    </div>
 </div>
+
 {% endblock %}

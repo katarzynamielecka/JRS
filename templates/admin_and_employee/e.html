@@ -1,9 +1,66 @@
 {% extends "base.html" %}
 {% load static %}
-
+{% block head %}
+{% load static %}
+<link rel="stylesheet" href="{% static 'timetable.css' %}">
+<link rel="stylesheet" href="{% static 'admin_and_employee.css' %}">
+{% endblock %}
 {% block content %}
 <button onclick="window.history.back()" class="btn button-grey">
     <i class="fa-solid fa-arrow-left"></i>
 </button>
-<h2>HOME EMPLOYEE</h2>
+<h1 class="page-title">PANEL LEKTORA</h1>
+<div class="main-page-employee-buttons-container">
+  <a href="/employee/attendance/" class="main-page-button">
+    <i class="fa-solid fa-clipboard-check"></i>
+    Obecności
+  </a>
+  <a href="/employee/form-management" class="main-page-button">
+    <i class="fa-solid fa-pen-to-square"></i>
+    Testy
+  </a>
+</div>
+
+
+<div class="table-centered">
+<table class="table-responsive timetable">
+    <thead>
+      <tr>
+        <th>Godzina</th>
+        <th>Poniedziałek</th>
+        <th>Wtorek</th>
+        <th>Środa</th>
+        <th>Czwartek</th>
+        <th>Piątek</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for interval in timetable %}
+      {% if interval.interval %}
+      <tr>
+        <td>
+          {{ interval.interval.start_time|time:"H:i" }} - {{ interval.interval.end_time|time:"H:i" }}
+        </td>
+        {% for day_data in interval.days %}
+        <td>
+          {% for lesson in day_data.lessons %}
+          <div class="lesson" style="background-color: #add8e6;">
+            <strong>{{ lesson.course__name }}</strong><br />
+            {{ lesson.teacher__user__last_name }}<br />
+            Sala: {{ lesson.classroom__name }}<br />
+            <small>{{ day_data.day }}</small><br />
+            <small>Od {{ lesson.time_interval__start_time|time:"H:i" }}</small> -
+            <small>Do {{ lesson.time_interval__end_time|time:"H:i" }}</small>
+          </div>
+          {% empty %}
+          <div class="empty-slot">---</div>
+          {% endfor %}
+        </td>
+        {% endfor %}
+      </tr>
+      {% endif %}
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
 {% endblock %}

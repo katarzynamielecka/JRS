@@ -24,7 +24,7 @@
     </a>
     <h2 class="courses-managment-title elem-left">Dostępne kursy:</h2>
 </div>
-<table class="table">
+<table class="table table-responsive">
     <thead>
         <tr>
             <th></th>
@@ -127,7 +127,7 @@
 
 <br>
 <h2 class="courses-managment-title">Dostępne języki:</h2>
-<table class="table">
+<table class="table table-responsive">
     <thead>
         <tr>
             <th>Język</th>
@@ -155,7 +155,7 @@
 <hr>
 
 <h2 class="courses-managment-title">Semestry:</h2>
-<table class="table" id="semesters-table">
+<table class="table table-responsive" id="semesters-table">
     <thead>
         <tr>
             <th>Nazwa</th>
@@ -168,8 +168,8 @@
         {% for semester in semesters %}
             <tr>
                 <td>{{ semester.name }}</td>
-                <td>{{ semester.start_date }}</td>
-                <td>{{ semester.end_date }}</td>
+                <td>{{ semester.start_date|date:'d.m.Y' }}</td>
+                <td>{{ semester.end_date|date:'d.m.Y' }}</td>
                 <td>
                     <button 
                         class="btn btn-sm btn-outline-info edit-semester-btn" 

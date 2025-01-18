@@ -9,7 +9,7 @@ form{
     border-collapse: collapse;
     margin: 0 auto;
     table-layout: auto;
-    overflow: visible; 
+    /* overflow: visible;  */
 
 }
 
@@ -83,6 +83,7 @@ input[type="checkbox"] {
 .time-interval {
     flex-basis: 25%;
     display: flex;
+    flex-wrap: wrap;
     justify-content: center;
     align-items: center;
     text-align: center;
@@ -148,6 +149,12 @@ input[type="time"] {
 .classrooms-buttons{
     display: flex;
     align-items: center;
+}
+@media (max-width: 270px) {
+    .classrooms-buttons{
+        flex-wrap: wrap;
+
+    }
 }
 
 .button-classroom {

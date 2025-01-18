@@ -7,8 +7,16 @@
         
         {% for field in form %}
         <div class="form-group">
-            {{ field.label_tag }}
-            {{ field }}
+            {% if field.name == "rodo_consent" or field.name == "truth_confirmation" %}
+                <div class="form-check">
+                    {{ field }}
+                    {{ field.label_tag }}
+                </div>
+            {% else %}
+                {{ field.label_tag }}
+                {{ field }}
+            {% endif %}
+            
             {% if field.errors %}
                 <div class="text-danger">
                     {% for error in field.errors %}
@@ -19,13 +27,13 @@
         </div>
         {% endfor %}
         
-        <div class="g-recaptcha" data-sitekey="6LeQqrMqAAAAAAi5Ntj32FG5mNKO16vc4fzBcAuC"></div>
+        <div class="captcha-container">
+            <div class="g-recaptcha" data-sitekey="6LeQqrMqAAAAAAi5Ntj32FG5mNKO16vc4fzBcAuC"></div>
+        </div>
         
         <button type="submit" name="next" class="btn button-orange">{{ translated_texts.next_button }}</button>
     </form>
 </div>
 
 <script src="https://www.google.com/recaptcha/api.js?hl={{ recaptcha_lang }}" async defer></script>
-
-
 {% endblock %}

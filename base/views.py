@@ -495,8 +495,8 @@ def assignment_to_courses(request, test_id, recruitment_name, user_role):
             "is_slavic": course.is_slavic,
         })
         unassigned_refugees = Refugee.objects.filter(
-        courses=None, language=test.language,
-        completed_tests__recruitment=recruitment
+            courses=None, language=test.language,
+            completed_tests__recruitment=recruitment
         ).distinct()
 
         unassigned_refugees_data = []
@@ -506,12 +506,18 @@ def assignment_to_courses(request, test_id, recruitment_name, user_role):
             ).first()
 
             if filled_test:
+                answers = filled_test.user_answers.all()
+                max_points = (
+                    answers.aggregate(total_max=Sum("max_points"))["total_max"] or 0
+                )
                 filled_test.calculate_total_points()
                 unassigned_refugees_data.append({
                     "refugee": refugee,
                     "test_score": filled_test.total_points,
+                    "max_points": max_points,
                     "is_slavic": refugee.is_slavic_speaker(),
                 })
+
     if request.method == "POST":
         if request.POST.get("remove_course"):
             refugee_id = request.POST.get("refugee_id")
@@ -762,12 +768,18 @@ def edit_test(request, user_role, id):
                 return redirect("edit_test", id=id)
             else:
                 return redirect("edit_test_employee", id=id)
-        elif "question_id" in request.POST and "max_points" in request.POST:
-            question_id = request.POST.get("question_id")
-            max_points = request.POST.get("max_points")
-            question = get_object_or_404(Question, id=question_id)
-            question.max_points = max_points
-            question.save()
+        elif "save_all_points" in request.POST:
+            question_ids = request.POST.getlist("question_id")
+            max_points_values = request.POST.getlist("max_points")
+
+            for question_id, max_points in zip(question_ids, max_points_values):
+                try:
+                    question = Question.objects.get(id=question_id)
+                    question.max_points = max_points
+                    question.save()
+                except Question.DoesNotExist:
+                    continue  
+            messages.success(request, "Punkty zostały zapisane pomyślnie.")
             if user_role == "admin":
                 return redirect("edit_test", id=id)
             else:
@@ -781,11 +793,32 @@ def edit_test(request, user_role, id):
 @login_required
 @employee_required
 def employee(request, user_role):
+    days = ["Mon", "Tue", "Wed", "Thu", "Fri"]
+    intervals = list(TimeInterval.objects.all())
+    lessons = ClassSchedule.objects.select_related(
+        "time_interval", "classroom", "teacher", "course"
+    )
+    timetable = []
+    for interval in intervals:
+        interval_data = {"interval": interval, "days": []}
+        for day in days:
+            day_lessons = lessons.filter(
+                day=day, 
+                time_interval=interval
+            ).values(
+                "course__name", 
+                "teacher__user__last_name", 
+                "classroom__name", 
+                "time_interval__start_time", 
+                "time_interval__end_time",
+            )
+            interval_data["days"].append({"day": day, "lessons": list(day_lessons)})
+        timetable.append(interval_data)
     context = {
         "user_role": user_role,
+        "timetable": timetable,
     }
     return render(request, "admin_and_employee/e.html", context)
-
 
 # ADMIN
 @login_required
@@ -1275,17 +1308,26 @@ def mark_attendance(request, user_role, schedule_id, date):
     attendance_queryset = Attendance.objects.filter(schedule=schedule, date=selected_date)
     if request.method == "POST":
         formset = AttendanceFormSet(request.POST, queryset=attendance_queryset)
+        for form in formset:
+            if form.errors:
+                print(f"Błędy w formularzu dla uchodźcy  {form.errors}")
         if formset.is_valid():
+            print('pau')
             formset.save()
             messages.success(request, "Obecności zostały zapisane.")
-            return redirect("mark_attendance", schedule_id=schedule_id, date=selected_date)
+            if user_role == 'amin':
+                return redirect("attendance_admin")
+            else:
+                return redirect("attendance")
     else:
         formset = AttendanceFormSet(queryset=attendance_queryset)
+
     context = {
         "user_role": user_role,
         "schedule": schedule,
         "refugees": refugees,
         "formset": formset,
+        "date": selected_date,
     }
     return render(request, "admin_and_employee/e_mark_attendance.html", context)
 

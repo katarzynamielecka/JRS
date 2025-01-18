@@ -2,16 +2,20 @@ import random
 from deap import base, creator, tools
 from .models import LanguageCourse, Employee, Classroom, Availability, TimeInterval, Semester
 
-def genetic_algorithm_schedule(population_size=50, generations=100):
-    creator.create("FitnessMin", base.Fitness, weights=(-1.0,))
-    creator.create("Individual", list, fitness=creator.FitnessMin)
+elitism_size = 1
+def genetic_algorithm_schedule(population_size=100, generations=10000):
 
     toolbox = base.Toolbox()
+    if not hasattr(creator, "FitnessMin"):
+        creator.create("FitnessMin", base.Fitness, weights=(-1.0,))
 
+    if not hasattr(creator, "Individual"):
+        creator.create("Individual", list, fitness=creator.FitnessMin)
     current_semesters = Semester.get_current_semesters()
     courses = list(LanguageCourse.objects.filter(semesters__in=current_semesters).distinct())
     classrooms = list(Classroom.objects.all())
     teachers = list(Employee.objects.filter(courses__isnull=False).distinct())
+    availability = Availability.objects.all()
     time_intervals = TimeInterval.objects.filter(
         id__in=Availability.objects.values_list("time_interval", flat=True).distinct()
     )
@@ -19,16 +23,17 @@ def genetic_algorithm_schedule(population_size=50, generations=100):
 
     if not courses or not classrooms or not teachers or not time_intervals:
         raise ValueError("Brakuje danych wejściowych do algorytmu (kursy, sale, nauczyciele lub interwały czasowe).")
-
+    available_time_slots = [(a.day, a.time_interval) for a in availability.all()]
     def generate_individual():
         individual = []
         for course in courses:
             teacher = random.choice(course.teachers.all())
             for _ in range(course.weekly_classes):
+                day, time = random.choice(available_time_slots)
                 individual.append([
                     course,                        # 0: Kurs
-                    random.choice(days),           # 1: Dzień
-                    random.choice(time_intervals), # 2: Interwał czasu
+                    day,                           # 1: Dzień
+                    time,                          # 2: Interwał czasu
                     random.choice(classrooms),     # 3: Sala
                     teacher                        # 4: Ten sam nauczyciel dla danego kursu
                 ])
@@ -47,35 +52,41 @@ def genetic_algorithm_schedule(population_size=50, generations=100):
         if len(scheduled_courses) != len(courses):
             conflicts += len(courses) - len(scheduled_courses)
 
+
+        teacher_schedule = {}
+        classroom_schedule = {}
+
         for schedule in individual:
-            if len(schedule) != 5:
-                raise ValueError(f"Invalid schedule structure: {schedule}. Expected 5 elements.")
             course, day, time_interval, classroom, teacher = schedule
+            key = (day, time_interval)
 
-            # Konflikt: nauczyciel nie jest przypisany do kursu
-            if teacher not in course.teachers.all():
-                conflicts += 1
-
-            availability = Availability.objects.filter(
-                day=day,
-                time_interval=time_interval
-            )
-
-            # Konflikt: sala nie jest dostępna
-            if not availability.filter(classrooms=classroom).exists():
-                conflicts += 1
-
-            # Konflikt: nauczyciel nie jest dostępny
-            if not availability.filter(employees=teacher).exists():
-                conflicts += 1
-
-            # Konflikt: nauczyciel przypisany do więcej niż jednego kursu w tym samym czasie
-            teacher_conflicts = [
-                s for s in individual
-                if s[4] == teacher and s[1] == day and s[2] == time_interval
+            # Sprawdzenie dostępności nauczyciela i sali
+            availability_teachers_classrooms = [
+                a
+                for a in availability.all()
+                if a.day == day and a.time_interval == time_interval
             ]
-            if len(teacher_conflicts) > 1:
+            if not any(
+                teacher in a.employees.all() and classroom in a.classrooms.all()
+                for a in availability_teachers_classrooms
+            ):
                 conflicts += 1
+
+            # Sprawdzanie zajętości nauczycieli
+            if key not in teacher_schedule:
+                teacher_schedule[key] = set()
+            if teacher in teacher_schedule[key]:
+                conflicts += 1  # Konflikt: nauczyciel zarezerwowany dwa razy
+            else:
+                teacher_schedule[key].add(teacher)
+
+            # Sprawdzanie zajętości sal
+            if key not in classroom_schedule:
+                classroom_schedule[key] = set()
+            if classroom in classroom_schedule[key]:
+                conflicts += 1  # Konflikt: sala zarezerwowana dwa razy
+            else:
+                classroom_schedule[key].add(classroom)
 
         return (conflicts,)
 
@@ -91,21 +102,20 @@ def genetic_algorithm_schedule(population_size=50, generations=100):
 
 
     def custom_mutation(individual):
-        course_to_genes = {}
+        course_teacher_map = {} 
         for gene in individual:
             course = gene[0]
-            if course not in course_to_genes:
-                course_to_genes[course] = []
-            course_to_genes[course].append(gene)
-        for course, genes in course_to_genes.items():
-            new_teacher = random.choice(course.teachers.all())
-            for gene in genes:
-                gene[1] = random.choice(["Mon", "Tue", "Wed", "Thu", "Fri"]) 
-                gene[2] = random.choice(TimeInterval.objects.all())         
-                gene[3] = random.choice(Classroom.objects.all())            
-                gene[4] = new_teacher                                        
+            if course not in course_teacher_map:
+                teacher = random.choice([t for t in teachers if t in course.teachers.all()])
+                course_teacher_map[course] = teacher
+            else:
+                teacher = course_teacher_map[course]
+            day, time = random.choice(available_time_slots)
+            gene[1] = day
+            gene[2] = time
+            gene[3] = random.choice(classrooms)
+            gene[4] = teacher  
         return individual
-
 
 
     toolbox.register("evaluate", evaluate)
@@ -115,30 +125,33 @@ def genetic_algorithm_schedule(population_size=50, generations=100):
 
 
     population = toolbox.population(n=population_size)
-
     for gen in range(generations):
-        offspring = toolbox.select(population, len(population))
+        elites = tools.selBest(population, elitism_size)
+
+        # Reszta populacji jest wybierana turniejowo
+        offspring = toolbox.select(population, len(population) - elitism_size)
         offspring = list(map(toolbox.clone, offspring))
 
         for child1, child2 in zip(offspring[::2], offspring[1::2]):
-            if random.random() < 0.7:
+            if random.random() < 0.1:
                 toolbox.mate(child1, child2)
                 del child1.fitness.values
                 del child2.fitness.values
 
         for mutant in offspring:
-            if random.random() < 0.2:
-                toolbox.mutate(mutant)
-                del mutant.fitness.values
+            # if random.random() < 0.7:
+            toolbox.mutate(mutant)
+            del mutant.fitness.values
 
         invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
         fitnesses = map(toolbox.evaluate, invalid_ind)
         for ind, fit in zip(invalid_ind, fitnesses):
             ind.fitness.values = fit
 
-        population[:] = offspring
+        population[:] = elites + offspring
+        best_ind = tools.selBest(population, 1)[0]
+        if best_ind.fitness.values[0] == 0: 
+            break
 
-    best_ind = tools.selBest(population, 1)[0]
-    print(f'rozwiazanie: {best_ind}')
-    conflicts = best_ind.fitness.values[0] 
+    conflicts = best_ind.fitness.values[0]
     return best_ind, conflicts

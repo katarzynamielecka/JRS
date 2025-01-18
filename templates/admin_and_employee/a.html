@@ -3,18 +3,53 @@
 {% block head %}
 {% load static %}
 <link rel="stylesheet" href="{% static 'timetable.css' %}">
+<link rel="stylesheet" href="{% static 'admin_and_employee.css' %}">
 {% endblock %}
 {% block content %}
-<h2>HOME ADMIN</h2>
-<a href="{% url 'recruitment_management' %}" class="btn button-orange">Zarządzanie rekrutacją</a>
-<a href="{% url 'export_employees_csv' %}" class="btn button-orange">Wyeksportuj dane pracowników</a>
-<a href="{% url 'export_courses_csv' %}" class="btn button-orange">Wyeksportuj dane kursów</a>
-<a href="{% url 'export_refugees_csv' %}" class="btn button-orange">Wyeksportuj zapisy na semestry</a>
-<a href="{% url 'timetable' %}" class="btn button-orange"
-  >Układanie planu lekcji</a
->
+<h1 class="page-title">PANEL ADMINISTRATORA</h1>
+<div class="main-page-buttons-container">
+  <a href="/systemadmin/attendance/" class="main-page-button">
+    <i class="fa-solid fa-clipboard-check"></i>
+    Obecności
+  </a>
+  <a href="/systemadmin/form-management" class="main-page-button">
+    <i class="fa-solid fa-pen-to-square"></i>
+    Testy
+  </a>
+  <a href="/systemadmin/courses-management" class="main-page-button">
+    <i class="fa-solid fa-book-open"></i>
+    Kursy
+  </a>
+  <a href="/systemadmin/recruitment_management" class="main-page-button">
+    <i class="fa-solid fa-users"></i>
+    Rekrutacja
+  </a>
+  <a href="/systemadmin/timetable/" class="main-page-button">
+    <i class="fa-solid fa-calendar-alt"></i>
+    Układanie planu lekcji
+  </a>
+  <a href="/systemadmin/employee-management" class="main-page-button">
+    <i class="fa-solid fa-id-badge"></i>
+    Pracownicy
+  </a>
+  <a href="{% url 'export_employees_csv' %}" class="main-page-button">
+    <i class="fa-solid fa-file-export"></i>
+    Wyeksportuj dane pracowników
+  </a>
+  <a href="{% url 'export_courses_csv' %}" class="main-page-button">
+    <i class="fa-solid fa-book"></i>
+    Wyeksportuj dane kursów
+  </a>
+  <a href="{% url 'export_refugees_csv' %}" class="main-page-button">
+    <i class="fa-solid fa-database"></i>
+    Wyeksportuj zapisy na semestry
+  </a>
+</div>
 
-<table class="table-responsive timetable">
+<br>
+
+<div class="table-centered">
+<table class="table table-responsive timetable">
   <thead>
     <tr>
       <th>Godzina</th>
@@ -53,4 +88,5 @@
     {% endfor %}
   </tbody>
 </table>
+</div>
 {% endblock %}

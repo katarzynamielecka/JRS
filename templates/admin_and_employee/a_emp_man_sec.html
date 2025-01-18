@@ -34,7 +34,7 @@
                 <td>{{ employee.user.last_name }}</td>
                 <td>{{ employee.user.email }}</td>
                 <td>{{ employee.is_admin|yesno:"Tak,Nie" }}</td>
-                <td>{{ employee.date_joined }}</td>
+                <td>{{ employee.date_joined|date:"d.m.Y" }}</td>
                 <td>
                     <a href="{% url 'delete_employee' employee.user.email %}" style="color: red; text-decoration: none;"
                         onclick="return confirm('Czy na pewno chcesz usunąć tego pracownika?');">
