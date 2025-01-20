@@ -109,7 +109,7 @@
                     </td>
                     <td>
                         <input type="hidden" name="question_id" value="{{ question.id }}">
-                        <input type="number" name="max_points" placeholder="Maks. punkty" 
+                        <input type="number" name="max_points_{{ question.id }}" placeholder="Maks. punkty"
                                step="0.5" min="0" class="form-control"
                                value="{{ question.max_points }}">
                     </td>

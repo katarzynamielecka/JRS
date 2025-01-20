@@ -785,21 +785,20 @@ def edit_test(request, user_role, id):
             else:
                 return redirect("edit_test_employee", id=id)
         elif "save_all_points" in request.POST:
-            question_ids = request.POST.getlist("question_id")
-            max_points_values = request.POST.getlist("max_points")
-
-            for question_id, max_points in zip(question_ids, max_points_values):
-                try:
-                    question = Question.objects.get(id=question_id)
-                    question.max_points = max_points
-                    question.save()
-                except Question.DoesNotExist:
-                    continue  
-            messages.success(request, "Punkty zostały zapisane pomyślnie.")
-            if user_role == "admin":
-                return redirect("edit_test", id=id)
-            else:
-                return redirect("edit_test_employee", id=id)
+            for key, value in request.POST.items():
+                if key.startswith("max_points_"):
+                    try:
+                        question_id = key.replace("max_points_", "")
+                        question = Question.objects.get(id=question_id)
+                        max_points = float(value)
+                        if max_points >= 0:  
+                            question.max_points = max_points
+                            question.save()
+                        else:
+                            messages.error(request, f"Punkty dla pytania ID {question_id} muszą być większe lub równe zero.")
+                    except (Question.DoesNotExist, ValueError):
+                        messages.error(request, f"Nieprawidłowe dane dla pytania ID {question_id}.")
+                        continue
     questions = test.questions.prefetch_related("choices").all()
     context = {"user_role": user_role, "test": test, "questions": questions}
     return render(request, "admin_and_employee/ae_edit_test.html", context)
