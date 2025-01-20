@@ -1,0 +1,294 @@
+form{
+    width: 100% !important;
+    margin:0 !important;
+}
+.timetable {
+    width: 100% !important;
+    max-width: 100%;
+    overflow-x: auto;
+    border-collapse: collapse;
+    margin: 0 auto;
+    table-layout: auto;
+    /* overflow: visible;  */
+
+}
+
+.dropdown-availability{
+    width: 180px;
+    padding: 10px;
+    border: solid, 1px, rgb(91, 97, 107);
+}
+
+
+input[type="checkbox"] {
+    accent-color: var(--jrs-orange);
+}
+
+.classroom-avability-checkbox,
+.employee-avability-checkbox {
+    display: block;
+    margin-bottom: 5px;
+}
+
+.timetable th,
+.timetable td {
+    border: 1px solid #ddd;
+    padding: 10px;
+    text-align: center;
+    vertical-align: middle;
+
+}
+
+.timetable th {
+    background-color: #f4f4f4;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.timetable tr:nth-child(odd) {
+    background-color: #f9f9f9;
+}
+
+.timetable tr:nth-child(even) {
+    background-color: #ffffff;
+}
+
+.lesson {
+    padding: 10px;
+    width: 190px;
+    border-radius: 8px;
+    color: #fff;
+    margin-bottom: 5px;
+    font-size: 14px;
+    text-align: left;
+    background-color: #ADD8E6;
+}
+
+.dropdown-btn{
+    width: 180px;
+    margin-top: 5px;
+}
+
+.time-intervals {
+    max-height: 200px;
+    max-width: 100% !important;
+    display: flex;
+    flex-wrap: wrap;
+    flex-direction: column;
+    justify-content: flex-start;
+    height: auto;
+    gap: 10px;
+}
+
+.time-interval {
+    flex-basis: 25%;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 5px;
+}
+
+.time-input {
+    margin: 5px !important;
+}
+
+input[type="time"] {
+    margin: 4px 0;
+    width: 90px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* .save-button {
+    margin-left: 45%;
+} */
+
+.removeIntervalButton {
+    color: red;
+    size: 20px;
+    width: 20px;
+    height: 20px;
+    border: none;
+    background-color: white;
+    transition-duration: 0.4s;
+}
+
+.removeIntervalButton:hover {
+    border: none;
+    size: 25px !important;
+}
+
+.removeIntervalButton:active {
+    border: none !important;
+    size: 20px;
+}
+
+@media (max-width: 1100px) {
+    .time-intervals {
+      max-height: 400px;
+    }
+  }
+  
+  @media (max-width: 550px) {
+    .time-intervals {
+      max-height: 800px;
+    }
+  }
+  
+
+.classroom-table {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    justify-content: center;
+}
+
+.classrooms-buttons{
+    display: flex;
+    align-items: center;
+}
+@media (max-width: 270px) {
+    .classrooms-buttons{
+        flex-wrap: wrap;
+
+    }
+}
+
+.button-classroom {
+    width: 80px;
+    height: 35px;
+}
+
+.classroom-name {
+    min-width: 180px;
+}
+@media (max-width: 380px) {
+    .classroom-name {
+        min-width: auto;
+    }
+    .classroom-table {
+        display: flex;
+        gap: 20px;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .button-classroom {
+        width: 60px;
+        font-size: 12px;
+    }
+}
+
+.classroom-avability-checkbox{
+    display:block !important;
+    width: 100% !important;
+}
+
+.no-loading-message{
+    display: none; 
+}
+
+.loading-message {
+    display: block;
+    position: fixed; 
+    top: 50%; 
+    left: 50%; 
+    transform: translate(-50%, -50%); 
+    width: 300px; 
+    padding: 20px;
+    border: 2px solid darkgray; 
+    background-color: white; 
+    z-index: 1000; 
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); 
+    text-align: center; 
+    font-size: 1.2em; 
+    color: black; 
+    border-radius: 8px; 
+}
+
+.timetable-conflicts{
+    color: red;
+}
+
+.generate-timetable-button-container{
+    display: flex;
+    justify-content: flex-end;
+    padding: 10px 0;
+}
+
+.button-generate-timetable{
+    margin-right: 20px;
+    background-color: #ADD8E6;
+    color: white;
+}
+
+.button-generate-timetable:hover{
+    color:white;
+    background-color: #6dc4e0;
+}
+
+.button-generate-timetable:focus{
+    outline: none;
+    box-shadow: none;
+}
+
+
+@media (max-width: 768px) {
+    .timetable {
+        font-size: 12px;
+    }
+
+    .lesson {
+        font-size: 12px;
+        padding: 8px;
+    }
+}
+
+@media (max-width: 480px) {
+    .timetable {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+
+    .lesson {
+        font-size: 10px;
+        padding: 6px;
+    }
+}
+
+.availability-checkbox-list{
+    text-align: left;
+    margin: 7px;
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background-color: #ffffff;
+    border-radius: 10px;
+    padding: 20px;
+    width: 400px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    position: relative;
+    text-align: center;
+}
+
+.timetable-edit-close-btn{
+    width: 100%;
+    display: flex;
+    justify-content: flex-end;
+}

@@ -6,6 +6,18 @@
 {% endblock %}
 {% block content %}
 <div class="container">
+    {% if messages %}
+    <div class="alert-overlay">
+        <div class="alert-box">
+            <button type="button" class="btn-close" aria-label="Close" onclick="closeAlertBox()">X</button>
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} mb-2">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+{% endif %}
     <button onclick="window.history.back()" class="btn button-grey">
         <i class="fa-solid fa-arrow-left"></i>
     </button>
@@ -19,9 +31,6 @@
     <p>Brak aktualnych semestrów.</p>
 {% endif %}
 <div class="courses-header-container">
-    <a class="elem-right" href="{% url 'refugee_list' %}" style="text-decoration: none;">
-        <button class="btn button-orange">Zobacz listę kursantów</button>
-    </a>
     <h2 class="courses-managment-title elem-left">Dostępne kursy:</h2>
 </div>
 <table class="table table-responsive">
@@ -34,6 +43,7 @@
             <th>Lektorzy</th>
             <th>Liczba lekcji w tygodniu</th>
             <th>Semestry</th>
+            <th></th>
         </tr>
     </thead>
     <tbody>
@@ -59,16 +69,18 @@
                     <div class="dropdown-menu dropdown-menu-list">
                         <form method="POST">
                             {% csrf_token %}
+                            <input type="hidden" name="form_type" value="teacher_assignment">
                             <input type="hidden" name="course_id" value="{{ course.id }}">
                             {% for employee in employees %}
-                                <label class="teachers-pick-courses-checkbox">
+                                <label>
                                     <input type="checkbox" name="teachers" value="{{ employee.id }}"
-                                        {% if course in employee.courses.all %}checked{% endif %}>
+                                           {% if course in employee.courses.all %}checked{% endif %}>
                                     {{ employee.user.first_name }} {{ employee.user.last_name }}
                                 </label>
                             {% endfor %}
-                            <button type="submit" class="btn button-orange mt-2">Zapisz</button>
+                            <button type="submit" name="teachers" class="btn button-orange mt-2">Zapisz</button>
                         </form>
+                        
                     </div>
                 </div>
             </td>
@@ -93,6 +105,11 @@
                     Brak
                 {% endif %}
             </td>
+            <td>
+                <a href="{% url 'course_refugee_list' course.id %}" class="button-orange-outline">
+                    Kursanci
+                </a>
+            </td>            
         </tr>
         {% empty %}
         <tr>

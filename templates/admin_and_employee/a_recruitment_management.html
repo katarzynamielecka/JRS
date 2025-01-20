@@ -30,27 +30,32 @@
 <h2>{% if form.instance.pk %}Edytuj rekrutację{% else %}Zaplanuj rekrutację{% endif %}</h2>
 <form method="post">
     {% csrf_token %}
-    <div class="form-group">
+    <div class="form-group form-recruitment">
         <label for="{{ form.name.id_for_label }}">Nazwa rekrutacji</label>
         {{ form.name }}
     </div>
-    <div class="form-group">
+    <div class="form-group form-recruitment">
         <label for="{{ form.start_date.id_for_label }}">Data rozpoczęcia</label>
         {{ form.start_date }}
     </div>
-    <div class="form-group">
+    <div class="form-group form-recruitment">
         <label for="{{ form.end_date.id_for_label }}">Data zakończenia</label>
         {{ form.end_date }}
     </div>
-    <div class="form-group">
+    <div class="form-group form-recruitment">
         <label for="{{ form.semester.id_for_label }}">Semestr</label>
         {{ form.semester }}
     </div>
-    <div class="form-group">
+    <div class="form-group form-recruitment">
         <label for="{{ form.max_people.id_for_label }}">Maksymalna liczba osób</label>
         {{ form.max_people }}
     </div>
-    <div class="form-group">
+    <div class="form-group form-recruitment-email">
+        <label for="{{ form.email_content.id_for_label }}">Treść e-maila</label>
+        {{ form.email_content }}
+        <small>{{ form.email_content.help_text }}</small>
+    </div>
+    <div class="form-group form-recruitment">
         <label>Testy językowe</label>
         {% for language, tests in form.language_tests_by_language.items %}
             <fieldset>
@@ -148,13 +153,14 @@
                 </td>
                 <td>
                     <div class="actions">
-                        <form method="post" style="display: inline;">
+                        <form method="post" style="display: inline;" onsubmit="return confirmDelete();">
                             {% csrf_token %}
                             <input type="hidden" name="delete" value="1">
                             <input type="hidden" name="recruitment_id" value="{{ recruitment.id }}">
                             <button type="submit" class="btn btn-outline-danger">Usuń</button>
                         </form>
                     </div>
+                    
                 </td>
             </tr>
         {% empty %}
@@ -166,4 +172,10 @@
 </table>
 
 </div>
+<script>
+    function confirmDelete() {
+        return confirm("Czy na pewno chcesz usunąć tą rekrutację? Wraz z nią zostaną usunięte zgromadzone dane.");
+    }
+</script>
+
 {% endblock %}

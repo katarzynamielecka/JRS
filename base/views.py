@@ -12,6 +12,7 @@ from django.contrib.auth import logout
 import csv
 from django.db.models import Subquery, OuterRef, Min
 from datetime import datetime
+from django.urls import reverse
 from collections import defaultdict
 from itertools import groupby
 from operator import itemgetter
@@ -27,6 +28,10 @@ from .utils import genetic_algorithm_schedule
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseRedirect
 from django.views.decorators.csrf import csrf_protect
+from django.core.mail import send_mail
+from django.http import HttpResponse
+from django.core.mail import send_mail
+from django.template import Context, Template
 from django.conf import settings
 from .forms import (
     EmployeeRegisterForm,
@@ -35,6 +40,7 @@ from .forms import (
     LanguageTestForm,
     LanguageForm,
     RecruitmentForm,
+    EmailForm,
     AttendanceFormSet
 )
 from .models import (
@@ -174,6 +180,18 @@ def no_registration_view(request, user_role):
     }
     return render(request, "refugees/no_registration.html", context)
 
+def send_registration_email(refugee, recruitment):
+    subject = "Potwierdzenie rejestracji - Language Course Registration Confirmation"
+    message = recruitment.email_content if recruitment.email_content else "Thank you for registering, we will contact you with further information later"
+    recipient_list = [refugee.email]
+    send_mail(
+        subject,
+        message,
+        settings.DEFAULT_FROM_EMAIL,
+        recipient_list,
+        fail_silently=False,
+    )
+
 def refugee_registration_view(request, user_role):
     translator = Translator()
     lang = get_user_language(request)
@@ -181,18 +199,14 @@ def refugee_registration_view(request, user_role):
     if request.method == "POST":
         form = RefugeeRegistrationForm(request.POST, lang=lang)
         if form.is_valid():
-            # Pobranie odpowiedzi z reCAPTCHA
             recaptcha_response = request.POST.get('g-recaptcha-response')
             if not validate_recaptcha(recaptcha_response):
                 print('nie przeszło')
                 form.add_error(None, 'Invalid reCAPTCHA. Please try again.')
                 return render(request, "refugees/form.html", {'form': form, 'user_role': user_role, 'lang': lang})
-            
-            # Jeżeli wszystko jest poprawne, zapisujemy dane i przechodzimy do następnego kroku
             refugee_data = form.cleaned_data
             refugee_data["language_id"] = refugee_data["language"].id
             del refugee_data["language"]
-
             request.session["refugee_data"] = refugee_data
             return redirect("language_test")
     else:
@@ -308,6 +322,7 @@ def language_test_view(request, user_role):
             filled_test.save()
             request.session.pop("refugee_data", None)
             request.session.pop("test_answers", None)
+            send_registration_email(refugee, recruitment)
             return redirect("success_view")
     context = {
         "questions": questions,
@@ -658,6 +673,7 @@ def recruitment_management(request, user_role):
                 start_date = form.cleaned_data['start_date']
                 end_date = form.cleaned_data['end_date']
                 active = form.cleaned_data.get('active', False)
+                email_content = form.cleaned_data.get('email_content', '')
                 overlapping_recruitments = Recruitment.objects.filter(
                     active=True,
                     start_date__lte=end_date,
@@ -935,7 +951,11 @@ def handle_teacher_assignment(request):
     if "teachers" in request.POST and course_id:
         course = get_object_or_404(LanguageCourse, id=course_id)
         teacher_ids = request.POST.getlist("teachers")
-        employees = Employee.objects.filter(id__in=teacher_ids)
+        teacher_ids = [teacher_id for teacher_id in teacher_ids if teacher_id.strip()]
+        if teacher_ids:
+            employees = Employee.objects.filter(id__in=teacher_ids)
+        else:
+            employees = Employee.objects.none()
         for employee in Employee.objects.all():
             if employee in employees:
                 employee.courses.add(course)
@@ -1067,9 +1087,21 @@ def delete_refugee_view(request, refugee_id, user_role):
 
 @login_required
 @admin_required
-def refugees_list_view(request, user_role):
-    refugees = Refugee.objects.all()
-    context = {"user_role": user_role, "refugees": refugees}
+def refugees_list_view(request, user_role, course_id=None):
+    if course_id:
+        course = get_object_or_404(LanguageCourse, id=course_id)
+        refugees = course.refugees.all() 
+        heading = f"Kursanci przypisani do kursu: {course.name}"
+    else:
+        refugees = Refugee.objects.all()
+        heading = "Lista wszystkich kursantów"
+
+    context = {
+        "refugees": refugees,
+        "user_role": user_role,
+        "heading": heading,
+        "course_id": course.id if course else None,
+    }
     return render(request, "admin_and_employee/a_refugees_list.html", context)
 
 
@@ -1196,8 +1228,24 @@ def timetable_view(request, user_role,):
 @login_required
 @admin_required
 def generate_timetable(request, user_role):
+    courses_without_teachers = []
+    for course in LanguageCourse.objects.all():
+        if not course.teachers.exists():  
+            courses_without_teachers.append(course.name)
+    if courses_without_teachers:
+        error_message = (
+            "Nie można wygenerować planu zajęć. Następujące kursy nie mają przypisanych nauczycieli: "
+            + ", ".join(courses_without_teachers)
+        )
+        messages.error(request, error_message)
+        return redirect("timetable", user_role=user_role)
     ClassSchedule.objects.all().delete()
-    best_schedule, conflicts = genetic_algorithm_schedule(population_size=50, generations=100)
+    try:
+        best_schedule, conflicts = genetic_algorithm_schedule()
+    except ValueError as e:
+        messages.error(request, f"Błąd generowania planu zajęć: {str(e)}")
+        return redirect("timetable", user_role=user_role)
+
     for schedule in best_schedule:
         course = schedule[0] 
         teacher = schedule[4] 
@@ -1312,10 +1360,9 @@ def mark_attendance(request, user_role, schedule_id, date):
             if form.errors:
                 print(f"Błędy w formularzu dla uchodźcy  {form.errors}")
         if formset.is_valid():
-            print('pau')
             formset.save()
             messages.success(request, "Obecności zostały zapisane.")
-            if user_role == 'amin':
+            if user_role == 'admin':
                 return redirect("attendance_admin")
             else:
                 return redirect("attendance")
@@ -1330,6 +1377,77 @@ def mark_attendance(request, user_role, schedule_id, date):
         "date": selected_date,
     }
     return render(request, "admin_and_employee/e_mark_attendance.html", context)
+
+def send_course_removal_email(refugee, course):
+    subject = "Powiadomienie o usunięciu z kursu - Course Removal Notification"
+    message = (
+        "Dzień dobry,\n\n"
+        f"Zostałeś usunięty z kursu {course.name}.\n\n"
+        "Pozdrawiamy,\nZespół JRS\n\n"
+        "Hello,\n\n"
+        f"You have been removed from the course {course.name}.\n\n"
+        "Best regards,\nJRS Team\n\n"
+        "Добрий день,\n\n"
+        f"Вас було видалено з курсу {course.name}.\n\n"
+        "З найкращими побажаннями,\nКоманда JRS\n\n"
+        "مرحبا،\n\n"
+        f"تمت إزالتك من الدورة {course.name}.\n\n"
+        "مع أطيب التحيات،\nفريق JRS\n\n"
+        "Hola,\n\n"
+        f"Has sido eliminado del curso {course.name}.\n\n"
+        "Saludos,\nEquipo JRS"
+    )
+    recipient_list = [refugee.email]
+    
+    send_mail(
+        subject,
+        message,
+        settings.DEFAULT_FROM_EMAIL,
+        recipient_list,
+        fail_silently=False,
+    )
+
+@login_required
+@admin_or_employee_required
+def student_attendance_view(request, user_role, refugee_id):
+    refugee = get_object_or_404(Refugee, id=refugee_id)
+    attendances = Attendance.objects.filter(refugee=refugee).select_related("schedule").order_by("date")
+    total_absences = attendances.filter(status="absent").count()
+    if request.method == "POST":
+        if "save_attendance" in request.POST:  
+            formset = AttendanceFormSet(request.POST)
+            if formset.is_valid():
+                formset.save()
+                messages.success(request, "Obecności zostały zapisane.")
+            else:
+                messages.error(request, "Wystąpiły błędy w formularzu.")
+        
+        elif "remove_from_course" in request.POST:  
+            course_id = request.POST.get("course_id")
+            course = get_object_or_404(LanguageCourse, id=course_id)
+            Attendance.objects.filter(schedule__course=course, refugee=refugee).delete()
+            refugee.courses.remove(course)
+            send_course_removal_email(refugee, course)
+            messages.success(
+                request,
+                f"Uchodźca {refugee.first_name} {refugee.last_name} został usunięty z kursu {course.name}."
+            )
+            if user_role == "admin":
+                return redirect("attendance_admin")
+            else:
+                return redirect("attendance")
+    else:
+        formset = AttendanceFormSet(queryset=attendances)
+
+    context = {
+        "user_role": user_role,
+        "refugee": refugee,
+        "formset": formset,
+        "total_absences": total_absences,
+        "courses": refugee.courses.all(), 
+    }
+    return render(request, "admin_and_employee/e_student_attendance.html", context)
+
 
 @login_required
 @admin_required
@@ -1410,5 +1528,59 @@ def export_employees_csv(request, user_role):
     }
     return response
 
+@login_required
+@admin_required
+def send_email_view(request, user_role, refugee_id=None, course_id=None):
+    recipients = Refugee.objects.none()
+    if refugee_id:
+        refugee = get_object_or_404(Refugee, id=refugee_id)
+        recipients = Refugee.objects.filter(id=refugee.id)
+    elif course_id:
+        course = get_object_or_404(LanguageCourse, id=course_id)
+        recipients = course.refugees.all()
+    
+    if request.method == "POST":
+        form = EmailForm(request.POST)
+        if form.is_valid():
+            subject = form.cleaned_data["subject"]
+            message = form.cleaned_data["message"]
+            selected_recipients = form.cleaned_data["recipients"]
+            recipient_list = [recipient.email for recipient in recipients]
+            
+            send_mail(
+                subject,
+                message,
+                settings.DEFAULT_FROM_EMAIL,
+                recipient_list,
+                fail_silently=False,
+            )
+            messages.success(request, "E-mail został pomyślnie wysłany.")
+            return redirect("send_email")
+    else:
+        form = EmailForm(initial={"recipients": recipients})
+
+    context = {
+        "user_role": user_role,
+        "form": form, 
+        "recipients": recipients
+    }
+    return render(request, "admin_and_employee/ae_send_email.html", context)
 
 
+@login_required
+@admin_required
+def application_list_view(request, user_role, recruitment_name):
+    recruitment = get_object_or_404(Recruitment, name=recruitment_name)
+    refugees = Refugee.objects.filter(completed_tests__recruitment=recruitment).distinct()
+    if request.method == "POST":
+        refugee_id = request.POST.get("refugee_id")
+        refugee = get_object_or_404(Refugee, id=refugee_id)
+        refugee.delete()
+        messages.success(request, f"Uchodźca {refugee.first_name} {refugee.last_name} został usunięty.")
+        return redirect(application_list_view, user_role=user_role, recruitment_name=recruitment_name)
+    context = {
+        "recruitment": recruitment,
+        "refugees": refugees,
+        "user_role": user_role,
+    }
+    return render(request, "admin_and_employee/a_application_list.html", context)

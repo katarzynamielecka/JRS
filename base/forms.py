@@ -324,13 +324,19 @@ class RecruitmentForm(forms.ModelForm):
 
     class Meta:
         model = Recruitment
-        fields = ['name', 'start_date', 'end_date', 'semester', 'max_people'] 
+        fields = ['name', 'start_date', 'end_date', 'semester', 'max_people', 'email_content'] 
         widgets = {
             'start_date': forms.DateInput(attrs={'type': 'date'}),
             'end_date': forms.DateInput(attrs={'type': 'date'}),
             'max_people': forms.NumberInput(),
             'semester': forms.Select(attrs={'class': 'form-select'}),
         }
+        email_content = forms.CharField(
+        widget=forms.Textarea(attrs={'rows': 4}),
+        required=False,
+        label="Treść e-maila",
+        help_text="Treść e-maila wysyłanego rejestrującym się uchodźcom."
+    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -389,7 +395,18 @@ AttendanceFormSet = modelformset_factory(
             ("absent", "Nieobecny"),
             ("late", "Spóźniony"),
             ("excused absence", "Nieobecny usprawiedliwiony"),
+            ("not_recorded", "Nie wpisano obecności"),
         ]),
         "notes": forms.Textarea(attrs={"class": "form-control", "rows": 2}),
     },
 )
+
+class EmailForm(forms.Form):
+    subject = forms.CharField(max_length=255, label="Temat")
+    message = forms.CharField(widget=forms.Textarea, label="Treść wiadomości")
+    recipients = forms.ModelMultipleChoiceField(
+        queryset=Refugee.objects.all(),
+        widget=forms.CheckboxSelectMultiple,
+        label="Odbiorcy",
+        required=False
+    )

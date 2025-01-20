@@ -51,7 +51,40 @@ class Recruitment(models.Model):
     activated_at = models.DateTimeField(null=True, blank=True)
     manually_closed = models.BooleanField(default=False)
     language_tests = models.ManyToManyField(LanguageTest, related_name="recruitments", verbose_name="Testy językowe", blank=True)
-    
+    email_content = models.TextField(
+            verbose_name="Treść e-maila", 
+            null=True, 
+            blank=True,
+            default=(
+                "Dzień dobry,\n\n"
+                "Otrzymaliśmy Państwa zgłoszenie na kurs językowy. Zgłoszenie zostanie teraz rozpatrzone, "
+                "a my skontaktujemy się z Państwem wkrótce z dalszymi informacjami.\n\n"
+                "Pozdrawiamy,\n"
+                "Zespół JRS\n\n"
+                "Hello,\n\n"
+                "We have received your registration for the language course. Your application will be reviewed, "
+                "and we will contact you soon with further details.\n\n"
+                "Best regards,\n"
+                "JRS Team\n\n"
+                "Добрий день,\n\n"
+                "Ми отримали вашу реєстрацію на мовний курс. Заявка буде розглянута, і ми зв'яжемося з вами "
+                "найближчим часом для надання подальшої інформації.\n\n"
+                "З найкращими побажаннями,\n"
+                "Команда JRS\n\n"
+                "مرحبا،\n\n"
+                "لقد استلمنا تسجيلك لدورة اللغة. سيتم مراجعة طلبك، وسنتواصل معك قريبًا لتزويدك "
+                "بمزيد من المعلومات.\n\n"
+                "مع أطيب التحيات،\n"
+                "فريق JRS\n\n"
+                "Hola,\n\n"
+                "Hemos recibido su inscripción para el curso de idiomas. Su solicitud será revisada y nos pondremos "
+                "en contacto con usted pronto con más detalles.\n\n"
+                "Saludos,\n"
+                "Equipo JRS\n"
+            ),
+            help_text="Domyślna treść e-maila wysyłanego rejestrującym się uchodźcom."
+    )
+
     def update_active_status(self):
         if not self.manually_closed and self.start_date <= now().date() <= self.end_date:
             self.active = True
@@ -346,8 +379,8 @@ class Attendance(models.Model):
     date = models.DateField()
     status = models.CharField(
         max_length=20,
-        choices=[("present", "Obecny"), ("absent", "Nieobecny"), ("late", "Spóźniony"), ("excused absence", "Nieobecny usprawiedliwiony")],
-        default="absent"
+        choices=[("present", "Obecny"), ("absent", "Nieobecny"), ("late", "Spóźniony"), ("excused absence", "Nieobecny usprawiedliwiony"), ("not_recorded", "Nie wpisano obecności"),],
+        default="not_recorded"
     )
     notes = models.TextField(blank=True, null=True)
 

@@ -38,6 +38,15 @@
                 Nie
             {% endif %}
         </p>
+        <!-- <a type="submit" class="btn btn-orange">
+            Wyślij mail do przypisanych kursantów
+        </a> -->
+        <form method="post" action="{% url 'send_email_course' data.course.id %}">
+            {% csrf_token %}
+            <button type="submit" class="btn button-orange-outline">
+                Wyślij email z informacjami do przypisanych kursantów
+            </button>
+        </form>
         <form method="post">
             <div class="minmax_points_input_container">
                 {% csrf_token %}

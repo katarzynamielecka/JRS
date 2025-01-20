@@ -25,7 +25,8 @@ urlpatterns = [
     path("systemadmin/employee-management", views.employee_management_section, {"user_role": "admin"}, name="emp_man_sec"),
     path("systemadmin/courses-management", views.courses_management_section, {"user_role": "admin"}, name="crs_man_sec"),
     path("systemadmin/form-management", views.form_management_section, {"user_role": "admin"}, name="frm_man_sec"),
-    path("systemadmin/refugees", views.refugees_list_view, {"user_role": "admin"}, name="refugee_list"),
+    path("systemadmin/refugees/", views.refugees_list_view, {"user_role": "admin"}, name="refugee_list"),
+    path("systemadmin/refugees/<int:course_id>/", views.refugees_list_view, {"user_role": "admin"}, name="course_refugee_list"),
     path("systemadmin/recruitment_management", views.recruitment_management, {"user_role": "admin"}, name="recruitment_management"),
     path("systemadmin/timetable/", views.timetable_view, {"user_role": "admin"}, name="timetable"),
     path("systemadmin/generate-timetable/", views.generate_timetable, {"user_role": "admin"}, name="generate_timetable"),
@@ -43,6 +44,12 @@ urlpatterns = [
     path("systemadmin/delete_employee/<str:email>/", views.delete_employee, {"user_role": "admin"}, name="delete_employee"),
     path("systemadmin/attendance/", views.attendance_view, {"user_role": "admin"}, name="attendance_admin"),
     path("systemadmin/mark-attendance/<int:schedule_id>/<str:date>/", views.mark_attendance, {"user_role": "admin"}, name="mark_attendance_admin"),
+    path("systemadmin/attendance/student/<int:refugee_id>/", views.student_attendance_view, {"user_role": "admin"}, name="student_attendance_admin"),
+    path("systemadmin/send-email/", views.send_email_view, {"user_role": "admin"}, name="send_email"),
+    path("systemadmin/send-email/to-course/<int:course_id>/", views.send_email_view, {"user_role": "admin"}, name="send_email_course"),
+    path("systemadmin/send-email/to-refugee/<int:refugee_id>/", views.send_email_view, {"user_role": "admin"}, name="send_email_refugee"),
+    path("systemadmin/applications/<str:recruitment_name>/", views.application_list_view, {"user_role": "admin"}, name="applications"),
+
 
 
 
@@ -55,5 +62,5 @@ urlpatterns = [
     path("employee/courses-management", views.courses_management_section, {"user_role": "employee"}, name="crs_man_sec_employee"),
     path("employee/attendance/", views.attendance_view, {"user_role": "employee"}, name="attendance"),
     path("employee/mark-attendance/<int:schedule_id>/<str:date>/", views.mark_attendance, {"user_role": "employee"}, name="mark_attendance"),
-
+    path("employee/attendance/student/<int:refugee_id>/", views.student_attendance_view, {"user_role": "employee"}, name="student_attendance"),
 ]

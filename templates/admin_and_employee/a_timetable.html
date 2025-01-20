@@ -4,7 +4,20 @@
 
 
 {% endblock %} {% block content %}
+
 <div class="container">
+  {% if messages %}
+  <div class="alert-overlay">
+      <div class="alert-box">
+          <button type="button" class="btn-close" aria-label="Close" onclick="closeAlertBox()">X</button>
+          {% for message in messages %}
+              <div class="alert alert-{{ message.tags }} mb-2">
+                  {{ message }}
+              </div>
+          {% endfor %}
+      </div>
+  </div>
+{% endif %}
   <button onclick="window.history.back()" class="btn button-grey">
     <i class="fa-solid fa-arrow-left"></i>
   </button>

@@ -6,10 +6,23 @@
 {% endblock %}
 {% block content %}
 <div class="container">
+    {% if messages %}
+    <div class="alert-overlay">
+        <div class="alert-box">
+            <button type="button" class="btn-close" aria-label="Close" onclick="closeAlertBox()">X</button>
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} mb-2">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+{% endif %}
     <button onclick="window.history.back()" class="btn button-grey">
         <i class="fa-solid fa-arrow-left"></i>
     </button>
     <h1 class="page-title">WYPEŁNIONE TESTY: {{ test.title }}</h1>
+    <div style="width: 100%" class="table-centered">
     <form method="post" action="{% url 'save_points' %}">
         {% csrf_token %}
         <input type="hidden" name="test_id" value="{{ test.id }}">
@@ -17,8 +30,12 @@
         {% for recruitment_name, refugee_data in grouped_data.items %}
         <h2 class="recruitment-title">Rekrutacja: {{ recruitment_name }}</h2>
         {% if user_role == "admin" %}
-            <a href="{% url 'assignment_to_courses' test.id  recruitment_name %}" class="btn button-orange">Przydzielanie kursantów do kursów językowych</a>
-        {% endif %}
+            <div class="filled_tests_buttons">
+                <a href="{% url 'assignment_to_courses' test.id  recruitment_name %}" class="btn button-orange-outline">Przydzielanie kursantów do kursów językowych</a>
+                <a href="{% url 'applications' recruitment_name %}" class="btn button-orange-outline">Formularze</a>
+            </div>
+            {% endif %}
+        
         <table class="table table-responsive">
             <thead>
                 <tr>
@@ -77,9 +94,13 @@
                 {% endfor %}
             </tbody>
         </table>
+
         <button type="submit" class="btn button-orange">Zapisz punkty</button>
+        {% empty %}
+            <p style="text-align: center;">Ten test nie został użyty w żadnej rekrutacji.</p>
         {% endfor %}
     </form>
+</div>
 </div>
 <script>
 function toggleDetails(refugeeId) {

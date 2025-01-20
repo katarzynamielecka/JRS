@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% load static %}
+{% block head %}
+<link rel="stylesheet" href="{% static 'admin_and_employee.css' %}">
+{% endblock %}
+{% block content %}
+{% if messages %}
+<div class="alert-overlay">
+    <div class="alert-box">
+        <button type="button" class="btn-close" aria-label="Close" onclick="closeAlertBox()">X</button>
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} mb-2">
+                {{ message }}
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+  <h1 class="page-title">WYŚLIJ EMAIL</h1>
+  <form class="email-form" method="post">
+    {% csrf_token %}
+    <label for="id_subject">Temat:</label>
+    <input type="text" name="subject" id="id_subject" required>
+    
+    <label for="id_message">Treść wiadomości:</label>
+    <textarea name="message" id="id_message" rows="6" required></textarea>
+    
+    {% if recipients %}
+      <p>Wiadomość zostanie wysłana do:</p>
+      <ul class="recipents-list">
+        {% for recipient in recipients %}
+          <li>{{ recipient.email }}</li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p>Brak odbiorców do wysłania wiadomości.</p>
+    {% endif %}
+      
+    <button class="btn button-orange" type="submit">Wyślij</button>
+  </form>
+
+{% endblock %}

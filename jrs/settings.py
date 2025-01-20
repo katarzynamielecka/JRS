@@ -14,6 +14,7 @@ from pathlib import Path
 import logging
 from pathlib import Path
 import os
+import ssl
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -28,7 +29,7 @@ SECRET_KEY = 'django-insecure-afc0zu!4%iu+zf0%y#$@@l!ea5p1jnwmjp@v3j(#u0!6%zktww
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost']
+ALLOWED_HOSTS = ['localhost', '157.230.125.253']
 
 RECAPTCHA_PUBLIC_KEY = '6L6LeQqrMqAAAAAAi5Ntj32FG5mNKO16vc4fzBcAuC'
 RECAPTCHA_SECRET_KEY = '6LeQqrMqAAAAAJwqSxbTUewq_AtaZwWq1LuLihy-'
@@ -133,10 +134,21 @@ USE_TZ = True
 STATIC_URL = 'static/'
 
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'static'),
+    os.path.join(BASE_DIR, 'static'),  # Przesuwamy się jeden poziom wyżej
 ]
+
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+# Ustawienia e-maili
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'  # Dla Gmaila
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = '5amflight.mailing@gmail.com'
+EMAIL_HOST_PASSWORD = 'v v w b q k w n k j c j a e c r'

@@ -5,10 +5,25 @@
 {% endblock %}
 {% block content %}
 <div class="container">
+    {% if messages %}
+    <div class="alert-overlay">
+        <div class="alert-box">
+            <button type="button" class="btn-close" aria-label="Close" onclick="closeAlertBox()">X</button>
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} mb-2">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+{% endif %}
     <button onclick="window.history.back()" class="btn button-grey">
         <i class="fa-solid fa-arrow-left"></i>
     </button>
 <h1 class="page-title">LISTA KURSANTÓW</h1>
+<a href="{% url 'send_email_course' course_id %}" class="btn button-orange">
+    Wyślij email do wszystkich kursantów
+</a>
 <div class="table-responsive">
 <table class="table table-bordered table-hover">
     <thead>
@@ -17,7 +32,7 @@
             <th>Nazwisko</th>
             <th>Płeć</th>
             <th>Email</th>
-            <th>Data urodzenia</th>
+            <th>Czy pełnoletni?</th>
             <th>Numer telefonu</th>
             <th>Narodowość</th>
             <th>Typ pobytu</th>
@@ -39,8 +54,19 @@
                         Inna
                     {% endif %}
                 </td>
-                <td>{{ refugee.email }}</td>
-                <td>{{ refugee.dob|date:"d.m.Y" }}</td>
+                <td>
+                    {{ refugee.email }}
+                    <a href="{% url 'send_email_refugee' refugee_id=refugee.id %}" class="text-orange" title="Wyślij e-mail">
+                        <i class="fas fa-arrow-right"></i>
+                    </a>
+                </td>
+                <td>
+                    {% if refugee.is_adult == True %}
+                        Pełnoletni
+                    {% else %}
+                        Niepełnoletni
+                    {% endif %}
+                </td>
                 <td>{{ refugee.phone_number }}</td>
                 <td>{{ refugee.get_nationality_name }}</td>
                 <td>{{ refugee.residency }}</td>
@@ -50,6 +76,10 @@
                         &times;
                     </a>
                 </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="10">Brak kursantów</td>
             </tr>
         {% endfor %}
     </tbody>
