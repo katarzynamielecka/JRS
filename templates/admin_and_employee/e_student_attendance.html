@@ -2,20 +2,29 @@
 {% block content %}
 <div class="container">
     {% if messages %}
-    <div class="alert-overlay">
-        <div class="alert-box">
-            <button type="button" class="btn-close" aria-label="Close" onclick="closeAlertBox()">X</button>
-            {% for message in messages %}
-                <div class="alert alert-{{ message.tags }} mb-2">
-                    {{ message }}
-                </div>
-            {% endfor %}
+        <div class="alert-overlay">
+            <div class="alert-box">
+                <button type="button" class="btn-close" aria-label="Close" onclick="closeAlertBox()">X</button>
+                {% for message in messages %}
+                    <div class="alert" style="margin: 10px">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
         </div>
-    </div>
-{% endif %}
+    {% endif %}
     <button onclick="window.history.back()" class="btn button-grey">
         <i class="fa-solid fa-arrow-left"></i>
     </button>
+    <div class="help-icon" onclick="toggleInstructions()">
+        ?
+      </div>
+      
+      <div class="instruction-popup" id="instructionPopup">
+        <button class="close-popup" onclick="toggleInstructions()">×</button>
+        <h2>Instrukcje</h2>
+        <p id="instructionText"></p>
+      </div>
     <h1 class="page-title">OBECNOŚCI UCZNIA</h1>
     <h2>{{ refugee.first_name }} {{ refugee.last_name }}</h2>
     <div class="summary mt-4">

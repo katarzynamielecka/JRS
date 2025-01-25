@@ -73,7 +73,7 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 1050; 
+    z-index: 900; 
 }
 
 .table-centered{
@@ -147,3 +147,86 @@ body {
     color: white; 
     border-color: #D97014;
 }
+
+
+.help-icon {
+    position: fixed;
+    top: 100px;
+    right: 20px;
+    width: 40px;
+    height: 40px;
+    background-color: rgb(38, 82, 140);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    z-index: 500;
+  }
+
+  .help-icon:hover {
+    background-color: rgb(38, 82, 140);
+  }
+
+  .instruction-popup {
+    position: fixed;
+    top: 140px;
+    right: 20px;
+    width: 300px;
+    background-color: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    padding: 15px;
+    display: none; 
+    z-index: 500;
+    max-height: 420px; 
+    height: min-content;
+    overflow-y: auto; 
+    overflow-x: hidden;
+  }
+
+  .instruction-popup h2 {
+    margin: 0;
+    margin-bottom: 10px;
+    font-size: 18px;
+    color: rgb(38, 82, 140);
+  }
+
+  .instruction-popup p {
+    margin: 0;
+    font-size: 14px;
+    color: #555;
+  }
+
+  .close-popup {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: none;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+  }
+
+  .close-popup:hover {
+    color: #ff0000;
+  }
+
+
+  @media (max-width: 400px) {
+    .instruction-popup {
+      width: 90%; 
+      right: 5%; 
+    }
+
+    .instruction-popup p {
+      font-size: 12px; 
+    }
+
+    .instruction-popup h2 {
+      font-size: 16px;
+    }
+  }

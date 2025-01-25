@@ -47,8 +47,6 @@ def genetic_algorithm_schedule(population_size=100, generations=10000):
         conflicts = 0
 
         scheduled_courses = {gene[0] for gene in individual}
-
-        # Sprawdź, czy wszystkie kursy są obecne
         if len(scheduled_courses) != len(courses):
             conflicts += len(courses) - len(scheduled_courses)
 
@@ -60,7 +58,6 @@ def genetic_algorithm_schedule(population_size=100, generations=10000):
             course, day, time_interval, classroom, teacher = schedule
             key = (day, time_interval)
 
-            # Sprawdzenie dostępności nauczyciela i sali
             availability_teachers_classrooms = [
                 a
                 for a in availability.all()
@@ -72,7 +69,7 @@ def genetic_algorithm_schedule(population_size=100, generations=10000):
             ):
                 conflicts += 1
 
-            # Sprawdzanie zajętości nauczycieli
+
             if key not in teacher_schedule:
                 teacher_schedule[key] = set()
             if teacher in teacher_schedule[key]:
@@ -80,7 +77,6 @@ def genetic_algorithm_schedule(population_size=100, generations=10000):
             else:
                 teacher_schedule[key].add(teacher)
 
-            # Sprawdzanie zajętości sal
             if key not in classroom_schedule:
                 classroom_schedule[key] = set()
             if classroom in classroom_schedule[key]:
@@ -128,7 +124,6 @@ def genetic_algorithm_schedule(population_size=100, generations=10000):
     for gen in range(generations):
         elites = tools.selBest(population, elitism_size)
 
-        # Reszta populacji jest wybierana turniejowo
         offspring = toolbox.select(population, len(population) - elitism_size)
         offspring = list(map(toolbox.clone, offspring))
 
@@ -139,7 +134,6 @@ def genetic_algorithm_schedule(population_size=100, generations=10000):
                 del child2.fitness.values
 
         for mutant in offspring:
-            # if random.random() < 0.7:
             toolbox.mutate(mutant)
             del mutant.fitness.values
 

@@ -107,3 +107,46 @@
         font-size: 9px;
     }
 }
+
+
+tr.cancelled {
+    background-color: #f8d7da; 
+    color: grey;
+    pointer-events: none;
+    opacity: 0.6;
+}
+tr.cancelled a {
+    pointer-events: none;
+    text-decoration: line-through;
+}
+tr.cancelled form {
+    pointer-events: auto; 
+    opacity: 1;
+}
+
+
+.attendance-dates-management {
+    display: flex;
+    align-items: center; 
+    gap: 10px; 
+}
+
+.attendance-dates-management a,
+.attendance-dates-management button {
+    margin: 0; 
+    padding: 5px 10px; 
+}
+
+@media (max-width: 340px) {
+    .attendance-dates-management {
+        display: inline;
+        gap: 10px;
+    }
+}
+
+@media (max-width: 285px) {
+    .attendance-dates-management a,
+    .attendance-dates-management button {
+        font-size: 11px;
+    }
+}

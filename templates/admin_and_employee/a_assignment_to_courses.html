@@ -14,7 +14,7 @@
             <div class="alert-box">
                 <button type="button" class="btn-close" aria-label="Close" onclick="closeAlertBox()">X</button>
                 {% for message in messages %}
-                    <div class="alert alert-{{ message.tags }} mb-2">
+                    <div class="alert" style="margin: 10px">
                         {{ message }}
                     </div>
                 {% endfor %}
@@ -26,6 +26,15 @@
 <button onclick="window.history.back()" class="btn button-grey">
     <i class="fa-solid fa-arrow-left"></i>
 </button>
+<div class="help-icon" onclick="toggleInstructions()">
+    ?
+  </div>
+  
+  <div class="instruction-popup" id="instructionPopup">
+    <button class="close-popup" onclick="toggleInstructions()">×</button>
+    <h2>Instrukcje</h2>
+    <p id="instructionText"></p>
+  </div>
 <h1 class="page-title">PRZYPISANIE UCZESTNIKÓW DO KURSÓW NA PODSTAWIE WYNIKÓW TESTU</h1>
     {% for data in course_data %}
         <h2 class="part-title">Kurs: {{ data.course.name }}</h2>
@@ -55,12 +64,12 @@
                 
                 <div class="form-group">
                     <label for="min_points">Minimalna liczba punktów:</label>
-                    <input class="minmax_points_input" type="number" value="{{ data.min_points }}" id="min_points" name="min_points" min="0" step="0.5" required>
+                    <input class="minmax_points_input" type="number" value="{{ data.min_points }}" id="min_points" name="min_points" min="0" step="1" required>
                 </div>
                 
                 <div class="form-group">
                     <label for="max_points">Maksymalna liczba punktów:</label>
-                    <input class="minmax_points_input" type="number" id="max_points" value="{{ data.max_points }}" name="max_points" min="0" step="0.5" required>
+                    <input class="minmax_points_input" type="number" id="max_points" value="{{ data.max_points }}" name="max_points" min="0" step="1" required>
                 </div>
                 
                 <button type="submit" class="btn button-orange save-points-btn">Zapisz</button>

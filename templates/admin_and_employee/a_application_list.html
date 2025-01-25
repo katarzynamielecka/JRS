@@ -3,50 +3,58 @@
 {% block head %}
 <link rel="stylesheet" href="{% static 'admin_and_employee.css' %}">
 {% endblock %}
+
 {% block content %}
 {% if messages %}
 <div class="alert-overlay">
     <div class="alert-box">
         <button type="button" class="btn-close" aria-label="Close" onclick="closeAlertBox()">X</button>
         {% for message in messages %}
-            <div class="alert alert-{{ message.tags }} mb-2">
+            <div class="alert" style="margin: 10px">
                 {{ message }}
             </div>
         {% endfor %}
     </div>
 </div>
 {% endif %}
+
 <button onclick="window.history.back()" class="btn button-grey">
     <i class="fa-solid fa-arrow-left"></i>
 </button>
+<div class="help-icon" onclick="toggleInstructions()">
+    ?
+  </div>
+  
+  <div class="instruction-popup" id="instructionPopup">
+    <button class="close-popup" onclick="toggleInstructions()">×</button>
+    <h2>Instrukcje</h2>
+    <p id="instructionText"></p>
+  </div>
 <h1 class="page-title">LISTA ZGŁOSZEŃ - {{ recruitment.name }}</h1>
+
+
+<h2>Uchodźcy, którzy nie uczestniczyli w kursie językowym JRS</h2>
 <div class="table-centered">
-<table class="table table-responsive">
-    <thead>
-        <tr>
-            <th>Imię</th>
-            <th>Nazwisko</th>
-            <th>Płeć</th>
-            <th>Email</th>
-            <th>Czy pełnoletni?</th>
-            <th>Narodowość</th>
-            <th>Typ pobytu</th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for refugee in refugees %}
+    <table class="table table-responsive">
+        <thead>
+            <tr>
+                <th>Imię</th>
+                <th>Nazwisko</th>
+                <th>Płeć</th>
+                <th>Email</th>
+                <th>Czy pełnoletni?</th>
+                <th>Narodowość</th>
+                <th>Typ pobytu</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for refugee in refugees_not_attended %}
             <tr>
                 <td>{{ refugee.first_name }}</td>
                 <td>{{ refugee.last_name }}</td>
                 <td>
-                    {% if refugee.gender == "female" %}
-                        Kobieta
-                    {% elif refugee.gender == "male" %}
-                        Mężczyzna
-                    {% else %}
-                        Inna
-                    {% endif %}
+                    {% if refugee.gender == "female" %} Kobieta {% elif refugee.gender == "male" %} Mężczyzna {% else %} Inna {% endif %}
                 </td>
                 <td>
                     {{ refugee.email }}
@@ -55,11 +63,7 @@
                     </a>
                 </td>
                 <td>
-                    {% if refugee.is_adult == True %}
-                        Pełnoletni
-                    {% else %}
-                        Niepełnoletni
-                    {% endif %}
+                    {% if refugee.is_adult %} Pełnoletni {% else %} Niepełnoletni {% endif %}
                 </td>
                 <td>{{ refugee.get_nationality_name }}</td>
                 <td>{{ refugee.residency }}</td>
@@ -72,13 +76,74 @@
                         </button>
                     </form>
                 </td>
-        </tr>
-        {% empty %}
-        <tr>
-            <td colspan="6">Brak zgłoszeń w tej rekrutacji.</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="8">Brak zgłoszeń w tej rekrutacji.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 </div>
+<br>
+<h2>Uchodźcy, którzy uczestniczyli w kursie językowym JRS</h2>
+<form method="POST" action="">
+    {% csrf_token %}
+    <button type="submit" name="delete_all_attended" value="true" class="btn btn-outline-danger" onclick="return confirm('Czy na pewno chcesz usunąć wszystkie zgłoszenia uchodźców, którzy uczestniczyli w kursie?')">
+        Usuń wszystkie zgłoszenia
+    </button>
+</form>
+
+<div class="table-centered">
+    <table class="table table-responsive">
+        <thead>
+            <tr>
+                <th>Imię</th>
+                <th>Nazwisko</th>
+                <th>Płeć</th>
+                <th>Email</th>
+                <th>Czy pełnoletni?</th>
+                <th>Narodowość</th>
+                <th>Typ pobytu</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for refugee in refugees_attended %}
+            <tr>
+                <td>{{ refugee.first_name }}</td>
+                <td>{{ refugee.last_name }}</td>
+                <td>
+                    {% if refugee.gender == "female" %} Kobieta {% elif refugee.gender == "male" %} Mężczyzna {% else %} Inna {% endif %}
+                </td>
+                <td>
+                    {{ refugee.email }}
+                    <a href="{% url 'send_email_refugee' refugee_id=refugee.id %}" class="text-orange" title="Wyślij e-mail">
+                        <i class="fas fa-arrow-right"></i>
+                    </a>
+                </td>
+                <td>
+                    {% if refugee.is_adult %} Pełnoletni {% else %} Niepełnoletni {% endif %}
+                </td>
+                <td>{{ refugee.get_nationality_name }}</td>
+                <td>{{ refugee.residency }}</td>
+                <td>
+                    <form method="POST" action="">
+                        {% csrf_token %}
+                        <input type="hidden" name="refugee_id" value="{{ refugee.id }}">
+                        <button type="submit" class="btn btn-outline-danger" onclick="return confirm('Czy na pewno chcesz usunąć to zgłoszenie?')">
+                            Usuń zgłoszenie
+                        </button>
+                    </form>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="8">Brak zgłoszeń w tej rekrutacji.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
 {% endblock %}

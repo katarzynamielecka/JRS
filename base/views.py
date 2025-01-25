@@ -6,9 +6,12 @@ from django.contrib.auth import authenticate, login
 from django.utils import formats
 from googletrans import Translator
 from django.db import transaction
+from django.views.decorators.cache import never_cache
 from django.utils.timezone import now
 from django.contrib import messages
 from django.contrib.auth import logout
+from datetime import date
+import calendar
 import csv
 from django.db.models import Subquery, OuterRef, Min
 from datetime import datetime
@@ -170,7 +173,6 @@ def no_registration_view(request, user_role):
             try:
                 translated_texts[key] = translator.translate(text, dest=lang).text
             except Exception as e:
-                print(f"Błąd tłumaczenia dla '{key}': {e}")
                 translated_texts[key] = text 
     context = {
         "user_role": user_role,
@@ -201,9 +203,29 @@ def refugee_registration_view(request, user_role):
         if form.is_valid():
             recaptcha_response = request.POST.get('g-recaptcha-response')
             if not validate_recaptcha(recaptcha_response):
-                print('nie przeszło')
                 form.add_error(None, 'Invalid reCAPTCHA. Please try again.')
-                return render(request, "refugees/form.html", {'form': form, 'user_role': user_role, 'lang': lang})
+                original_texts = {
+                    'registration_title': "Registration Form",
+                    'next_button': "Next",
+                }
+                translated_texts = {}
+                for key, text in original_texts.items():
+                    if text:
+                        try:
+                            translated_texts[key] = translator.translate(text, dest=lang).text
+                        except Exception as e:
+                            translated_texts[key] = original_texts[key]
+                return render(
+                    request,
+                    "refugees/form.html",
+                    {
+                        'form': form,
+                        'user_role': user_role,
+                        'lang': lang,
+                        'translated_texts': translated_texts,
+                        'recaptcha_lang': get_recaptcha_lang(lang),
+                    }
+                )
             refugee_data = form.cleaned_data
             refugee_data["language_id"] = refugee_data["language"].id
             del refugee_data["language"]
@@ -245,66 +267,63 @@ def validate_recaptcha(recaptcha_response):
     }
     response = requests.post(recaptcha_url, data=payload)
     result = response.json()
-
-    print("ReCAPTCHA Response:", recaptcha_response)
-    print("Google API Payload:", payload)
-    print("Google API Result:", result)
-
     return result.get('success', False)
-
 
 def language_test_view(request, user_role):
     translator = Translator()
     lang = get_user_language(request)
     refugee_data = request.session.get("refugee_data")
+    
     if not refugee_data:
         return redirect("home")
+    
     recruitment = Recruitment.objects.filter(active=True).first()
     if not recruitment:
         return redirect("no_recruitment")
+    
     language_id = refugee_data.get("language_id")
     language = get_object_or_404(Language, id=language_id)
     test = recruitment.language_tests.filter(language=language).first()
     if not test:
         return redirect("no_recruitment")  
+    
     questions = test.questions.filter(
         Q(question_type="open") | Q(question_type="choice", choices__isnull=False)
     ).distinct()
+    
     original_texts = {
         'language_test': "Language Test",
+        'submit_test': "Submit Test"
     }
+    
     translated_texts = {}
     for key, text in original_texts.items():
-        if text: 
-            try:
-                translated_texts[key] = translator.translate(text, dest=lang).text 
-            except Exception as e:
-                translated_texts[key] = original_texts[key]
+        try:
+            translated_texts[key] = translator.translate(text, dest=lang).text 
+        except Exception:
+            translated_texts[key] = text
+    
     if request.method == "POST":
         answers = {}
         total_points = 0
-        refugee = None
+        
         for question in questions:
             if question.question_type == "choice":
                 selected_choice_id = request.POST.get(f"question_{question.id}")
                 answers[question.id] = selected_choice_id
             elif question.question_type == "open":
-                open_answer = request.POST.get(f"question_{question.id}")
-                answers[question.id] = open_answer
-        if refugee_data:
-            refugee = Refugee.objects.create(**refugee_data)
-            filled_test = FilledTest.objects.create(
-                refugee=refugee,
-                test=test,
-                recruitment=recruitment
-            )
-            for question_id, answer in answers.items():
-                question = Question.objects.get(id=question_id)
-                if question.question_type == "choice":
+                answers[question.id] = request.POST.get(f"question_{question.id}", "")
+        
+        refugee = Refugee.objects.create(**refugee_data)
+        filled_test = FilledTest.objects.create(refugee=refugee, test=test, recruitment=recruitment)
+        
+        for question_id, answer in answers.items():
+            question = Question.objects.get(id=question_id)
+            
+            if question.question_type == "choice":
+                if answer:  
                     selected_choice = Choice.objects.get(id=answer)
-                    awarded_points = (
-                        question.max_points if selected_choice.is_correct else 0
-                    )
+                    awarded_points = question.max_points if selected_choice.is_correct else 0
                     total_points += awarded_points
                     UserAnswer.objects.create(
                         question=question,
@@ -315,21 +334,135 @@ def language_test_view(request, user_role):
                 else:
                     UserAnswer.objects.create(
                         question=question,
+                        choice=None,
+                        awarded_points=0,
+                        filled_test=filled_test
+                    )
+            else:
+                if answer=="":
+                    UserAnswer.objects.create(
+                        question=question,
+                        text_answer=answer,
+                        awarded_points=0,
+                        filled_test=filled_test
+                    )
+                else:
+                    UserAnswer.objects.create(
+                        question=question,
                         text_answer=answer,
                         filled_test=filled_test
                     )
-            filled_test.total_points = total_points
-            filled_test.save()
-            request.session.pop("refugee_data", None)
-            request.session.pop("test_answers", None)
-            send_registration_email(refugee, recruitment)
-            return redirect("success_view")
+        filled_test.total_points = total_points
+        filled_test.save()
+        request.session.pop("refugee_data", None)
+        request.session.pop("test_answers", None)
+        send_registration_email(refugee, recruitment)
+        return redirect("success_view")
+    
     context = {
         "questions": questions,
         "user_role": user_role,
         "translated_texts": translated_texts,
     }
     return render(request, "refugees/language_test.html", context)
+
+
+
+# def language_test_view(request, user_role):
+#     translator = Translator()
+#     lang = get_user_language(request)
+#     refugee_data = request.session.get("refugee_data")
+#     if not refugee_data:
+#         return redirect("home")
+#     recruitment = Recruitment.objects.filter(active=True).first()
+#     if not recruitment:
+#         return redirect("no_recruitment")
+#     language_id = refugee_data.get("language_id")
+#     language = get_object_or_404(Language, id=language_id)
+#     test = recruitment.language_tests.filter(language=language).first()
+#     if not test:
+#         return redirect("no_recruitment")  
+#     questions = test.questions.filter(
+#         Q(question_type="open") | Q(question_type="choice", choices__isnull=False)
+#     ).distinct()
+#     original_texts = {
+#         'language_test': "Language Test",
+#         'submit_test': "Submit Test"
+#     }
+#     translated_texts = {}
+#     for key, text in original_texts.items():
+#         if text: 
+#             try:
+#                 translated_texts[key] = translator.translate(text, dest=lang).text 
+#             except Exception as e:
+#                 translated_texts[key] = original_texts[key]
+#     if request.method == "POST":
+#         answers = {}
+#         total_points = 0
+#         refugee = None
+#         for question in questions:
+#             if question.question_type == "choice":
+#                 selected_choice_id = request.POST.get(f"question_{question.id}")
+#                 answers[question.id] = selected_choice_id
+#             elif question.question_type == "open":
+#                 open_answer = request.POST.get(f"question_{question.id}")
+#                 answers[question.id] = open_answer
+#         if refugee_data:
+#             refugee = Refugee.objects.create(**refugee_data)
+#             filled_test = FilledTest.objects.create(
+#                 refugee=refugee,
+#                 test=test,
+#                 recruitment=recruitment
+#             )
+#             for question_id, answer in answers.items():
+#                 question = Question.objects.get(id=question_id)
+#                 if question.question_type == "choice":
+#                     if selected_choice_id:  
+#                         selected_choice = Choice.objects.get(id=selected_choice_id)
+#                         print(selected_choice.text)
+#                         awarded_points = (
+#                             question.max_points if selected_choice.is_correct else 0
+#                         )
+#                         total_points += awarded_points
+#                         UserAnswer.objects.create(
+#                             question=question,
+#                             choice=selected_choice,
+#                             awarded_points=awarded_points,
+#                             filled_test=filled_test
+#                         )
+#                     else:  
+#                         UserAnswer.objects.create(
+#                             question=question,
+#                             choice=None,  
+#                             awarded_points=0,  
+#                             filled_test=filled_test
+#                         )
+#                 else:
+#                     if answer=="":
+#                         UserAnswer.objects.create(
+#                             question=question,
+#                             text_answer=answer,
+#                             awarded_points=0,
+#                             filled_test=filled_test
+#                         )
+#                     else:
+#                         UserAnswer.objects.create(
+#                             question=question,
+#                             text_answer=answer,
+#                             filled_test=filled_test
+#                         )
+#             filled_test.total_points = total_points
+#             filled_test.save()
+#             request.session.pop("refugee_data", None)
+#             request.session.pop("test_answers", None)
+#             send_registration_email(refugee, recruitment)
+#             return redirect("success_view")
+#     context = {
+#         "questions": questions,
+#         "user_role": user_role,
+#         "translated_texts": translated_texts,
+#     }
+#     return render(request, "refugees/language_test.html", context)
 
 
 
@@ -412,15 +545,17 @@ def form_management_section(request, user_role):
 
 @login_required
 @admin_or_employee_required
+@never_cache
 def test_check_view(request, test_id, user_role):
     test = LanguageTest.objects.get(pk=test_id)
     filled_tests = FilledTest.objects.filter(test=test).select_related("refugee", "recruitment")
     refugee_data = []
     for filled_test in filled_tests:
+        filled_test.refresh_from_db()  
         refugee = filled_test.refugee
         filled_test_id = filled_test.id
         total_points = filled_test.total_points
-        answers = filled_test.user_answers.all()
+        answers = filled_test.user_answers.select_related("question").all()
         max_points = (
             answers.aggregate(total_max=Sum("max_points"))["total_max"] or 0
         )
@@ -469,6 +604,7 @@ def save_points(request, user_role):
                 except (ValueError, UserAnswer.DoesNotExist):
                     pass
             filled_test.calculate_total_points()
+            filled_test.refresh_from_db()
         if user_role == "admin":
             return redirect("test_check", test_id=test_id, user_role=user_role)
         else:
@@ -739,7 +875,10 @@ def edit_test(request, user_role, id):
             request, 
             "Nie możesz edytować tego testu, ponieważ jest używany w aktywnej rekrutacji."
         )
-        return redirect("frm_man_sec") 
+        if user_role == "admin":
+            return redirect("frm_man_sec") 
+        else:
+            return redirect("frm_man_sec_employee") 
     if request.method == "POST":
         if "add_open_question" in request.POST:
             text = request.POST.get("open_question_text")
@@ -829,9 +968,25 @@ def employee(request, user_role):
             )
             interval_data["days"].append({"day": day, "lessons": list(day_lessons)})
         timetable.append(interval_data)
+        today = date.today()
+        today_day_name = calendar.day_name[today.weekday()] 
+        employee = Employee.objects.get(user=request.user)
+        today_lessons = lessons.filter(
+            day=today.strftime("%a"),
+            teacher=employee
+        ).values(
+            "id",
+            "course__name", 
+            "time_interval__start_time", 
+            "time_interval__end_time", 
+            "classroom__name"
+        )
     context = {
         "user_role": user_role,
         "timetable": timetable,
+        "today_date": today,
+        "today_day_name": today_day_name,
+        "today_lessons": today_lessons,
     }
     return render(request, "admin_and_employee/e.html", context)
 
@@ -860,9 +1015,25 @@ def systemadmin(request, user_role):
             )
             interval_data["days"].append({"day": day, "lessons": list(day_lessons)})
         timetable.append(interval_data)
+        today = date.today()
+        today_day_name = calendar.day_name[today.weekday()] 
+        employee = Employee.objects.get(user=request.user)
+        today_lessons = lessons.filter(
+            day=today.strftime("%a"),
+            teacher=employee
+        ).values(
+            "id",
+            "course__name", 
+            "time_interval__start_time", 
+            "time_interval__end_time", 
+            "classroom__name"
+        )
     context = {
         "user_role": user_role,
         "timetable": timetable,
+        "today_date": today,
+        "today_day_name": today_day_name,
+        "today_lessons": today_lessons,
     }
     return render(request, "admin_and_employee/a.html", context)
 
@@ -902,17 +1073,19 @@ def employee_management_section(request, user_role):
 @admin_required
 def handle_course_form(request):
     course_id = request.POST.get("course_id")
+
     if course_id:
         course = get_object_or_404(LanguageCourse, id=course_id)
         form = LanguageCourseForm(request.POST, instance=course)
     else:
-        form = LanguageCourseForm(request.POST or None)
+        form = LanguageCourseForm(request.POST)  # Usunięto `or None`, bo `POST` zawsze dostarcza dane
 
     if form.is_valid():
         form.save()
         return form, None
     else:
         return form, form.errors
+
     
 @login_required
 @admin_required
@@ -920,8 +1093,9 @@ def handle_language_form(request):
     language_form = LanguageForm(request.POST or None)
     if language_form.is_valid():
         language_form.save()
-        return True
-    return language_form
+        return language_form, None  
+    return language_form, language_form.errors 
+
 
 @login_required
 @admin_required
@@ -1159,7 +1333,6 @@ def timetable_view(request, user_role,):
         if request.headers.get("X-Requested-With") == "XMLHttpRequest":
             return handle_schedule_update(request)
         if "update_availability" in request.POST:
-            print(request.POST)
             with transaction.atomic():
                 for day in days:
                     for interval in intervals:
@@ -1263,7 +1436,6 @@ def generate_timetable(request, user_role):
 @login_required
 @admin_required
 def handle_schedule_update(request):
-    """Obsługuje AJAX-owe aktualizacje planu w modelu ClassSchedule."""
     if request.method != "POST":
         return JsonResponse({"error": "Metoda żądania musi być POST."}, status=405)
 
@@ -1320,26 +1492,44 @@ def generate_course_dates(start_date, end_date, weekday):
 @admin_or_employee_required
 def attendance_view(request, user_role):
     user = request.user
-    try: 
+    try:
         employee = Employee.objects.get(user=user)
     except Employee.DoesNotExist:
         employee = None
     current_semesters = Semester.get_current_semesters()
     schedules = ClassSchedule.objects.filter(
-        teacher=employee, 
+        teacher=employee,
         course__semesters__in=current_semesters
-    ).distinct()
+    ).distinct().order_by('course__name')
+    if request.method == "POST":
+        schedule_id = request.POST.get("schedule_id")
+        date = request.POST.get("date")
+        try:
+            schedule = ClassSchedule.objects.get(id=schedule_id)
+            if "cancel_date" in request.POST:
+                schedule.cancel_date(date) 
+                messages.success(request, f"Zajęcia w dniu {date} zostały odwołane.")
+            elif "uncancel_date" in request.POST:
+                schedule.uncancel_date(date) 
+                messages.success(request, f"Odwołanie zajęć w dniu {date} zostało anulowane.")
+        except ClassSchedule.DoesNotExist:
+            messages.error(request, "Nie znaleziono harmonogramu.")
+
     for schedule in schedules:
         semester = schedule.course.semesters.first()
         weekday = DAY_MAPPING[schedule.day]
         schedule.dates = generate_course_dates(
             semester.start_date, semester.end_date, weekday
         )
+        schedule.cancelled_dates_set = set(schedule.cancelled_dates)
+
     context = {
-        "user_role": user_role, 
+        "user_role": user_role,
         "schedules": schedules,
     }
     return render(request, "admin_and_employee/e_attendance.html", context)
+
+
 
 @login_required
 @admin_or_employee_required
@@ -1570,16 +1760,32 @@ def send_email_view(request, user_role, refugee_id=None, course_id=None):
 @admin_required
 def application_list_view(request, user_role, recruitment_name):
     recruitment = get_object_or_404(Recruitment, name=recruitment_name)
-    refugees = Refugee.objects.filter(completed_tests__recruitment=recruitment).distinct()
+    refugees_attended = Refugee.objects.filter(
+        completed_tests__recruitment=recruitment, attended_course=True
+    ).distinct()
+    refugees_not_attended = Refugee.objects.filter(
+        completed_tests__recruitment=recruitment, attended_course=False
+    ).distinct()
+
     if request.method == "POST":
         refugee_id = request.POST.get("refugee_id")
-        refugee = get_object_or_404(Refugee, id=refugee_id)
-        refugee.delete()
-        messages.success(request, f"Uchodźca {refugee.first_name} {refugee.last_name} został usunięty.")
+        delete_all_attended = request.POST.get("delete_all_attended")
+        if refugee_id:
+            refugee = get_object_or_404(Refugee, id=refugee_id)
+            refugee.delete()
+            messages.success(request, f"Uchodźca {refugee.first_name} {refugee.last_name} został usunięty.")
+        elif delete_all_attended:
+            Refugee.objects.filter(
+                completed_tests__recruitment=recruitment, attended_course=True
+            ).delete()
+            messages.success(request, "Wszystkie zgłoszenia uchodźców, którzy uczestniczyli w kursie zostały usunięte.")
         return redirect(application_list_view, user_role=user_role, recruitment_name=recruitment_name)
+
+
     context = {
         "recruitment": recruitment,
-        "refugees": refugees,
+        "refugees_attended": refugees_attended,
+        "refugees_not_attended": refugees_not_attended,
         "user_role": user_role,
     }
     return render(request, "admin_and_employee/a_application_list.html", context)

@@ -7,20 +7,29 @@
 {% block content %}
 <div class="container">
     {% if messages %}
-    <div class="alert-overlay">
-        <div class="alert-box">
-            <button type="button" class="btn-close" aria-label="Close" onclick="closeAlertBox()">X</button>
-            {% for message in messages %}
-                <div class="alert alert-{{ message.tags }} mb-2">
-                    {{ message }}
-                </div>
-            {% endfor %}
+        <div class="alert-overlay">
+            <div class="alert-box">
+                <button type="button" class="btn-close" aria-label="Close" onclick="closeAlertBox()">X</button>
+                {% for message in messages %}
+                    <div class="alert" style="margin: 10px">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
         </div>
-    </div>
-{% endif %}
+    {% endif %}
 <button onclick="window.history.back()" class="btn button-grey">
     <i class="fa-solid fa-arrow-left"></i>
 </button>
+<div class="help-icon" onclick="toggleInstructions()">
+    ?
+  </div>
+  
+  <div class="instruction-popup" id="instructionPopup">
+    <button class="close-popup" onclick="toggleInstructions()">×</button>
+    <h2>Instrukcje</h2>
+    <p id="instructionText"></p>
+  </div>
 <h1 class="page-title">OBECNOŚCI</h1>
 <div class="attendance-container">
 <h1>Lista zajęć</h1>
@@ -70,18 +79,44 @@
                     </thead>
                     <tbody>
                         {% for date in schedule.dates %}
-                        <tr>
+                        <tr class="{% if date|date:'Y-m-d' in schedule.cancelled_dates_set %}cancelled{% endif %}">
                             <td>{{ date|date:'d.m.Y' }}</td>
                             <td>
-                                {% if user_role == 'admin' %}
-                                    <a href="{% url 'mark_attendance_admin' schedule.id date %}" style="color: #D97014;">Sprawdź obecność</a>
-                                {% elif user_role == 'employee' %}
-                                    <a href="{% url 'mark_attendance' schedule.id date %}" style="color: #D97014;">Sprawdź obecność</a>
+                                {% if date|date:'Y-m-d' in schedule.cancelled_dates_set %}
+                                    <span style="color: grey;">Odwołano</span>
+                                    <div class="attendance-dates-management">
+                                        <form method="POST" style="display: inline;">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="schedule_id" value="{{ schedule.id }}">
+                                            <input type="hidden" name="date" value="{{ date|date:'Y-m-d' }}">
+                                            <button type="submit" name="uncancel_date" class="btn btn-link" style="color: green;">
+                                                Anuluj odwołanie
+                                            </button>
+                                        </form>
+                                    </div>
+                                {% else %}
+                                    <div class="attendance-dates-management">
+                                        {% if user_role == 'admin' %}
+                                            <a href="{% url 'mark_attendance_admin' schedule.id date %}" class="btn btn-link attendance-action-button" style="color: #D97014;">Sprawdź obecność</a>
+                                        {% elif user_role == 'employee' %}
+                                            <a href="{% url 'mark_attendance' schedule.id date %}" class="btn btn-link" style="color: #D97014;">Sprawdź obecność</a>
+                                        {% endif %}
+                                        <form method="POST" style="display: inline;" >
+                                            {% csrf_token %}
+                                            <input type="hidden" name="schedule_id" value="{{ schedule.id }}">
+                                            <input type="hidden" name="date" value="{{ date|date:'Y-m-d' }}">
+                                            <button onclick="return confirm('Czy na pewno chcesz odwołać zajęcia?')" type="submit" name="cancel_date" class="btn btn-link attendance-action-button" style="color: red;">
+                                                Odwołaj zajęcia
+                                            </button>
+                                        </form>
+                                    </div>
                                 {% endif %}
-                            </td>
+                            </td>                            
                         </tr>
                         {% endfor %}
                     </tbody>
+                    
+                    
                 </table>
             </td>
         </tr>

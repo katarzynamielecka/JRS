@@ -24,16 +24,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-afc0zu!4%iu+zf0%y#$@@l!ea5p1jnwmjp@v3j(#u0!6%zktww'
+SECRET_KEY = os.getenv('SECRET_KEY')
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '157.230.125.253']
+# ALLOWED_HOSTS = ['46.101.180.138']
+ALLOWED_HOSTS = ['localhost']
 
-RECAPTCHA_PUBLIC_KEY = '6L6LeQqrMqAAAAAAi5Ntj32FG5mNKO16vc4fzBcAuC'
-RECAPTCHA_SECRET_KEY = '6LeQqrMqAAAAAJwqSxbTUewq_AtaZwWq1LuLihy-'
-
+RECAPTCHA_PUBLIC_KEY = os.getenv('RECAPTCHA_PUBLIC_KEY')
+RECAPTCHA_SECRET_KEY = os.getenv('RECAPTCHA_SECRET_KEY')
 
 LOGIN_URL = '/login/'
 # Application definition
@@ -131,7 +129,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static'),  # Przesuwamy się jeden poziom wyżej
@@ -150,5 +148,22 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'  # Dla Gmaila
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = '5amflight.mailing@gmail.com'
-EMAIL_HOST_PASSWORD = 'v v w b q k w n k j c j a e c r'
+
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
+
+
+
+# # Bezpieczeństwo aplikacji w trybie produkcyjnym
+# SECURE_SSL_REDIRECT = True
+# SESSION_COOKIE_SECURE = True
+# CSRF_COOKIE_SECURE = True
+# SECURE_BROWSER_XSS_FILTER = True
+# SECURE_CONTENT_TYPE_NOSNIFF = True
+# SECURE_HSTS_SECONDS = 31536000
+# SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+# SECURE_HSTS_PRELOAD = True
+
+# DEBUG = False
+
+DEBUG = True

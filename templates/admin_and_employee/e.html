@@ -6,10 +6,16 @@
 <link rel="stylesheet" href="{% static 'admin_and_employee.css' %}">
 {% endblock %}
 {% block content %}
-<button onclick="window.history.back()" class="btn button-grey">
-    <i class="fa-solid fa-arrow-left"></i>
-</button>
 <h1 class="page-title">PANEL LEKTORA</h1>
+<div class="help-icon" onclick="toggleInstructions()">
+  ?
+</div>
+
+<div class="instruction-popup" id="instructionPopup">
+  <button class="close-popup" onclick="toggleInstructions()">×</button>
+  <h2>Instrukcje</h2>
+  <p id="instructionText"></p>
+</div>
 <div class="main-page-employee-buttons-container">
   <a href="/employee/attendance/" class="main-page-button">
     <i class="fa-solid fa-clipboard-check"></i>
@@ -20,8 +26,28 @@
     Testy
   </a>
 </div>
-
-
+<br>
+<div class="today-info">
+  <h2 class="today-info-date">{{ today_date|date:"d.m.Y" }}</h2>
+  {% if today_lessons %}
+  <ul>
+    {% for lesson in today_lessons %}
+    <li class="today-lesson-item">
+      <div class="lesson-info">
+        <strong>{{ lesson.course__name }}</strong><br />
+        Godzina: {{ lesson.time_interval__start_time|time:"H:i" }} - 
+        {{ lesson.time_interval__end_time|time:"H:i" }}<br />
+        Sala: {{ lesson.classroom__name }}
+      </div>
+      <a href="{% url 'mark_attendance' schedule_id=lesson.id date=today_date %}" class="btn btn-link mark-attendance">
+        Sprawdź obecność
+      </a>
+    </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+</div>
+<br>
 <div class="table-centered">
 <table class="table-responsive timetable">
     <thead>

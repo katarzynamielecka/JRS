@@ -5,13 +5,15 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{% block title %}JRS{% endblock %}</title>
-    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="{% static 'bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
+
+    <!-- <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet" /> -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap">
     <link rel="stylesheet" href="{% static 'navbar.css' %}" />
     <link rel="stylesheet" href="{% static 'base.css' %}">
     <link rel="stylesheet" href="{% static 'home.css' %}">
-    <script src="https://kit.fontawesome.com/a8f7e99427.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="{% static 'fontawesome/css/all.min.css' %}">
     {% block head %}{% endblock %}
   </head>
   <nav class="jrs-navbar">
@@ -49,13 +51,14 @@
             </div>
           </div>
           <div class="mobile-menu-content">
-          <a href="/systemadmin/attendance/" class="second-nav-item">Obecności</a>
+          <a href="/systemadmin/attendance/" class="mobile-menu-item">Obecności</a>
           <a href="/systemadmin/form-management" class="mobile-menu-item">Testy</a>
           <a href="/systemadmin/courses-management" class="mobile-menu-item">Kursy</a>
           <a href="/systemadmin/recruitment_management" class="mobile-menu-item">Rekrutacja</a>
           <a href="/systemadmin/timetable/" class="mobile-menu-item">Układanie planu lekcji</a>
           <a href="/systemadmin/employee-management" class="mobile-menu-item">Pracownicy</a>
           <a class="mobile-menu-item logout-btn" href="{% url 'logout' %}">Wyloguj się</a>
+
         {% elif user_role == 'employee' %}
         <div class="burger-menu">
           <i class="fas fa-bars"></i>
@@ -75,6 +78,7 @@
           <a href="/employee/attendance" class="mobile-menu-item">Obecności</a>
           <a href="/employee/form-management" class="mobile-menu-item">Testy</a>
           <a class="mobile-menu-item logout-btn" href="{% url 'logout' %}">Wyloguj się</a>
+
           {% elif user_role == 'refugee' %}
             <div class="jrs-refugee-nav-menu">
               <div class="language-select">
@@ -150,10 +154,9 @@
 
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
-  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+  <script src="{% static 'bootstrap/js/bootstrap.bundle.min.js' %}"></script>
   <script src="/static/js/navbar-menu.js"></script>
   <script src="/static/js/close_alert.js"></script>
   <script src="/static/js/translation_options.js"></script>
-
-
+  <script src="{% static 'js/instructions.js' %}"></script>
   </html>

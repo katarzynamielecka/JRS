@@ -7,20 +7,29 @@
 {% block content %}
 <div class="container">
     {% if messages %}
-    <div class="alert-overlay">
-        <div class="alert-box">
-            <button type="button" class="btn-close" aria-label="Close" onclick="closeAlertBox()">X</button>
-            {% for message in messages %}
-                <div class="alert alert-{{ message.tags }} mb-2">
-                    {{ message }}
-                </div>
-            {% endfor %}
+        <div class="alert-overlay">
+            <div class="alert-box">
+                <button type="button" class="btn-close" aria-label="Close" onclick="closeAlertBox()">X</button>
+                {% for message in messages %}
+                    <div class="alert" style="margin: 10px">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
         </div>
-    </div>
-{% endif %}
+    {% endif %}
     <button onclick="window.history.back()" class="btn button-grey">
         <i class="fa-solid fa-arrow-left"></i>
     </button>
+    <div class="help-icon" onclick="toggleInstructions()">
+        ?
+      </div>
+      
+      <div class="instruction-popup" id="instructionPopup">
+        <button class="close-popup" onclick="toggleInstructions()">×</button>
+        <h2>Instrukcje</h2>
+        <p id="instructionText"></p>
+      </div>
 <h1 class="page-title">ZARZĄDZANIE KURSAMI</h1>
 {% if cur_semesters %}
     Semestr: 
@@ -89,13 +98,15 @@
                     {% csrf_token %}
                     <input type="hidden" name="course_id" value="{{ course.id }}">
                     <input type="number" name="weekly_classes" 
-                    step="1" min="0" class="form-control"
-                    value="{{ course.weekly_classes }}"
-                    onblur="document.forms['weekly_classes_form'].submit();" 
-                    onkeydown="if(event.key === 'Enter') { document.forms['weekly_classes_form'].submit(); }">
+                           step="1" min="0" class="form-control"
+                           value="{{ course.weekly_classes }}"
+                           id="weekly-classes-input">
+                    <button type="submit" class="btn button-orange">
+                        Zapisz
+                    </button>
                     <div class="error-message" style="color: red; display: none;"></div>
                 </form>
-            </td>
+            </td>            
             <td>
                 {% if course.semesters.exists %}
                     {% for semester in course.semesters.all %}
@@ -125,12 +136,16 @@
 <form method="POST">
     {% csrf_token %}
     <input type="hidden" name="form_type" value="course_form">
-    {{ form.as_p }}
+    
     {% if request.GET.edit %}
-    <input type="hidden" name="course_id" value="{{ request.GET.edit }}">
+        <input type="hidden" name="course_id" value="{{ request.GET.edit }}">
     {% endif %}
+    
+    {{ form.as_p }}
+    
     <button type="submit" class="btn button-orange crs-man-button">Zapisz</button>
 </form>
+
 
 <hr>
 

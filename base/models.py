@@ -139,6 +139,7 @@ class Refugee(models.Model):
             ("other", "Other"),
         ],
     )
+    attended_course = models.BooleanField(default=False)
     rodo_consent = models.BooleanField(default=False)
     truth_confirmation = models.BooleanField(default=False)
     comments = models.TextField(blank=True)
@@ -284,7 +285,7 @@ class TimeInterval(models.Model):
 
 
 class LanguageCourse(models.Model):
-    name = models.CharField(max_length=255)
+    name = models.CharField(max_length=255, unique=True)
     description = models.TextField(blank=True, null=True)
     language = models.ForeignKey(Language, on_delete=models.CASCADE)
     weekly_classes = models.PositiveIntegerField(default=1)
@@ -335,6 +336,29 @@ class ClassSchedule(models.Model):
     )
     course = models.ForeignKey(LanguageCourse, on_delete=models.CASCADE)
     conflicts = models.IntegerField(default=0)
+    cancelled_dates = models.JSONField(
+        default=list,
+        blank=True,
+        verbose_name="Odwołane daty",
+        help_text="Lista dat, w których zajęcia zostały odwołane."
+    )
+
+    def cancel_date(self, date):
+        if not isinstance(date, str):
+            date = date.strftime("%Y-%m-%d") 
+        if date not in self.cancelled_dates:
+            self.cancelled_dates.append(date)
+            self.save()
+
+    def is_cancelled(self, date):
+        if not isinstance(date, str):
+            date = date.strftime("%Y-%m-%d")  
+        return date in self.cancelled_dates
+
+    def uncancel_date(self, date):
+        if date in self.cancelled_dates:
+            self.cancelled_dates.remove(date)
+            self.save()
 
     def __str__(self):
         return f"{self.course} by {self.teacher} in {self.classroom} on {self.day}"

@@ -7,20 +7,29 @@
 {% block content %}
 <div class="container">
     {% if messages %}
-    <div class="alert-overlay">
-        <div class="alert-box">
-            <button type="button" class="btn-close" aria-label="Close" onclick="closeAlertBox()">X</button>
-            {% for message in messages %}
-                <div class="alert alert-{{ message.tags }} mb-2">
-                    {{ message }}
-                </div>
-            {% endfor %}
+        <div class="alert-overlay">
+            <div class="alert-box">
+                <button type="button" class="btn-close" aria-label="Close" onclick="closeAlertBox()">X</button>
+                {% for message in messages %}
+                    <div class="alert" style="margin: 10px">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
         </div>
-    </div>
-{% endif %}
+    {% endif %}
     <button onclick="window.history.back()" class="btn button-grey">
         <i class="fa-solid fa-arrow-left"></i>
     </button>
+    <div class="help-icon" onclick="toggleInstructions()">
+        ?
+      </div>
+      
+      <div class="instruction-popup" id="instructionPopup">
+        <button class="close-popup" onclick="toggleInstructions()">×</button>
+        <h2>Instrukcje</h2>
+        <p id="instructionText"></p>
+      </div>
     <h1 class="page-title">WYPEŁNIONE TESTY: {{ test.title }}</h1>
     <div style="width: 100%" class="table-centered">
     <form method="post" action="{% url 'save_points' %}">
@@ -73,11 +82,11 @@
                                     <td>{{ answer.question_text }}</td>
                                     <td>
                                         {% if answer.text_answer %}
-                                        {{ answer.text_answer }}
+                                            {{ answer.text_answer }}
                                         {% elif answer.choice_text %}
-                                        {{ answer.choice_text }}
+                                            {{ answer.choice_text }}
                                         {% else %}
-                                        Brak odpowiedzi
+                                            Brak odpowiedzi
                                         {% endif %}
                                     </td>
                                     <td>

@@ -5,6 +5,15 @@
 {% endblock %}
 {% block content %}
 <div class="centered-container">
+    <div class="help-icon" onclick="toggleInstructions()">
+        ?
+      </div>
+      
+      <div class="instruction-popup" id="instructionPopup">
+        <button class="close-popup" onclick="toggleInstructions()">×</button>
+        <h2>Instrukcje</h2>
+        <p id="instructionText"></p>
+      </div>
 <h2>Zarejestruj pracownika</h2>
 <form method="post">
     {% csrf_token %}

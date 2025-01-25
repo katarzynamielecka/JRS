@@ -7,21 +7,30 @@
 {% block content %}
 <div class="container">
     {% if messages %}
-    <div class="alert-overlay">
-        <div class="alert-box">
-            <button type="button" class="btn-close" aria-label="Close" onclick="closeAlertBox()">X</button>
-            {% for message in messages %}
-                <div class="alert alert-{{ message.tags }} mb-2">
-                    {{ message }}
-                </div>
-            {% endfor %}
+        <div class="alert-overlay">
+            <div class="alert-box">
+                <button type="button" class="btn-close" aria-label="Close" onclick="closeAlertBox()">X</button>
+                {% for message in messages %}
+                    <div class="alert" style="margin: 10px">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
         </div>
-    </div>
-{% endif %}
+    {% endif %}
     <button onclick="window.history.back()" class="btn button-grey">
         <i class="fa-solid fa-arrow-left"></i>
     </button>
     <h1 class="page-title">REJESTRACJA OBECNOŚCI NA ZAJĘCIACH - {{ date|date:'d.m.Y' }}</h1>
+    <div class="help-icon" onclick="toggleInstructions()">
+        ?
+      </div>
+      
+      <div class="instruction-popup" id="instructionPopup">
+        <button class="close-popup" onclick="toggleInstructions()">×</button>
+        <h2>Instrukcje</h2>
+        <p id="instructionText"></p>
+      </div>
     <div class="table-centered">
         <form method="post">
             {% csrf_token %}
@@ -39,10 +48,10 @@
                     <tr>
                         <td class="mark_attendance-title">
                             {% if user_role == "admin" %}
-                            <a href="{% url 'student_attendance_admin' form.instance.refugee.id %}"> {{ form.instance.refugee }}
+                            <a class="btn btn-link" style="color: #D97014;" href="{% url 'student_attendance_admin' form.instance.refugee.id %}"> {{ form.instance.refugee }}
                                 {{ form.id }} </a>
                             {% else %}
-                            <a href="{% url 'student_attendance' form.instance.refugee.id %}"> {{ form.instance.refugee }}
+                            <a class="btn btn-link" style="color: #D97014;" href="{% url 'student_attendance' form.instance.refugee.id %}"> {{ form.instance.refugee }}
                                 {{ form.id }} </a>
                             {% endif %}
                         </td>

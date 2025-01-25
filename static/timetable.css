@@ -3,7 +3,7 @@ form{
     margin:0 !important;
 }
 .timetable {
-    width: 100% !important;
+    /* width: 100% !important; */
     max-width: 100%;
     overflow-x: auto;
     border-collapse: collapse;

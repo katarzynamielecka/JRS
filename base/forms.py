@@ -144,10 +144,21 @@ class RefugeeRegistrationForm(forms.ModelForm):
         widget=forms.RadioSelect(),
         label="Are you an adult?"
     )
+
+    ATTENDED_COURSE_CHOICES = [
+        (True, 'Yes'),
+        (False, 'No'),
+    ]
+
+    attended_course = forms.ChoiceField(
+        choices=ATTENDED_COURSE_CHOICES,
+        widget=forms.RadioSelect(),
+        label="Have you ever participated in any JRS language course?"
+    )
     
     class Meta:
         model = Refugee
-        fields = ['first_name', 'last_name', 'email', 'gender', 'is_adult', 'phone_number', 'nationality', 'residency', 'language', 'comments']
+        fields = ['first_name', 'last_name', 'email', 'gender', 'is_adult', 'phone_number', 'nationality', 'residency', 'attended_course', 'language', 'comments']
         labels = {
            
         }
@@ -219,6 +230,11 @@ class RefugeeRegistrationForm(forms.ModelForm):
             for choice in self.IS_ADULT_CHOICES
         ]
         self.fields['is_adult'].choices = translated_choices
+        translated_choices = [
+            (choice[0], translator.translate(choice[1], dest=lang).text)
+            for choice in self.ATTENDED_COURSE_CHOICES
+        ]
+        self.fields['attended_course'].choices = translated_choices
         if hasattr(self.fields['gender'], 'choices'):
             gender_choices = self.fields['gender'].choices
             translated_gender_choices = [
@@ -263,6 +279,14 @@ class LanguageTestForm(forms.ModelForm):
             'description': forms.TextInput(attrs={'class': 'form-control'}),
             'language': forms.Select(attrs={'class': 'form-control'}),
         }
+        def clean(self):
+                cleaned_data = super().clean()
+                title = cleaned_data.get('title')
+                if title and LanguageTest.objects.filter(title=title).exists():
+                    self.add_error('title', "Test o takiej nazwie już istnieje. Wybierz inną nazwę.")
+                
+                return cleaned_data
+
 
 class QuestionForm(forms.ModelForm):
     class Meta:
@@ -302,12 +326,22 @@ class LanguageCourseForm(forms.ModelForm):
             'is_slavic': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
         error_messages = {
-            'name': {'required': 'To pole jest wymagane.'},
+            'name': {
+                'required': 'To pole jest wymagane.',
+                'unique': 'Kurs o tej nazwie już istnieje.',  
+            },
             'language': {'required': 'Musisz wybrać język.'},
             'semesters': {'required': 'Musisz zaznaczyć co najmniej jeden semestr.'},
         }
+        def clean_name(self):
+            name = self.cleaned_data.get('name')
+            course_id = self.data.get('course_id')
 
+            if LanguageCourse.objects.filter(name=name).exclude(id=course_id).exists():
+                raise ValidationError(self.Meta.error_messages['name']['unique'])
 
+            return name
+        
 class LanguageForm(forms.ModelForm):
     class Meta:
         model = Language

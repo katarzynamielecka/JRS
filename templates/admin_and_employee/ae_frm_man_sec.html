@@ -11,7 +11,7 @@
             <div class="alert-box">
                 <button type="button" class="btn-close" aria-label="Close" onclick="closeAlertBox()">X</button>
                 {% for message in messages %}
-                    <div class="alert alert-{{ message.tags }} mb-2">
+                    <div class="alert" style="margin: 10px">
                         {{ message }}
                     </div>
                 {% endfor %}
@@ -21,6 +21,15 @@
     <button onclick="window.history.back()" class="btn button-grey">
         <i class="fa-solid fa-arrow-left"></i>
     </button>
+    <div class="help-icon" onclick="toggleInstructions()">
+        ?
+      </div>
+      
+      <div class="instruction-popup" id="instructionPopup">
+        <button class="close-popup" onclick="toggleInstructions()">×</button>
+        <h2>Instrukcje</h2>
+        <p id="instructionText"></p>
+      </div>
     <h1 class="page-title">TESTY JĘZYKOWE</h1>
     <div class="tests-management-header">
         <h2 class="tests-managment-title">Zarządzaj testami językowymi</h2>
