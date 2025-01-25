@@ -15,14 +15,14 @@ Already a pro? Just edit this README.md and make it your own. Want to make it ea
 
 ```
 cd existing_repo
-git remote add origin https://gitlab-stud.elka.pw.edu.pl/kmieleck/language-registration-system-jrs.git
+git remote add origin https://gitlab-stud.elka.pw.edu.pl/kmieleck/jrs.git
 git branch -M main
 git push -uf origin main
 ```
 
 ## Integrate with your tools
 
-- [ ] [Set up project integrations](https://gitlab-stud.elka.pw.edu.pl/kmieleck/language-registration-system-jrs/-/settings/integrations)
+- [ ] [Set up project integrations](https://gitlab-stud.elka.pw.edu.pl/kmieleck/jrs/-/settings/integrations)
 
 ## Collaborate with your team
 
