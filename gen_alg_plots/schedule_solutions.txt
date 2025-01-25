@@ -1,0 +1,190 @@
+Schedule Solutions (With Fitness) - Debugging Output
+----------------------------------------------------------
+
+Generation 0:
+Best Individual in Generation 0 (Fitness: 10.0):
+Individual (Fitness: 10.0):
+  Course: English A1, Day: Thu, Time: 10:00-11:00, Classroom: Room 101, Teacher: Smith
+  Course: English A1, Day: Wed, Time: 9:00-10:00, Classroom: Room 101, Teacher: Smith
+  Course: Math B1, Day: Thu, Time: 8:00-9:00, Classroom: Room 102, Teacher: Johnson
+  Course: Math B1, Day: Tue, Time: 10:00-11:00, Classroom: Room 102, Teacher: Johnson
+  Course: Math B1, Day: Mon, Time: 8:00-9:00, Classroom: Room 101, Teacher: Johnson
+
+Individual (Fitness: 10.0):
+  Course: English A1, Day: Thu, Time: 11:00-12:00, Classroom: Room 101, Teacher: Smith
+  Course: English A1, Day: Wed, Time: 12:00-13:00, Classroom: Room 101, Teacher: Smith
+  Course: Math B1, Day: Thu, Time: 11:00-12:00, Classroom: Room 102, Teacher: Johnson
+  Course: Math B1, Day: Tue, Time: 8:00-9:00, Classroom: Room 102, Teacher: Johnson
+  Course: Math B1, Day: Mon, Time: 9:00-10:00, Classroom: Room 101, Teacher: Johnson
+
+
+Generation 1:
+Best Individual in Generation 1 (Fitness: 10.0):
+Individual (Fitness: 10.0):
+  Course: English A1, Day: Thu, Time: 10:00-11:00, Classroom: Room 101, Teacher: Smith
+  Course: English A1, Day: Wed, Time: 9:00-10:00, Classroom: Room 101, Teacher: Smith
+  Course: Math B1, Day: Thu, Time: 8:00-9:00, Classroom: Room 102, Teacher: Johnson
+  Course: Math B1, Day: Tue, Time: 10:00-11:00, Classroom: Room 102, Teacher: Johnson
+  Course: Math B1, Day: Mon, Time: 8:00-9:00, Classroom: Room 101, Teacher: Johnson
+
+Individual (Fitness: 10.0):
+  Course: English A1, Day: Fri, Time: 11:00-12:00, Classroom: Room 101, Teacher: Smith
+  Course: English A1, Day: Mon, Time: 12:00-13:00, Classroom: Room 101, Teacher: Smith
+  Course: Math B1, Day: Mon, Time: 11:00-12:00, Classroom: Room 102, Teacher: Johnson
+  Course: Math B1, Day: Tue, Time: 8:00-9:00, Classroom: Room 102, Teacher: Johnson
+  Course: Math B1, Day: Mon, Time: 9:00-10:00, Classroom: Room 101, Teacher: Johnson
+
+
+Generation 2:
+Best Individual in Generation 2 (Fitness: 10.0):
+Individual (Fitness: 10.0):
+  Course: English A1, Day: Fri, Time: 10:00-11:00, Classroom: Room 101, Teacher: Smith
+  Course: English A1, Day: Mon, Time: 10:00-11:00, Classroom: Room 101, Teacher: Smith
+  Course: Math B1, Day: Mon, Time: 8:00-9:00, Classroom: Room 102, Teacher: Johnson
+  Course: Math B1, Day: Tue, Time: 9:00-10:00, Classroom: Room 102, Teacher: Johnson
+  Course: Math B1, Day: Mon, Time: 11:00-12:00, Classroom: Room 101, Teacher: Johnson
+
+Individual (Fitness: 10.0):
+  Course: English A1, Day: Thu, Time: 12:00-13:00, Classroom: Room 101, Teacher: Smith
+  Course: English A1, Day: Wed, Time: 12:00-13:00, Classroom: Room 101, Teacher: Smith
+  Course: Math B1, Day: Thu, Time: 8:00-9:00, Classroom: Room 102, Teacher: Johnson
+  Course: Math B1, Day: Tue, Time: 12:00-13:00, Classroom: Room 102, Teacher: Johnson
+  Course: Math B1, Day: Mon, Time: 11:00-12:00, Classroom: Room 101, Teacher: Johnson
+
+
+Generation 3:
+Best Individual in Generation 3 (Fitness: 10.0):
+Individual (Fitness: 10.0):
+  Course: English A1, Day: Thu, Time: 12:00-13:00, Classroom: Room 101, Teacher: Smith
+  Course: English A1, Day: Wed, Time: 12:00-13:00, Classroom: Room 101, Teacher: Smith
+  Course: Math B1, Day: Thu, Time: 8:00-9:00, Classroom: Room 102, Teacher: Johnson
+  Course: Math B1, Day: Tue, Time: 12:00-13:00, Classroom: Room 102, Teacher: Johnson
+  Course: Math B1, Day: Mon, Time: 11:00-12:00, Classroom: Room 101, Teacher: Johnson
+
+Individual (Fitness: 10.0):
+  Course: English A1, Day: Wed, Time: 12:00-13:00, Classroom: Room 101, Teacher: Smith
+  Course: English A1, Day: Fri, Time: 12:00-13:00, Classroom: Room 101, Teacher: Smith
+  Course: Math B1, Day: Thu, Time: 8:00-9:00, Classroom: Room 102, Teacher: Johnson
+  Course: Math B1, Day: Thu, Time: 12:00-13:00, Classroom: Room 102, Teacher: Johnson
+  Course: Math B1, Day: Wed, Time: 11:00-12:00, Classroom: Room 101, Teacher: Johnson
+
+
+Generation 4:
+Best Individual in Generation 4 (Fitness: 10.0):
+Individual (Fitness: 10.0):
+  Course: English A1, Day: Tue, Time: 12:00-13:00, Classroom: Room 101, Teacher: Smith
+  Course: English A1, Day: Thu, Time: 12:00-13:00, Classroom: Room 101, Teacher: Smith
+  Course: Math B1, Day: Fri, Time: 8:00-9:00, Classroom: Room 102, Teacher: Johnson
+  Course: Math B1, Day: Fri, Time: 12:00-13:00, Classroom: Room 102, Teacher: Johnson
+  Course: Math B1, Day: Mon, Time: 11:00-12:00, Classroom: Room 101, Teacher: Johnson
+
+Individual (Fitness: 10.0):
+  Course: English A1, Day: Thu, Time: 11:00-12:00, Classroom: Room 101, Teacher: Smith
+  Course: English A1, Day: Wed, Time: 11:00-12:00, Classroom: Room 101, Teacher: Smith
+  Course: Math B1, Day: Thu, Time: 12:00-13:00, Classroom: Room 102, Teacher: Johnson
+  Course: Math B1, Day: Tue, Time: 12:00-13:00, Classroom: Room 102, Teacher: Johnson
+  Course: Math B1, Day: Mon, Time: 11:00-12:00, Classroom: Room 101, Teacher: Johnson
+
+
+Generation 5:
+Best Individual in Generation 5 (Fitness: 10.0):
+Individual (Fitness: 10.0):
+  Course: English A1, Day: Tue, Time: 12:00-13:00, Classroom: Room 101, Teacher: Smith
+  Course: English A1, Day: Thu, Time: 12:00-13:00, Classroom: Room 101, Teacher: Smith
+  Course: Math B1, Day: Fri, Time: 8:00-9:00, Classroom: Room 102, Teacher: Johnson
+  Course: Math B1, Day: Fri, Time: 12:00-13:00, Classroom: Room 102, Teacher: Johnson
+  Course: Math B1, Day: Mon, Time: 11:00-12:00, Classroom: Room 101, Teacher: Johnson
+
+Individual (Fitness: 14.0):
+  Course: English A1, Day: Wed, Time: 11:00-12:00, Classroom: Room 101, Teacher: Smith
+  Course: English A1, Day: Wed, Time: 11:00-12:00, Classroom: Room 101, Teacher: Smith
+  Course: Math B1, Day: Mon, Time: 12:00-13:00, Classroom: Room 102, Teacher: Johnson
+  Course: Math B1, Day: Fri, Time: 12:00-13:00, Classroom: Room 102, Teacher: Johnson
+  Course: Math B1, Day: Wed, Time: 11:00-12:00, Classroom: Room 101, Teacher: Johnson
+
+
+Generation 6:
+Best Individual in Generation 6 (Fitness: 10.0):
+Individual (Fitness: 10.0):
+  Course: English A1, Day: Tue, Time: 12:00-13:00, Classroom: Room 102, Teacher: Smith
+  Course: English A1, Day: Thu, Time: 12:00-13:00, Classroom: Room 102, Teacher: Smith
+  Course: Math B1, Day: Fri, Time: 8:00-9:00, Classroom: Room 101, Teacher: Johnson
+  Course: Math B1, Day: Fri, Time: 12:00-13:00, Classroom: Room 101, Teacher: Johnson
+  Course: Math B1, Day: Mon, Time: 11:00-12:00, Classroom: Room 101, Teacher: Johnson
+
+Individual (Fitness: 10.0):
+  Course: English A1, Day: Tue, Time: 10:00-11:00, Classroom: Room 101, Teacher: Smith
+  Course: English A1, Day: Thu, Time: 11:00-12:00, Classroom: Room 101, Teacher: Smith
+  Course: Math B1, Day: Fri, Time: 8:00-9:00, Classroom: Room 102, Teacher: Johnson
+  Course: Math B1, Day: Fri, Time: 10:00-11:00, Classroom: Room 102, Teacher: Johnson
+  Course: Math B1, Day: Mon, Time: 12:00-13:00, Classroom: Room 101, Teacher: Johnson
+
+
+Generation 7:
+Best Individual in Generation 7 (Fitness: 10.0):
+Individual (Fitness: 10.0):
+  Course: English A1, Day: Thu, Time: 10:00-11:00, Classroom: Room 101, Teacher: Smith
+  Course: English A1, Day: Thu, Time: 11:00-12:00, Classroom: Room 101, Teacher: Smith
+  Course: Math B1, Day: Tue, Time: 8:00-9:00, Classroom: Room 102, Teacher: Johnson
+  Course: Math B1, Day: Wed, Time: 10:00-11:00, Classroom: Room 102, Teacher: Johnson
+  Course: Math B1, Day: Wed, Time: 12:00-13:00, Classroom: Room 101, Teacher: Johnson
+
+Individual (Fitness: 10.0):
+  Course: English A1, Day: Mon, Time: 10:00-11:00, Classroom: Room 101, Teacher: Smith
+  Course: English A1, Day: Wed, Time: 11:00-12:00, Classroom: Room 101, Teacher: Smith
+  Course: Math B1, Day: Thu, Time: 8:00-9:00, Classroom: Room 102, Teacher: Johnson
+  Course: Math B1, Day: Thu, Time: 10:00-11:00, Classroom: Room 102, Teacher: Johnson
+  Course: Math B1, Day: Mon, Time: 12:00-13:00, Classroom: Room 101, Teacher: Johnson
+
+
+Generation 8:
+Best Individual in Generation 8 (Fitness: 10.0):
+Individual (Fitness: 10.0):
+  Course: English A1, Day: Mon, Time: 10:00-11:00, Classroom: Room 101, Teacher: Smith
+  Course: English A1, Day: Wed, Time: 8:00-9:00, Classroom: Room 101, Teacher: Smith
+  Course: Math B1, Day: Thu, Time: 11:00-12:00, Classroom: Room 102, Teacher: Johnson
+  Course: Math B1, Day: Thu, Time: 11:00-12:00, Classroom: Room 102, Teacher: Johnson
+  Course: Math B1, Day: Mon, Time: 8:00-9:00, Classroom: Room 101, Teacher: Johnson
+
+Individual (Fitness: 10.0):
+  Course: English A1, Day: Mon, Time: 10:00-11:00, Classroom: Room 101, Teacher: Smith
+  Course: English A1, Day: Wed, Time: 11:00-12:00, Classroom: Room 101, Teacher: Smith
+  Course: Math B1, Day: Thu, Time: 8:00-9:00, Classroom: Room 102, Teacher: Johnson
+  Course: Math B1, Day: Thu, Time: 10:00-11:00, Classroom: Room 102, Teacher: Johnson
+  Course: Math B1, Day: Mon, Time: 12:00-13:00, Classroom: Room 101, Teacher: Johnson
+
+
+Generation 9:
+Best Individual in Generation 9 (Fitness: 10.0):
+Individual (Fitness: 10.0):
+  Course: English A1, Day: Mon, Time: 10:00-11:00, Classroom: Room 101, Teacher: Smith
+  Course: English A1, Day: Wed, Time: 11:00-12:00, Classroom: Room 101, Teacher: Smith
+  Course: Math B1, Day: Thu, Time: 8:00-9:00, Classroom: Room 102, Teacher: Johnson
+  Course: Math B1, Day: Thu, Time: 10:00-11:00, Classroom: Room 102, Teacher: Johnson
+  Course: Math B1, Day: Mon, Time: 12:00-13:00, Classroom: Room 101, Teacher: Johnson
+
+Individual (Fitness: 10.0):
+  Course: English A1, Day: Mon, Time: 10:00-11:00, Classroom: Room 102, Teacher: Smith
+  Course: English A1, Day: Wed, Time: 11:00-12:00, Classroom: Room 101, Teacher: Smith
+  Course: Math B1, Day: Thu, Time: 8:00-9:00, Classroom: Room 102, Teacher: Johnson
+  Course: Math B1, Day: Thu, Time: 10:00-11:00, Classroom: Room 102, Teacher: Johnson
+  Course: Math B1, Day: Mon, Time: 12:00-13:00, Classroom: Room 102, Teacher: Johnson
+
+
+Final Population After All Generations:
+Individual (Fitness: 10.0):
+  Course: English A1, Day: Mon, Time: 10:00-11:00, Classroom: Room 101, Teacher: Smith
+  Course: English A1, Day: Wed, Time: 11:00-12:00, Classroom: Room 101, Teacher: Smith
+  Course: Math B1, Day: Thu, Time: 8:00-9:00, Classroom: Room 102, Teacher: Johnson
+  Course: Math B1, Day: Thu, Time: 10:00-11:00, Classroom: Room 102, Teacher: Johnson
+  Course: Math B1, Day: Mon, Time: 12:00-13:00, Classroom: Room 101, Teacher: Johnson
+
+Individual (Fitness: 10.0):
+  Course: English A1, Day: Mon, Time: 10:00-11:00, Classroom: Room 102, Teacher: Smith
+  Course: English A1, Day: Wed, Time: 11:00-12:00, Classroom: Room 101, Teacher: Smith
+  Course: Math B1, Day: Thu, Time: 8:00-9:00, Classroom: Room 102, Teacher: Johnson
+  Course: Math B1, Day: Thu, Time: 10:00-11:00, Classroom: Room 102, Teacher: Johnson
+  Course: Math B1, Day: Mon, Time: 12:00-13:00, Classroom: Room 102, Teacher: Johnson
+
+
+Best Solution After 10 Generations: (Fitness: 10.0)

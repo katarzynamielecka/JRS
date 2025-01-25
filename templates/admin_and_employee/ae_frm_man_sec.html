@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% block head %}
+{% load static %}
+<link rel="stylesheet" href="{% static 'admin_and_employee.css' %}">
+<link rel="stylesheet" href="{% static 'ae_test_edition.css' %}">
+{% endblock %}
+{% block content %}
+<div class="container tests-management-container">
+    {% if messages %}
+        <div class="alert-overlay">
+            <div class="alert-box">
+                <button type="button" class="btn-close" aria-label="Close" onclick="closeAlertBox()">X</button>
+                {% for message in messages %}
+                    <div class="alert" style="margin: 10px">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+    <button onclick="window.history.back()" class="btn button-grey">
+        <i class="fa-solid fa-arrow-left"></i>
+    </button>
+    <div class="help-icon" onclick="toggleInstructions()">
+        ?
+      </div>
+      
+      <div class="instruction-popup" id="instructionPopup">
+        <button class="close-popup" onclick="toggleInstructions()">×</button>
+        <h2>Instrukcje</h2>
+        <p id="instructionText"></p>
+      </div>
+    <h1 class="page-title">TESTY JĘZYKOWE</h1>
+    <div class="tests-management-header">
+        <h2 class="tests-managment-title">Zarządzaj testami językowymi</h2>
+        {% if user_role == "admin" %}
+            <a href="{% url 'create_test' %}" style="text-decoration: none;">
+                <button class="btn  button-orange new-test-button">Utwórz nowy test</button>
+            </a> 
+        {% elif user_role == "employee" %}
+            <a href="{% url 'create_test_employee' %}" style="text-decoration: none;">
+                <button class="btn  button-orange new-test-button">Utwórz nowy test</button>
+            </a>
+        {% endif %} 
+    </div>
+    <h4>Ostatnia aktywna rekrutacja:</h4>
+        {% if last_recruitment %}
+            <p style="font-weight: bold;">{{ last_recruitment.name }} - {{ last_recruitment.activated_at|date:"d.m.Y" }}</p>
+            <p>Testy w rekrutacji:</p>
+            <ul>
+                {% for test in last_recruitment_tests %}
+                    <li>{{ test.language.name }} - {{ test.title }}</li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>Brak rekrutacji, które były aktywne.</p>
+        {% endif %}
+
+
+        <br>
+    {% for language in languages %}
+        <h5>Lista testów językowych: {{ language.name }}</h5>
+        <div class="table-container">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th scope="col">Nazwa testu</th>
+                    <th scope="col">Data utworzenia</th>
+                    <th scope="col">Akcje</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for test in language.languagetest_set.all %}
+                    <tr>
+                        <td>{{ test.title }}</td>
+                        <td>{{ test.created_at|date:"d.m.Y" }}</td>
+                        <td>
+                            {% if user_role == "admin" %}
+                                <a href="{% url 'edit_test' test.id %}" style="text-decoration: none;">
+                                    <button class="btn btn-outline-primary table-button">Edytuj</button>
+                                </a>
+                                <a href="{% url 'delete_test' test.id %}" style="text-decoration: none; color: red;" 
+                                onclick="return confirm('Czy na pewno chcesz usunąć ten test?');">
+                                    <button class="btn btn-outline-danger table-button">Usuń</button>
+                                </a>
+                            {% elif user_role == "employee" %}
+                                <a href="{% url 'edit_test_employee' test.id %}" style="text-decoration: none;">
+                                    <button class="btn btn-outline-primary table-button">Edytuj</button>
+                                </a>
+                            {% endif %} 
+                        </td>
+                        <td>
+                            {% if user_role == "admin" %}
+                                <a href="{% url 'test_check' test.id %}" style="text-decoration: none;">
+                                    <button class="btn btn-outline-info" >Wypełnione testy</button>
+                                </a>
+                            {% elif user_role == "employee" %}
+                                <a href="{% url 'test_check_employee' test.id %}" style="text-decoration: none;">
+                                    <button class="btn btn-outline-info" >Wypełnione testy</button>
+                                </a>
+                            {% endif %} 
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

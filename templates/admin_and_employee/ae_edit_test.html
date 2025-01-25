@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+{% load static %}
+{% block head %}
+<link rel="stylesheet" href="{% static 'admin_and_employee.css' %}">
+<link rel="stylesheet" href="{% static 'ae_test_edition.css' %}">
+{% endblock %}
+{% block content %}
+{% if messages %}
+<div class="alert-overlay">
+    <div class="alert-box">
+        <button type="button" class="btn-close" aria-label="Close" onclick="closeAlertBox()">X</button>
+        {% for message in messages %}
+            <div class="alert" style="margin: 10px">
+                {{ message }}
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+<div class="container">
+    <button onclick="window.history.back()" class="btn button-grey">
+        <i class="fa-solid fa-arrow-left"></i>
+    </button>
+    <div class="help-icon" onclick="toggleInstructions()">
+        ?
+      </div>
+      
+      <div class="instruction-popup" id="instructionPopup">
+        <button class="close-popup" onclick="toggleInstructions()">×</button>
+        <h2>Instrukcje</h2>
+        <p id="instructionText"></p>
+      </div>
+    <h1 class="page-title">EDYCJA TESTU: {{ test.title }}</h1>
+    
+    <hr>
+    <h2 class="test-management-title">Dodaj pytanie otwarte</h2>
+    <form method="post">
+        {% csrf_token %}
+        <input type="text" name="open_question_text" placeholder="Treść pytania otwartego" class="form-control mb-2" required>
+        <button type="submit" name="add_open_question" class="btn button-orange">Dodaj pytanie otwarte</button>
+    </form>
+
+    <hr>
+    <h2 class="test-management-title">Dodaj pytanie zamknięte</h2>
+    <form method="post" id="choice-question-form">
+        {% csrf_token %}
+        <input type="text" name="choice_question_text" placeholder="Treść pytania zamkniętego" class="form-control mb-2" required>
+        <div id="answers-container">
+            <div class="answer-item">
+                <input type="text" name="answer_text" placeholder="Treść odpowiedzi" class="form-control mb-2" required>
+                <input type="radio" name="is_correct" value="0"> Odpowiedź poprawna
+            </div>
+        </div>
+        
+        <button type="button" id="add-answer-btn" class="button-new-answer" onclick="addAnswer()">
+            <i class="fa-solid fa-plus" style="color: grey"></i>
+        </button>
+<!-- style="color: #26528c -->
+        <script>
+            let answerCount = 1;
+        
+            function addAnswer() {
+                if (answerCount >= 5) return;
+        
+                const container = document.getElementById('answers-container');
+                const answerItem = document.createElement('div');
+                answerItem.classList.add('answer-item');
+        
+                answerItem.innerHTML = `
+                    <input type="text" name="answer_text" placeholder="Treść odpowiedzi" class="form-control mb-2" required>
+                    <input type="radio" name="is_correct" value="${answerCount}"> Odpowiedź poprawna
+                `;
+        
+                container.appendChild(answerItem);
+                answerCount++;
+            }
+        </script>
+        
+        <br>
+
+        <button type="submit" name="add_choice_question" class="btn button-orange">Dodaj pytanie zamknięte</button>
+    </form>
+
+    <hr>
+
+    <h2 class="test-management-title">Pytania w tym teście</h2>
+    <form method="post">
+        {% csrf_token %}
+        <table class="table table-responsive">
+            <thead>
+                <tr>
+                    <th>Nr</th>
+                    <th>Treść pytania</th>
+                    <th>Typ pytania</th>
+                    <th>Odpowiedzi</th>
+                    <th>Punktacja</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for question in questions %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ question.text }}</td>
+                    <td>{{ question.get_question_type_display }}</td>
+                    <td>
+                        {% if question.question_type == 'choice' %}
+                            <ul>
+                                {% for answer in question.choices.all %}
+                                    <li>
+                                        {{ answer.text }} {% if answer.is_correct %} <strong>(Poprawna)</strong> {% endif %}
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            Brak odpowiedzi (pytanie otwarte)
+                        {% endif %}
+                    </td>
+                    <td>
+                        <input type="hidden" name="question_id" value="{{ question.id }}">
+                        <input type="number" name="max_points_{{ question.id }}" placeholder="Maks. punkty"
+                               step="0.5" min="0" class="form-control"
+                               value="{{ question.max_points }}">
+                    </td>
+                    <td>
+                        <form method="post" onsubmit="return confirm('Czy na pewno chcesz usunąć to pytanie?');">
+                            {% csrf_token %}
+                            <input type="hidden" name="question_id" value="{{ question.id }}">
+                            <button type="submit" name="delete_question" class="btn btn-danger">Usuń</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    
+        <div class="text-end mt-3">
+            <button type="submit" name="save_all_points" class="btn button-orange">Zapisz punktację</button>
+        </div>
+    </form>
+    
+</div>
+<script src="{% static 'js/test_edition.js' %}"></script>
+{% endblock %}

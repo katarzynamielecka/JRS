@@ -1,0 +1,74 @@
+.courses-managment-title{
+    color: rgb(77, 85, 91);
+}
+.courses-header-container{
+    display: flex;
+    justify-content: space-between;
+    align-items: center; 
+    margin-top: 40px;
+}
+
+@media (max-width: 775px) {
+    .courses-header-container{
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+    }
+}
+
+.elem-left {
+    order: 1; 
+}
+
+.elem-right {
+    order: 2; 
+}
+
+.crs-man-button{
+    min-width: 120px;
+    min-height: 20px;
+}
+
+.dropdown-menu-list{
+   width: 170px;
+   padding: 10px;
+   border: solid, 1px, rgb(91, 97, 107);
+
+}
+
+.teachers-pick-courses-checkbox{
+    display: block;
+    margin-bottom: 5px;
+}
+
+.weekly-classes-form{
+    max-width: 100px;
+}
+
+input[type="checkbox"] {
+    accent-color: var(--jrs-orange);
+}
+
+.form-check-input {
+    position: relative;
+    /* display: block !important; */
+    margin-left: 10px;
+
+}
+
+.rectangle{
+    width: 3px;
+    height: 35px;
+}
+
+.blue-rectangle{
+    background-color: #89CFF0;
+
+}
+
+.courses-table-desc{
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+}

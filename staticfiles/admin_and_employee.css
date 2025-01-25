@@ -1,0 +1,160 @@
+.container {
+    max-width: 1196px;
+    padding: 10px;
+    margin: 0 auto;
+    width: 100%;
+    overflow: hidden;
+}
+
+
+hr{
+    margin: 50px 0;
+}
+
+.treshold-inputs{
+    max-width: 250px;
+    display: flex;
+    align-items: center;
+    margin: 7px;
+    gap: 7px;
+
+}
+
+.treshold-inputs input{
+    width: 70px;
+
+}
+
+.treshold-inputs-form{
+    display: flex;
+    align-items: center;
+    gap: 2%;
+}
+
+.treshold-inputs-form button{
+    margin: 0 !important;
+}
+
+.slavic-indicator{
+    display: inline-block;
+    width: 5px;
+    height: 25px;
+    margin-right: 5px;
+    background-color: #48a7f5; 
+    border-radius: 1px; 
+}
+
+
+.centered-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+
+.centered-container h2 {
+    margin-bottom: 20px;
+}
+
+
+
+.main-page-buttons-container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); 
+    gap: 15px;
+    margin: 20px 0;
+}
+
+.main-page-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 15px;
+    font-size: 16px;
+    color: #D97014; 
+    border: 2px solid #D97014;
+    border-radius: 5px;
+    background-color: transparent; 
+    text-align: center;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    gap: 10px; 
+}
+.main-page-button:focus,
+.main-page-button:active {
+  outline: none; 
+  text-decoration: none;
+}
+.main-page-button i {
+    font-size: 18px;
+}
+
+.main-page-button:hover {
+    background-color: #D97014; 
+    color: white; 
+    border-color: #D97014;
+}
+
+@media (max-width: 768px) {
+    .main-page-buttons-container {
+      grid-template-columns: repeat(2, 1fr); 
+    }
+  }
+  
+ 
+  @media (max-width: 480px) {
+    .main-page-buttons-container {
+      grid-template-columns: 1fr;
+    }
+  }
+
+
+  .main-page-employee-buttons-container {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); 
+    gap: 20px; 
+    padding: 20px;
+  }
+
+  @media (max-width: 768px) {
+    .main-page-employee-buttons-container {
+      grid-template-columns: 1fr;
+    }
+  }
+
+.form-recruitment-email{
+  display: flex;
+  flex-direction: column;
+}
+.form-recruitment{
+  max-width: 100% !important;
+}
+
+.form-recruitment-email textarea {
+  width: 100%; 
+  max-width: 600px; 
+  height: 150px;
+  resize: both; 
+}
+
+.email-form{
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+
+.recipents-list{
+  font-size: 16px;
+}
+
+@media (max-width: 300px) {
+  .recipents-list{
+    font-size: 10px;
+  }
+}
+
+.text-orange {
+  color: #D97014;
+}

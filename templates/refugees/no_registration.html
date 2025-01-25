@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container centered-content">
+<div>
+    <h1 class="no-registration_title">{{ translated_texts.no_active_registration }}</h1>
+    <p>{{ translated_texts.no_active_registration_message }}</p>
+
+    {% if upcoming_recruitments %}
+        <h2 class="no-registration_title2">{{ translated_texts.upcoming_recruitments }}</h2>
+        <ul class="recruitment-list">
+            {% for recruitment in upcoming_recruitments %}
+                <li>
+                    <strong>{{ recruitment.name }}</strong><br>
+                    {{ translated_texts.start_date }}: {{ recruitment.start_date|date:"d.m.Y" }}<br>
+                    {{ translated_texts.end_date }}: {{ recruitment.end_date|date:"d.m.Y" }}<br>
+                    {{ translated_texts.semester }}: {{ recruitment.semester }}
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>{{ translated_texts.no_upcoming_recruitments }}</p>
+    {% endif %}
+</div>
+</div>
+{% endblock %}
