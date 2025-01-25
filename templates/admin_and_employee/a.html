@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% load static %}
+{% block head %}
+{% load static %}
+<link rel="stylesheet" href="{% static 'timetable.css' %}">
+<link rel="stylesheet" href="{% static 'admin_and_employee.css' %}">
+
+{% endblock %}
+{% block content %}
+<h1 class="page-title">PANEL ADMINISTRATORA</h1>
+<div class="help-icon" onclick="toggleInstructions()">
+  ?
+</div>
+
+<div class="instruction-popup" id="instructionPopup">
+  <button class="close-popup" onclick="toggleInstructions()">×</button>
+  <h2>Instrukcje</h2>
+  <p id="instructionText"></p>
+</div>
+<div class="main-page-buttons-container">
+  <a href="/systemadmin/attendance/" class="main-page-button">
+    <i class="fa-solid fa-clipboard-check"></i>
+    Obecności
+  </a>
+  <a href="/systemadmin/form-management" class="main-page-button">
+    <i class="fa-solid fa-pen-to-square"></i>
+    Testy
+  </a>
+  <a href="/systemadmin/courses-management" class="main-page-button">
+    <i class="fa-solid fa-book-open"></i>
+    Kursy
+  </a>
+  <a href="/systemadmin/recruitment_management" class="main-page-button">
+    <i class="fa-solid fa-users"></i>
+    Rekrutacja
+  </a>
+  <a href="/systemadmin/timetable/" class="main-page-button">
+    <i class="fa-solid fa-calendar-alt"></i>
+    Układanie planu lekcji
+  </a>
+  <a href="/systemadmin/employee-management" class="main-page-button">
+    <i class="fa-solid fa-id-badge"></i>
+    Pracownicy
+  </a>
+  <a href="{% url 'export_employees_csv' %}" class="main-page-button">
+    <i class="fa-solid fa-file-export"></i>
+    Wyeksportuj dane pracowników
+  </a>
+  <a href="{% url 'export_courses_csv' %}" class="main-page-button">
+    <i class="fa-solid fa-book"></i>
+    Wyeksportuj dane kursów
+  </a>
+  <a href="{% url 'export_refugees_csv' %}" class="main-page-button">
+    <i class="fa-solid fa-database"></i>
+    Wyeksportuj zapisy na semestry
+  </a>
+</div>
+
+<br>
+
+<div class="today-info">
+  <h2 class="today-info-date">{{ today_date|date:"d.m.Y" }}</h2>
+  {% if today_lessons %}
+  <ul>
+    {% for lesson in today_lessons %}
+    <li class="today-lesson-item">
+      <div class="lesson-info">
+        <strong>{{ lesson.course__name }}</strong><br />
+        Godzina: {{ lesson.time_interval__start_time|time:"H:i" }} - 
+        {{ lesson.time_interval__end_time|time:"H:i" }}<br />
+        Sala: {{ lesson.classroom__name }}
+      </div>
+      <a href="{% url 'mark_attendance_admin' schedule_id=lesson.id date=today_date %}" class="btn btn-link mark-attendance">
+        Sprawdź obecność
+      </a>
+    </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+</div>
+
+
+<div class="table-centered">
+<table class="table table-responsive timetable">
+  <thead>
+    <tr>
+      <th>Godzina</th>
+      <th>Poniedziałek</th>
+      <th>Wtorek</th>
+      <th>Środa</th>
+      <th>Czwartek</th>
+      <th>Piątek</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for interval in timetable %}
+    {% if interval.interval %}
+    <tr>
+      <td>
+        {{ interval.interval.start_time|time:"H:i" }} - {{ interval.interval.end_time|time:"H:i" }}
+      </td>
+      {% for day_data in interval.days %}
+      <td>
+        {% for lesson in day_data.lessons %}
+        <div class="lesson" style="background-color: #add8e6;">
+          <strong>{{ lesson.course__name }}</strong><br />
+          {{ lesson.teacher__user__last_name }}<br />
+          Sala: {{ lesson.classroom__name }}<br />
+          <small>{{ day_data.day }}</small><br />
+          <small>Od {{ lesson.time_interval__start_time|time:"H:i" }}</small> -
+          <small>Do {{ lesson.time_interval__end_time|time:"H:i" }}</small>
+        </div>
+        {% empty %}
+        <div class="empty-slot">---</div>
+        {% endfor %}
+      </td>
+      {% endfor %}
+    </tr>
+    {% endif %}
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+
+
+
+{% endblock %}

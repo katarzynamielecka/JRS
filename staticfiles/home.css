@@ -1,0 +1,142 @@
+body{
+    color: #333;
+}
+
+.home {
+    display: block;
+    text-align: center;
+    margin-top: 6%;
+}
+
+.button-orange{
+    background-color: var(--jrs-orange);
+    color: white;
+    margin-top: 10px;
+    margin-bottom: 20px;;
+
+}
+
+form{
+    margin: 1%;
+}
+
+.recruitment-list{
+    grid-template-columns: 1fr;
+    justify-items: center;
+    text-align: center;
+    padding: 0;
+    margin-left: 20%;
+    margin-right: 20%;
+    max-width: 600px;
+    list-style-position: inside;
+}
+
+.two-column-list {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1px;
+    padding: 0;
+    margin-left: 20%;
+    margin-right: 20%;
+    max-width: 600px;
+    list-style-position: inside;
+}
+
+.two-column-list:has(li:only-child) {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    text-align: center;
+}
+
+
+@media (max-width: 768px) {
+    .two-column-list {
+        grid-template-columns: 1fr;
+        margin-left: 10%;
+        margin-right: 10%; 
+    }
+}
+
+
+.radio-group {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    margin-top: 0.5em;
+    margin-left: 38%;
+}
+
+
+
+.choice {
+    margin-bottom: 0.5em;
+}
+
+.success-message {
+    max-width: 600px;
+    margin: 50px auto;
+    padding: 30px;
+    background-color: #f9f9f9;
+    border: 2px solid #E0E0E0; 
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); 
+    text-align: center;
+    color: #333;
+}
+.success-message h1 {
+    color: var(--jrs-orange);
+    font-size: 2.5em;
+    margin-bottom: 20px;
+}
+
+@media (max-width: 250px) {
+    .success-message h1 {
+        font-size: 1.9em;
+    }
+}
+
+
+.success-message p {
+    font-size: 1.2em;
+    margin-bottom: 15px;
+}
+
+.success-message a {
+    color: var(--jrs-orange);
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.centered-content{
+    display: flex; 
+    justify-content: center !important;
+    align-items: center !important;
+    text-align: center;
+}
+
+@media (max-width: 435px) {
+    .captcha-container {
+        transform: scale(0.7);
+        transform-origin: 0 0; 
+        display: inline-block;
+    }
+}
+
+
+@media (max-width: 300px) {
+    .captcha-container {
+        transform: scale(0.4); 
+        transform-origin: 0 0;
+        display: inline-block;
+    }
+}
+
+
+@media (max-width: 300px) {
+    .no-registration_title{
+        font-size: 30px;
+    }
+    .no-registration_title2{
+        font-size: 22px;
+    }
+}

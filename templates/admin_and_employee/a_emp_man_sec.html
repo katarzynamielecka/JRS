@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% load static %}
+{% block head %}
+<link rel="stylesheet" href="{% static 'admin_and_employee.css' %}">
+<link rel="stylesheet" href="{% static 'ae_employee_management.css' %}">
+{% endblock %}
+{% block content %}
+<div class="container">
+    {% if messages %}
+        <div class="alert-overlay">
+            <div class="alert-box">
+                <button type="button" class="btn-close" aria-label="Close" onclick="closeAlertBox()">X</button>
+                {% for message in messages %}
+                    <div class="alert" style="margin: 10px">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+    <button onclick="window.history.back()" class="btn button-grey">
+        <i class="fa-solid fa-arrow-left"></i>
+    </button>
+    <div class="help-icon" onclick="toggleInstructions()">
+        ?
+      </div>
+      
+      <div class="instruction-popup" id="instructionPopup">
+        <button class="close-popup" onclick="toggleInstructions()">×</button>
+        <h2>Instrukcje</h2>
+        <p id="instructionText"></p>
+      </div>
+<h2 class="page-title">ZARZĄDZANIE PRACOWNIKAMI</h2>
+<a href="{% url 'register' %}" style="text-decoration: none;">
+    <button class="btn button-orange">Zarejestruj pracownika</button>
+</a> 
+<br>
+<br>
+<h2 class="employee-management-title">Zarejestrowani pracownicy:</h2>
+<table class="table table-responsive">
+    <thead>
+        <tr>
+            <th scope="col">Imię</th>
+            <th scope="col">Nazwisko</th>
+            <th scope="col">Email</th>
+            <th scope="col">Uprawnienia Administratora</th>
+            <th scope="col">Data dodania</th>
+            <th scope="col">Akcje</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for employee in employees %}
+            <tr>
+                <td>{{ employee.user.first_name }}</td>
+                <td>{{ employee.user.last_name }}</td>
+                <td>{{ employee.user.email }}</td>
+                <td>{{ employee.is_admin|yesno:"Tak,Nie" }}</td>
+                <td>{{ employee.date_joined|date:"d.m.Y" }}</td>
+                <td>
+                    <a href="{% url 'delete_employee' employee.user.email %}" style="color: red; text-decoration: none;"
+                        onclick="return confirm('Czy na pewno chcesz usunąć tego pracownika?');">
+                        Usuń
+                    </a>
+                </td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+</div>
+
+{% endblock %}

@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+{% load static %}
+{% block head %}
+<link rel="stylesheet" href="{% static 'admin_and_employee.css' %}">
+<link rel="stylesheet" href="{% static 'base.css' %}">
+
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    {% if messages %}
+        <div class="alert-overlay">
+            <div class="alert-box">
+                <button type="button" class="btn-close" aria-label="Close" onclick="closeAlertBox()">X</button>
+                {% for message in messages %}
+                    <div class="alert" style="margin: 10px">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+
+<button onclick="window.history.back()" class="btn button-grey">
+    <i class="fa-solid fa-arrow-left"></i>
+</button>
+<div class="help-icon" onclick="toggleInstructions()">
+    ?
+  </div>
+  
+  <div class="instruction-popup" id="instructionPopup">
+    <button class="close-popup" onclick="toggleInstructions()">×</button>
+    <h2>Instrukcje</h2>
+    <p id="instructionText"></p>
+  </div>
+<h1 class="page-title">ZARZĄDZANIE REKRUTACJĄ</h1>
+ 
+<h2>{% if form.instance.pk %}Edytuj rekrutację{% else %}Zaplanuj rekrutację{% endif %}</h2>
+<form method="post">
+    {% csrf_token %}
+    <div class="form-group form-recruitment">
+        <label for="{{ form.name.id_for_label }}">Nazwa rekrutacji</label>
+        {{ form.name }}
+    </div>
+    <div class="form-group form-recruitment">
+        <label for="{{ form.start_date.id_for_label }}">Data rozpoczęcia</label>
+        {{ form.start_date }}
+    </div>
+    <div class="form-group form-recruitment">
+        <label for="{{ form.end_date.id_for_label }}">Data zakończenia</label>
+        {{ form.end_date }}
+    </div>
+    <div class="form-group form-recruitment">
+        <label for="{{ form.semester.id_for_label }}">Semestr</label>
+        {{ form.semester }}
+    </div>
+    <div class="form-group form-recruitment">
+        <label for="{{ form.max_people.id_for_label }}">Maksymalna liczba osób</label>
+        {{ form.max_people }}
+    </div>
+    <div class="form-group form-recruitment-email">
+        <label for="{{ form.email_content.id_for_label }}">Treść e-maila</label>
+        {{ form.email_content }}
+        <small>{{ form.email_content.help_text }}</small>
+    </div>
+    <div class="form-group form-recruitment">
+        <label>Testy językowe</label>
+        {% for language, tests in form.language_tests_by_language.items %}
+            <fieldset>
+                <legend>{{ language }}</legend>
+                {% for test in tests %}
+                    <label>
+                        <input type="radio" name="language_tests_{{ language }}" value="{{ test.id }}">
+                        {{ test.title }}
+                    </label><br>
+                {% endfor %}
+            </fieldset>
+        {% endfor %}
+    </div>
+    {% if form.instance.pk %}
+        <input type="hidden" name="edit_recruitment" value="true">
+    {% else %}
+        <input type="hidden" name="add_recruitment" value="true">
+    {% endif %}
+    <button type="submit" class="btn button-orange">Zapisz</button>
+
+    {% if form.non_field_errors %}
+        <div class="alert alert-danger">
+            {{ form.non_field_errors }}
+        </div>
+    {% endif %}
+
+</form>
+
+
+
+
+<h2>Lista rekrutacji</h2>
+<table class="table table-responsive">
+    <thead>
+        <tr>
+            <th>Nazwa</th>
+            <th>Na semestr</th>
+            <th>Data rozpoczęcia</th>
+            <th>Data zakończenia</th>
+            <th>Maksymalna ilość zapisanych osób</th>
+            <th>Testy</th>
+            <th></th>
+            <th></th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for recruitment in recruitments %}
+            <tr>
+                <td>{{ recruitment.name }}</td>
+                <td>
+                    {% if recruitment.semester %}
+                        {{ recruitment.semester.name }}
+                    {% else %}
+                        Brak semestru
+                    {% endif %}
+                </td>
+                <td>{{ recruitment.start_date|date:"d.m.Y"}}</td>
+                <td>{{ recruitment.end_date|date:"d.m.Y"}}</td>
+                <td>{{recruitment.max_people}}</td>
+                <td>
+                    <ul>
+                    {% for test in recruitment.language_tests.all %}
+                    <li>{{ test.title }} - {{test.language}}</li>
+                    {% empty %}
+                    <li>Brak</li>
+                    {% endfor %}
+                    </ul>
+                </td>
+                <td>
+                    {% if recruitment.active %}
+                        <p class="text-success">Aktywna</p>
+                    {% else %}
+                        <p>Nieaktywna</p>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if recruitment.active %}
+                        <form method="post" style="display: inline;">
+                            {% csrf_token %}
+                            <input type="hidden" name="finish_recruitment" value="1">
+                            <input type="hidden" name="recruitment_id" value="{{ recruitment.id }}">
+                            <button type="submit" class="btn btn-outline-info">Zakończ rekrutację</button>
+                        </form>
+                    {% else %}
+                        {% if not recruitment.active and recruitment.is_within_active_dates %}
+                            <form method="post" style="display: inline;">
+                                {% csrf_token %}
+                                <input type="hidden" name="resume_recruitment" value="1">
+                                <input type="hidden" name="recruitment_id" value="{{ recruitment.id }}">
+                                <button type="submit" class="btn btn-outline-success">Wznów rekrutację</button>
+                            </form>
+                        {% endif %}
+                    {% endif %}
+                </td>
+                <td>
+                    <div class="actions">
+                        <form method="post" style="display: inline;" onsubmit="return confirmDelete();">
+                            {% csrf_token %}
+                            <input type="hidden" name="delete" value="1">
+                            <input type="hidden" name="recruitment_id" value="{{ recruitment.id }}">
+                            <button type="submit" class="btn btn-outline-danger">Usuń</button>
+                        </form>
+                    </div>
+                    
+                </td>
+            </tr>
+        {% empty %}
+            <tr>
+                <td colspan="6">Brak rekrutacji.</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+</div>
+<script>
+    function confirmDelete() {
+        return confirm("Czy na pewno chcesz usunąć tą rekrutację? Wraz z nią zostaną usunięte zgromadzone dane.");
+    }
+</script>
+
+{% endblock %}

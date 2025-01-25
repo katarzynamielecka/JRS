@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-5">
+    <h2 class="mb-4">{{ translated_texts.registration_title }}</h2>
+    <form method="post" novalidate>
+        {% csrf_token %}
+        
+        {% for field in form %}
+        <div class="form-group">
+            {% if field.name == "rodo_consent" or field.name == "truth_confirmation" %}
+                <div class="form-check">
+                    {{ field }}
+                    {{ field.label_tag }}
+                </div>
+            {% else %}
+                {{ field.label_tag }}
+                {{ field }}
+            {% endif %}
+            
+            {% if field.errors %}
+                <div class="text-danger">
+                    {% for error in field.errors %}
+                        <small>{{ error }}</small>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+        
+        <div class="captcha-container">
+            <div class="g-recaptcha" data-sitekey="6LeQqrMqAAAAAAi5Ntj32FG5mNKO16vc4fzBcAuC"></div>
+        </div>
+        
+        <button type="submit" name="next" class="btn button-orange">{{ translated_texts.next_button }}</button>
+    </form>
+</div>
+
+<script src="https://www.google.com/recaptcha/api.js?hl={{ recaptcha_lang }}" async defer></script>
+{% endblock %}

@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% load static %}
+{% block head %}
+{% load static %}
+<link rel="stylesheet" href="{% static 'admin_and_employee.css' %}">
+<link rel="stylesheet" href="{% static 'ae_test_edition.css' %}">
+{% endblock %}
+{% block content %}
+<div class="container">
+    {% if messages %}
+        <div class="alert-overlay">
+            <div class="alert-box">
+                <button type="button" class="btn-close" aria-label="Close" onclick="closeAlertBox()">X</button>
+                {% for message in messages %}
+                    <div class="alert" style="margin: 10px">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+    <button onclick="window.history.back()" class="btn button-grey">
+        <i class="fa-solid fa-arrow-left"></i>
+    </button>
+    <div class="help-icon" onclick="toggleInstructions()">
+        ?
+      </div>
+      
+      <div class="instruction-popup" id="instructionPopup">
+        <button class="close-popup" onclick="toggleInstructions()">×</button>
+        <h2>Instrukcje</h2>
+        <p id="instructionText"></p>
+      </div>
+    <div class="new-test-container">
+    <div class="new-test">
+    <h1 class="page-title">UTWÓRZ NOWY TEST</h1>
+    <form method="post">
+        {% csrf_token %}
+        <div class="new-test-input">
+            <label for="{{ form.title.id_for_label }}" class="form-label">{{ form.title.label }}</label>
+            {{ form.title }}
+            {% if form.title.errors %}
+                <div class="text-danger">
+                    {% for error in form.title.errors %}
+                        <small>{{ error }}</small>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+        <div class="new-test-input">
+            <label for="{{ form.description.id_for_label }}" class="form-label">{{ form.description.label }}</label>
+            {{ form.description }}
+            {% if form.description.errors %}
+                <div class="text-danger">
+                    {% for error in form.description.errors %}
+                        <small>{{ error }}</small>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+        <div class="new-test-input">
+            <label for="{{ form.language.id_for_label }}" class="form-label">{{ form.language.label }}</label>
+            {{ form.language }}
+            {% if form.language.errors %}
+                <div class="text-danger">
+                    {% for error in form.language.errors %}
+                        <small>{{ error }}</small>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+        <div class="create-new-test-button">
+            <button type="submit" class="btn button-orange">Utwórz test</button>
+        </div>
+    </form>
+</div>
+</div>
+</div>
+{% endblock %}

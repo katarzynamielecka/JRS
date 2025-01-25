@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% load static %}
+{% block head %}
+<link rel="stylesheet" href="{% static 'admin_and_employee.css' %}">
+<link rel="stylesheet" href="{% static 'ae_test_edition.css' %}">
+{% endblock %}
+{% block content %}
+<div class="container">
+    {% if messages %}
+        <div class="alert-overlay">
+            <div class="alert-box">
+                <button type="button" class="btn-close" aria-label="Close" onclick="closeAlertBox()">X</button>
+                {% for message in messages %}
+                    <div class="alert" style="margin: 10px">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+    <button onclick="window.history.back()" class="btn button-grey">
+        <i class="fa-solid fa-arrow-left"></i>
+    </button>
+    <div class="help-icon" onclick="toggleInstructions()">
+        ?
+      </div>
+      
+      <div class="instruction-popup" id="instructionPopup">
+        <button class="close-popup" onclick="toggleInstructions()">×</button>
+        <h2>Instrukcje</h2>
+        <p id="instructionText"></p>
+      </div>
+    <h1 class="page-title">WYPEŁNIONE TESTY: {{ test.title }}</h1>
+    <div style="width: 100%" class="table-centered">
+    <form method="post" action="{% url 'save_points' %}">
+        {% csrf_token %}
+        <input type="hidden" name="test_id" value="{{ test.id }}">
+
+        {% for recruitment_name, refugee_data in grouped_data.items %}
+        <h2 class="recruitment-title">Rekrutacja: {{ recruitment_name }}</h2>
+        {% if user_role == "admin" %}
+            <div class="filled_tests_buttons">
+                <a href="{% url 'assignment_to_courses' test.id  recruitment_name %}" class="btn button-orange-outline">Przydzielanie kursantów do kursów językowych</a>
+                <a href="{% url 'applications' recruitment_name %}" class="btn button-orange-outline">Formularze</a>
+            </div>
+            {% endif %}
+        
+        <table class="table table-responsive">
+            <thead>
+                <tr>
+                    <th scope="col">Imię i nazwisko</th>
+                    <th scope="col">Sprawdzone zadania</th>
+                    <th scope="col">Punkty</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for data in refugee_data %}
+                <tr>
+                    <td>{{ data.refugee.first_name }} {{ data.refugee.last_name }}</td>
+                    <td>{{ data.checked_tasks }}/{{ data.total_tasks }}</td>
+                    <td>{{ data.total_points }} / {{ data.max_points }}</td>
+                    <td>
+                        <a href="#" class="text-dark-blue" onclick="toggleDetails('{{ data.refugee.id }}'); return false;">Zobacz test</a>
+                    </td>
+                </tr>
+
+                <tr id="details-{{ data.refugee.id }}" class="details-row" style="display: none;">
+                    <td colspan="4">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Pytanie</th>
+                                    <th>Odpowiedź</th>
+                                    <th>Punkty</th>
+                                    <th>Max Punkty</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for answer in data.answers %}
+                                <tr>
+                                    <td>{{ answer.question_text }}</td>
+                                    <td>
+                                        {% if answer.text_answer %}
+                                            {{ answer.text_answer }}
+                                        {% elif answer.choice_text %}
+                                            {{ answer.choice_text }}
+                                        {% else %}
+                                            Brak odpowiedzi
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <input type="number" name="points_{{ answer.id }}" value="{{ answer.awarded_points }}" min="0" max="{{ answer.question.max_points }}" step="0.5" class="form-control">
+                                    </td>
+                                    <td>{{ answer.max_points }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        <input type="hidden" name="filled_test_id" value="{{ data.filled_test }}">
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <button type="submit" class="btn button-orange">Zapisz punkty</button>
+        {% empty %}
+            <p style="text-align: center;">Ten test nie został użyty w żadnej rekrutacji.</p>
+        {% endfor %}
+    </form>
+</div>
+</div>
+<script>
+function toggleDetails(refugeeId) {
+    const row = document.getElementById('details-' + refugeeId);
+    if (row.style.display === 'none') {
+        row.style.display = 'table-row';
+    } else {
+        row.style.display = 'none';
+    }
+}
+</script>
+{% endblock %}

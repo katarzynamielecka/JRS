@@ -1,0 +1,303 @@
+{% extends "base.html" %} {% load static %} {% block head %}
+<link rel="stylesheet" href="{% static 'admin_and_employee.css' %}" />
+<link rel="stylesheet" href="{% static 'timetable.css' %}" />
+
+
+{% endblock %} {% block content %}
+
+<div class="container">
+  {% if messages %}
+  <div class="alert-overlay">
+      <div class="alert-box">
+          <button type="button" class="btn-close" aria-label="Close" onclick="closeAlertBox()">X</button>
+          {% for message in messages %}
+              <div class="alert" style="margin: 10px">
+                  {{ message }}
+              </div>
+          {% endfor %}
+      </div>
+  </div>
+{% endif %}
+  <button onclick="window.history.back()" class="btn button-grey">
+    <i class="fa-solid fa-arrow-left"></i>
+  </button>
+  <div class="help-icon" onclick="toggleInstructions()">
+    ?
+  </div>
+  
+  <div class="instruction-popup" id="instructionPopup">
+    <button class="close-popup" onclick="toggleInstructions()">×</button>
+    <h2>Instrukcje</h2>
+    <p id="instructionText"></p>
+  </div>
+  <h1 class="page-title">STWÓRZ PLAN ZAJĘĆ</h1>
+    <form method="post">
+      {% csrf_token %}
+      <legend>Przedziały Godzinowe</legend>
+      <div class="time-intervals">
+        {% for interval in intervals %}
+        <div class="time-interval">
+          {{ forloop.counter }}
+          <input
+            class="time-input"
+            type="time"
+            name="startTime[]"
+            {% if interval %}
+            value="{{ interval.start_time|time:'H:i' }}"
+            {% endif %}
+          />
+          <span>-</span>
+          <input
+            class="time-input"
+            type="time"
+            name="endTime[]"
+            {% if interval %}
+            value="{{ interval.end_time|time:'H:i' }}"
+            {% endif %}
+          />
+          <button
+            type="button"
+            onclick="clearTime(this)"
+            class="removeIntervalButton"
+          >
+            x
+          </button>
+        </div>
+        {% endfor %}
+      </div>
+      <div class="centered-elems">
+      <button
+        class="btn button-orange save-button"
+        type="submit"
+        name="update_intervals"
+      >
+        Zapisz
+      </button>
+    </div>
+    </form>
+    <br>
+  </div>
+    <legend>Sale</legend>
+    <table>
+      {% for classroom in classrooms %}
+      <tr>
+        <td class="classroom-table">
+          <div class="classroom-name">{{ classroom.name }}</div>
+          <div class="classrooms-buttons">
+          <button
+            class="btn btn-outline-primary button-classroom"
+            onclick="editClassroom('{{ classroom.id }}', '{{ classroom.name }}')"
+          >
+            Edytuj
+          </button>
+          <form method="post">
+            {% csrf_token %}
+            <input
+              type="hidden"
+              name="classroom_id"
+              value="{{ classroom.id }}"
+            />
+            <button
+              class="btn btn-outline-danger button-classroom"
+              type="submit"
+              name="delete_classroom"
+            >
+              Usuń
+            </button>
+          </div>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </table>
+    <br>
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="classroom_id" id="classroom_id" />
+      <label for="name">Dodaj/Edytuj salę:</label>
+      <input type="text" id="name" name="name" required />
+      <button class="btn button-orange" type="submit" name="add_edit_classroom">
+        Zapisz
+      </button>
+    </form>
+    <script>
+      function editClassroom(id, name) {
+        document.getElementById("classroom_id").value = id;
+        document.getElementById("name").value = name;
+      }
+    </script>
+  <br>
+    <legend>Dostępność lektorów i sal</legend>
+    <form method="post">
+      {% csrf_token %}
+      <table class="table-responsive timetable">
+        <thead>
+          <tr>
+            <th>Godzina</th>
+            <th>Poniedziałek</th>
+            <th>Wtorek</th>
+            <th>Środa</th>
+            <th>Czwartek</th>
+            <th>Piątek</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for interval in intervals %}
+            {% if interval %}
+            <tr>
+              <td>
+                {{ interval.start_time|time:"H:i" }} - {{ interval.end_time|time:"H:i" }}
+              </td>
+              {% for day in days %}
+              <td>
+                <div>
+                  <strong>Dostępne sale:</strong>
+                  <div class="availability-checkbox-list">
+                    {% for classroom in classrooms %}
+                    <label class="classroom-avability-checkbox">
+                      <input
+                        type="checkbox"
+                        name="availability-classroom-{{ day }}-{{ interval.id }}"
+                        value="{{ classroom.id }}"
+                        {% for availability in availability_list %}
+                          {% if availability.day == day and availability.time_interval_id == interval.id and availability.classroom_id == classroom.id %}
+                            checked
+                          {% endif %}
+                        {% endfor %}
+                      />
+                      {{ classroom.name }}
+                    </label>
+                    {% endfor %}
+                  </div>
+                </div>
+
+                <div>
+                  <strong>Dostępni lektorzy:</strong>
+                  <div class="availability-checkbox-list">
+                    {% for employee in employees %}
+                    <label class="employee-avability-checkbox">
+                      <input
+                        type="checkbox"
+                        name="availability-employee-{{ day }}-{{ interval.id }}"
+                        value="{{ employee.id }}"
+                        {% for availability in availability_list %}
+                          {% if availability.day == day and availability.time_interval_id == interval.id and availability.employee_id == employee.id %}
+                            checked
+                          {% endif %}
+                        {% endfor %}
+                      />
+                      {{ employee.user.last_name }}
+                    </label>
+                    {% endfor %}
+                  </div>
+                </div>
+              </td>
+              {% endfor %}
+            </tr>
+            {% endif %}
+          {% endfor %}
+        </tbody>
+      </table>
+      <button class="btn button-orange" type="submit" name="update_availability">Zapisz dostępność</button>
+    </form>
+    
+    <br>
+  
+  <div class="generate-timetable-button-container">
+    <a class="btn button-generate-timetable" href="{% url 'generate_timetable' %}" id="generate-button" onclick="showLoading()">Wygeneruj plan zajęć</a>
+  </div>
+  <div id="loading-message" class="no-loading-message">
+      Układanie nowego planu lekcji może potrwać kilka minut...
+  </div>
+  {% if cur_semesters %}
+    Semestr: 
+        {% for semester in cur_semesters %}
+                <strong>{{ semester.name }}</strong>
+        {% endfor %}
+  {% else %}
+      <p>Brak aktualnych semestrów.</p>
+  {% endif %}
+<table class="table-responsive timetable">
+  <thead>
+    <tr>
+      <th>Godzina</th>
+      <th>Poniedziałek</th>
+      <th>Wtorek</th>
+      <th>Środa</th>
+      <th>Czwartek</th>
+      <th>Piątek</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for interval in timetable %}
+    {% if interval.interval %}
+    <tr data-interval-id="{{ interval.interval.id }}">
+      <td>
+        {{ interval.interval.start_time|time:"H:i" }} - {{ interval.interval.end_time|time:"H:i" }}
+      </td>
+      {% for day_data in interval.days %}
+      <td class="droppable" data-day="{{ day_data.day }}">
+        {% for lesson in day_data.lessons %}
+        <div
+        class="draggable lesson"
+        draggable="true"
+        data-lesson-id="{{ lesson.id }}"
+        style="background-color: #add8e6;"
+        ondblclick="openEditModal(data-lesson-id)">
+        <strong>{{ lesson.course__name }}</strong><br />
+        {{ lesson.teacher__user__last_name }}<br />
+        Sala: {{ lesson.classroom__name }}<br />
+        <small>{{ day_data.day }}</small><br />
+        <small>Od {{ lesson.time_interval__start_time|time:"H:i" }}</small> -
+        <small>Do {{ lesson.time_interval__end_time|time:"H:i" }}</small>
+      </div>
+        {% empty %}
+        <div class="empty-slot">---</div>
+        {% endfor %}
+      </td>
+      {% endfor %}
+    </tr>
+    {% endif %}
+    {% endfor %}
+  </tbody>
+</table>
+{% if conflicts and conflicts > 0 %}
+    <div class="timetable-conflicts">
+        <p class="timetable-conflicts">Uwaga: Wystąpiły konflikty w wygenerowanym planie lekcji.</p>
+    </div>
+{% endif %}
+
+<div id="editLessonModal" class="modal">
+  <div class="modal-content">
+      <div class="timetable-edit-close-btn"><button class="close">&times;</button></div>
+      <h3>Edytuj lekcję</h3>
+      <form id="editLessonForm">
+          <input type="hidden" name="lesson_id" id="lessonIdInput">
+          <div>
+            <label for="classroomSelect">Sala:</label>
+            <select id="classroomSelect" name="classroom_id">
+                {% for classroom in classrooms %}
+                <option value="{{ classroom.id }}">{{ classroom.name }}</option>
+                {% endfor %}
+            </select>
+          </div>
+          <div>
+            <label for="teacherSelect">Lektor:</label>
+            <select id="teacherSelect" name="teacher_id">
+                {% for employee in employees %}
+                <option value="{{ employee.id }}">{{ employee.user.last_name }}</option>
+                {% endfor %}
+            </select>
+          </div>
+          <button class="btn button-orange" type="button" id="saveLessonChanges">Zapisz</button>
+      </form>
+  </div>
+</div>
+</div>
+<script src="/static/js/timetable_edition_classrooms_teachers.js"></script>
+<script src="/static/js/timetable_edition_days_intervals.js"></script>
+<script src="/static/js/timetable_loading.js"></script>
+<script src="/static/js/clear_time.js"></script>
+<script src="/static/js/avability_table.js"></script>
+  {% endblock %}
+

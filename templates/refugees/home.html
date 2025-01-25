@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% load static %}
+{% block head %}
+<link rel="stylesheet" href="{% static 'home.css' %}">
+{% endblock %}
+{% block content %}
+  <div class="home">
+    <h2>{{ translated_texts.welcome_message }}</h2>
+    <p>{{ translated_texts.goal }}</p>
+    <br>
+    <h2>{{ translated_texts.available_courses }}</h2>
+    {% if courses %}
+    <ul class="two-column-list">
+      {% for course in courses %}
+        <li>{{ course.name }} ({{ course.language }})</li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p>{{ translated_texts.no_courses }}</p>
+    {% endif %}
+  
+    <br>
+    <h2>{{ translated_texts.important_info }}</h2>
+    <p>{{ translated_texts.info_details }}</p>
+    <br>
+    <h2>{{ translated_texts.how_to_register }}</h2>
+    <p>{{ translated_texts.register_instructions }}</p>
+    <a href="/form" class="btn button-orange">{{ translated_texts.register_now }}</a>
+  </div>
+{% endblock %}

@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% load static %}
+{% block head %}
+<link rel="stylesheet" href="{% static 'home.css' %}">
+{% endblock %}
+{% block content %}
+<div class="success-message">
+    <h1>Success!</h1>
+    <p>{{ success_message }}</p>
+    <p>{{ instructions_message }}</p>
+    <p>{{ contact_message}} <a href="https://jrs.center/napisz-do-nas/">{{contact_link}}</a></p>
+</div>
+{% endblock %}
+
+
+
