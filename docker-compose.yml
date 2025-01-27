@@ -12,6 +12,7 @@ services:
     depends_on:
       - db
     environment:
+      - SECRET_KEY=${SECRET_KEY}
       - DB_USER=${DB_USER}
       - DB_PASSWORD=${DB_PASSWORD}
       - DB_NAME=postgres
