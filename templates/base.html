@@ -115,7 +115,23 @@
                   </select>
                 </form>      
               </div>
-
+              <script>
+                document.addEventListener("DOMContentLoaded", function () {
+                  const langSelect = document.getElementById("lang-select");
+                  const urlParams = new URLSearchParams(window.location.search);
+                  let lang = urlParams.get("lang");
+                  if (!lang) {
+                    lang = localStorage.getItem("selectedLang") || "en";
+                  }
+                  langSelect.value = lang;
+                  langSelect.addEventListener("change", function () {
+                    localStorage.setItem("selectedLang", this.value);
+                    const newUrl = new URL(window.location);
+                    newUrl.searchParams.set("lang", this.value);
+                    window.location.href = newUrl.toString();
+                  });
+                });
+              </script>
               <div class="navbar-login">
                 <a class="nav-list-trigger dropdown-toggle nav-menu" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                   <div class="dropdown-menu dropdown-menu-right">
